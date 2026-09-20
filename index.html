@@ -659,9 +659,7 @@
         class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl relative"
       >
         <!-- Floating Header Container (Flush to top, Jumlah data langsung menempel di bawah judul) -->
-        <div
-          class="shrink-0 bg-slate-50/95 backdrop-blur-md px-5 pt-4 pb-2.5 z-20 relative"
-        >
+        <div class="shrink-0 bg-slate-50/95 backdrop-blur-md px-5 pt-4 pb-2.5 z-20 relative">
           <div class="flex justify-between items-center">
             <h3 id="mTitle" class="font-extrabold text-lg text-slate-800"></h3>
             <button
@@ -925,10 +923,7 @@
         </button>
 
         <!-- State: mendengarkan -->
-        <div
-          id="voiceListen"
-          class="flex flex-col items-center text-center pt-2"
-        >
+        <div id="voiceListen" class="flex flex-col items-center text-center pt-2">
           <h3 class="font-extrabold text-lg text-slate-800 mb-1">
             Catat dengan Suara
           </h3>
@@ -949,10 +944,7 @@
             </div>
           </div>
 
-          <div
-            id="voiceBars"
-            class="flex items-end justify-center gap-1 h-8 mb-4"
-          >
+          <div id="voiceBars" class="flex items-end justify-center gap-1 h-8 mb-4">
             <span class="voice-bar"></span>
             <span class="voice-bar"></span>
             <span class="voice-bar"></span>
@@ -960,10 +952,7 @@
             <span class="voice-bar"></span>
           </div>
 
-          <p
-            id="voiceStatus"
-            class="text-xs font-semibold text-indigo-600 mb-2"
-          >
+          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">
             Menyiapkan mikrofon...
           </p>
           <div
@@ -1003,12 +992,7 @@
             </div>
             <div>
               <label class="lbl">Kategori</label
-              ><input
-                id="vKat"
-                list="dlKat"
-                class="inp"
-                placeholder="Makanan"
-              />
+              ><input id="vKat" list="dlKat" class="inp" placeholder="Makanan" />
             </div>
           </div>
           <div>
@@ -1258,11 +1242,7 @@
           preConfirm: async () => {
             const url = $("cfgUrl").value.trim();
             const token = $("cfgToken").value.trim();
-            if (
-              !/^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/.+\/exec$/.test(
-                url,
-              )
-            ) {
+            if (!/^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/.+\/exec$/.test(url)) {
               Swal.showValidationMessage(
                 "URL harus link Web App Apps Script yang diakhiri /exec",
               );
@@ -2942,9 +2922,7 @@
               jenis = "Pemasukan";
             else if (/pengeluaran|keluar/.test(low)) jenis = "Pengeluaran";
           } else if (/\b(kategori|katagori|ketgory|category)\b/.test(low)) {
-            kategori = seg
-              .replace(/.*\b(kategori|katagori|ketgory|category)\b/i, "")
-              .trim();
+            kategori = seg.replace(/.*\b(kategori|katagori|ketgory|category)\b/i, "").trim();
           } else if (/\b(alasan|karena)\b/.test(low)) {
             alasan = seg.replace(/.*\b(alasan|karena)\b/i, "").trim();
           } else {
@@ -2957,10 +2935,7 @@
           nominal = 0;
         if (nomInfo) {
           nominal = nomInfo.value;
-          nama = namaNominalSeg
-            .slice(0, nomInfo.index)
-            .trim()
-            .replace(/[-,.]+$/, "");
+          nama = namaNominalSeg.slice(0, nomInfo.index).trim().replace(/[-,.]+$/, "");
         }
         if (!nama) nama = namaNominalSeg;
         if (!alasan) alasan = namaNominalSeg;
@@ -3014,8 +2989,7 @@
         };
         r.onresult = (e) => {
           let t = "";
-          for (let i = 0; i < e.results.length; i++)
-            t += e.results[i][0].transcript;
+          for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
           Vst.raw = t;
           $("voiceTranscript").textContent = t;
           if (e.results[e.results.length - 1].isFinal) {
