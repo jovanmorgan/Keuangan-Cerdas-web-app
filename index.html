@@ -106,6 +106,66 @@
         );
         box-shadow: 0 1px 6px 0 rgba(99, 102, 241, 0.35);
       }
+
+      /* ── Animasi pop-up "Catat dengan suara" ── */
+      .voice-ring {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 100%;
+        height: 100%;
+        border-radius: 9999px;
+        border: 2px solid rgba(99, 102, 241, 0.45);
+        animation: voiceRingPulse 1.8s ease-out infinite;
+      }
+      @keyframes voiceRingPulse {
+        0% {
+          transform: scale(0.45);
+          opacity: 0.9;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 0;
+        }
+      }
+      .voice-bar {
+        width: 4px;
+        height: 8px;
+        border-radius: 999px;
+        background: linear-gradient(180deg, #6366f1, #8b5cf6);
+        animation: voiceBarBeat 1s ease-in-out infinite;
+      }
+      .voice-bar:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .voice-bar:nth-child(2) {
+        animation-delay: 0.12s;
+      }
+      .voice-bar:nth-child(3) {
+        animation-delay: 0.24s;
+      }
+      .voice-bar:nth-child(4) {
+        animation-delay: 0.36s;
+      }
+      .voice-bar:nth-child(5) {
+        animation-delay: 0.48s;
+      }
+      @keyframes voiceBarBeat {
+        0%,
+        100% {
+          height: 8px;
+          opacity: 0.6;
+        }
+        50% {
+          height: 28px;
+          opacity: 1;
+        }
+      }
+      .voice-bar.idle {
+        animation: none;
+        height: 4px;
+        opacity: 0.35;
+      }
     </style>
     <style>
       #printArea {
@@ -279,20 +339,6 @@
           <div class="card">
             <h3 class="font-bold text-sm mb-3">Pertumbuhan saldo</h3>
             <div class="h-64"><canvas id="cSaldo"></canvas></div>
-          </div>
-        </div>
-        <div class="card flex items-center gap-4">
-          <button
-            onclick="voice()"
-            class="w-14 h-14 shrink-0 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-2xl shadow-lg active:scale-95 transition"
-          >
-            🎙️
-          </button>
-          <div>
-            <h3 class="font-bold text-sm">Catat dengan suara</h3>
-            <p id="vs" class="text-xs text-slate-500">
-              Contoh: "makan siang 25 ribu" atau "terima gaji 5 juta"
-            </p>
           </div>
         </div>
       </section>
@@ -535,6 +581,15 @@
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
+    </button>
+    <!-- Tombol mengambang: catat transaksi dengan suara -->
+    <button
+      onclick="openVoice()"
+      class="fixed right-4 bottom-44 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition flex items-center justify-center"
+      aria-label="Catat dengan suara"
+      title="Catat dengan suara"
+    >
+      🎙️
     </button>
     <nav
       id="navBottom"
@@ -847,6 +902,115 @@
         <button onclick="saveSetor()" class="btn w-full !py-3">
           Simpan setoran
         </button>
+      </div>
+    </div>
+
+    <!-- Modal catat transaksi dengan suara -->
+    <div
+      id="mVoice"
+      class="hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+      onclick="if (event.target === this) closeVoice();"
+    >
+      <div
+        class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+      >
+        <button
+          onclick="closeVoice()"
+          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition z-10"
+          aria-label="Tutup"
+        >
+          ×
+        </button>
+
+        <!-- State: mendengarkan -->
+        <div id="voiceListen" class="flex flex-col items-center text-center pt-2">
+          <h3 class="font-extrabold text-lg text-slate-800 mb-1">
+            Catat dengan Suara
+          </h3>
+          <p class="text-xs text-slate-400 mb-5">
+            Contoh: "transaksi pengeluaran, makan siang 25 ribu, kategori
+            makanan"
+          </p>
+
+          <div class="relative w-32 h-32 flex items-center justify-center mb-5">
+            <span class="voice-ring"></span>
+            <span class="voice-ring" style="animation-delay: 0.6s"></span>
+            <span class="voice-ring" style="animation-delay: 1.2s"></span>
+            <div
+              id="voiceMicWrap"
+              class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40"
+            >
+              🎙️
+            </div>
+          </div>
+
+          <div id="voiceBars" class="flex items-end justify-center gap-1 h-8 mb-4">
+            <span class="voice-bar"></span>
+            <span class="voice-bar"></span>
+            <span class="voice-bar"></span>
+            <span class="voice-bar"></span>
+            <span class="voice-bar"></span>
+          </div>
+
+          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">
+            Menyiapkan mikrofon...
+          </p>
+          <div
+            class="w-full min-h-[3rem] rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-700"
+          >
+            <span id="voiceTranscript" class="italic text-slate-400"
+              >Silakan bicara...</span
+            >
+          </div>
+        </div>
+
+        <!-- State: hasil / konfirmasi -->
+        <div id="voiceReview" class="hidden space-y-3">
+          <h3 class="font-extrabold text-lg text-slate-800 text-center mb-1">
+            Periksa hasilnya
+          </h3>
+          <p
+            class="text-xs text-slate-400 text-center mb-2 bg-slate-50 rounded-xl px-3 py-2"
+          >
+            Terdengar: "<span id="voiceRawText"></span>"
+          </p>
+          <div class="grid grid-cols-2 gap-2" id="voiceJenis"></div>
+          <div>
+            <label class="lbl">Nama transaksi</label
+            ><input id="vNama" class="inp" placeholder="Contoh: Makan siang" />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="lbl">Nominal (Rp)</label
+              ><input
+                id="vNom"
+                type="number"
+                inputmode="numeric"
+                class="inp"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label class="lbl">Kategori</label
+              ><input id="vKat" list="dlKat" class="inp" placeholder="Makanan" />
+            </div>
+          </div>
+          <div>
+            <label class="lbl">Alasan / catatan</label
+            ><input id="vKet" class="inp" placeholder="Catatan tambahan" />
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button
+              onclick="voiceRetry()"
+              class="px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition shrink-0"
+            >
+              🎙️ Ulangi
+            </button>
+            <button onclick="voiceSave()" class="btn flex-1 !py-3">
+              Simpan transaksi
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2552,6 +2716,7 @@
           closeForm();
           closeTarget();
           closeSetor();
+          closeVoice();
         }
         if (e.key === "Enter" && e.target && e.target.tagName === "INPUT") {
           if (!$("mTarget").classList.contains("hidden")) saveTarget();
@@ -2706,28 +2871,206 @@
         return u;
       }
 
-      /* ---------- Suara ---------- */
-      function voice() {
+      /* ---------- Catat dengan suara (pop-up mengambang) ---------- */
+      const Vst = {
+        rec: null,
+        listening: false,
+        jenis: "Pengeluaran",
+        raw: "",
+      };
+
+      /** Ubah angka bicara ("25 ribu", "5 juta", "20.000") jadi nominal + posisi kemunculannya di teks. */
+      function parseNominalV_(str) {
+        const m = str.match(
+          /(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(ribu|rb|k|juta|jt)?/i,
+        );
+        if (!m) return null;
+        let n = /\.\d{3}/.test(m[1])
+          ? parseFloat(m[1].replace(/\./g, ""))
+          : parseFloat(m[1].replace(",", "."));
+        const suf = (m[2] || "").toLowerCase();
+        if (/^(ribu|rb|k)$/.test(suf)) n *= 1000;
+        else if (/^(juta|jt)$/.test(suf)) n *= 1000000;
+        return { value: Math.round(n), index: m.index, length: m[0].length };
+      }
+      const capV_ = (s) =>
+        String(s || "")
+          .trim()
+          .replace(/\s+/g, " ")
+          .replace(/^./, (c) => c.toUpperCase());
+
+      /**
+       * Format yang didukung: "transaksi <jenis>, <nama> <nominal>, kategori
+       * <kategori>, alasan <alasan>" — koma & kata kunci boleh dalam urutan
+       * bebas. Kalau "alasan" tidak disebut, alasan otomatis dipakai dari
+       * kalimat nama+nominal itu sendiri.
+       */
+      function parseVoiceCommand_(text) {
+        const raw = String(text || "").trim();
+        const segs = raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        let jenis = "Pengeluaran",
+          kategori = "",
+          alasan = "";
+        const sisaSegs = [];
+        segs.forEach((seg) => {
+          const low = seg.toLowerCase();
+          if (/\btransaksi\b/.test(low)) {
+            if (/pemasukan|masuk|pendapatan|terima|gaji/.test(low))
+              jenis = "Pemasukan";
+            else if (/pengeluaran|keluar/.test(low)) jenis = "Pengeluaran";
+          } else if (/\b(kategori|katagori|ketgory|category)\b/.test(low)) {
+            kategori = seg.replace(/.*\b(kategori|katagori|ketgory|category)\b/i, "").trim();
+          } else if (/\b(alasan|karena)\b/.test(low)) {
+            alasan = seg.replace(/.*\b(alasan|karena)\b/i, "").trim();
+          } else {
+            sisaSegs.push(seg);
+          }
+        });
+        const namaNominalSeg = sisaSegs.join(", ") || raw;
+        const nomInfo = parseNominalV_(namaNominalSeg);
+        let nama = namaNominalSeg,
+          nominal = 0;
+        if (nomInfo) {
+          nominal = nomInfo.value;
+          nama = namaNominalSeg.slice(0, nomInfo.index).trim().replace(/[-,.]+$/, "");
+        }
+        if (!nama) nama = namaNominalSeg;
+        if (!alasan) alasan = namaNominalSeg;
+        return {
+          jenis,
+          nama: capV_(nama),
+          nominal,
+          kategori: capV_(kategori),
+          keterangan: capV_(alasan),
+          raw,
+        };
+      }
+
+      function setVoiceJenis(j) {
+        Vst.jenis = j;
+        $("voiceJenis").innerHTML = ["Pengeluaran", "Pemasukan"]
+          .map(
+            (x) =>
+              `<button type="button" onclick="setVoiceJenis('${x}')" class="py-2.5 rounded-2xl text-sm font-bold ${x === j ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${x}</button>`,
+          )
+          .join("");
+      }
+
+      function openVoice() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SR)
           return Toast.fire({
             icon: "error",
             title: "Browser tidak mendukung input suara",
           });
+        $("mVoice").classList.remove("hidden");
+        $("voiceListen").classList.remove("hidden");
+        $("voiceReview").classList.add("hidden");
+        $("voiceTranscript").innerHTML =
+          '<span class="italic text-slate-400">Silakan bicara...</span>';
+        $("voiceStatus").textContent = "Menyiapkan mikrofon...";
+        document
+          .querySelectorAll("#voiceBars .voice-bar")
+          .forEach((b) => b.classList.remove("idle"));
+
         const r = new SR();
+        Vst.rec = r;
         r.lang = "id-ID";
-        $("vs").textContent = "Mendengarkan...";
-        r.onresult = (e) => {
-          const t = e.results[0][0].transcript;
-          $("vs").textContent = "Terdeteksi: " + t;
-          act("analisisSuaraPintar", [t], "Memproses suara...");
+        r.interimResults = true;
+        r.continuous = false;
+        r.maxAlternatives = 1;
+
+        r.onstart = () => {
+          Vst.listening = true;
+          $("voiceStatus").textContent = "Mendengarkan...";
         };
-        r.onerror = () => {
-          $("vs").textContent =
-            "Suara tidak tertangkap. Pastikan izin mikrofon aktif.";
-          Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
+        r.onresult = (e) => {
+          let t = "";
+          for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+          Vst.raw = t;
+          $("voiceTranscript").textContent = t;
+          if (e.results[e.results.length - 1].isFinal) {
+            r.stop();
+          }
+        };
+        r.onerror = (e) => {
+          Vst.listening = false;
+          document
+            .querySelectorAll("#voiceBars .voice-bar")
+            .forEach((b) => b.classList.add("idle"));
+          if (e.error === "no-speech") {
+            $("voiceStatus").textContent =
+              "Tidak terdengar suara. Coba lagi, bicara lebih jelas.";
+          } else {
+            $("voiceStatus").textContent =
+              "Gagal menangkap suara. Pastikan izin mikrofon aktif.";
+            Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
+          }
+        };
+        r.onend = () => {
+          Vst.listening = false;
+          document
+            .querySelectorAll("#voiceBars .voice-bar")
+            .forEach((b) => b.classList.add("idle"));
+          if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
         };
         r.start();
+      }
+
+      function showVoiceReview_(text) {
+        const p = parseVoiceCommand_(text);
+        $("voiceListen").classList.add("hidden");
+        $("voiceReview").classList.remove("hidden");
+        $("voiceRawText").textContent = text;
+        setVoiceJenis(p.jenis);
+        $("vNama").value = p.nama;
+        $("vNom").value = p.nominal || "";
+        $("vKat").value = p.kategori;
+        $("vKet").value = p.keterangan;
+      }
+
+      function voiceRetry() {
+        $("voiceReview").classList.add("hidden");
+        $("voiceListen").classList.remove("hidden");
+        openVoice();
+      }
+
+      function closeVoice() {
+        if (Vst.rec && Vst.listening) {
+          try {
+            Vst.rec.stop();
+          } catch (_) {}
+        }
+        Vst.raw = "";
+        $("mVoice").classList.add("hidden");
+      }
+
+      async function voiceSave() {
+        const nama = $("vNama").value.trim(),
+          nominal = Number($("vNom").value);
+        if (!nama || !(nominal > 0))
+          return Toast.fire({
+            icon: "warning",
+            title: "Nama dan nominal (lebih dari 0) wajib diisi",
+          });
+        const ok = await act(
+          "simpanDataTransaksi",
+          [
+            {
+              jenis: Vst.jenis,
+              nama,
+              nominal,
+              kategori: $("vKat").value.trim() || "Umum",
+              keterangan: $("vKet").value.trim(),
+              tanggal: "",
+            },
+          ],
+          "Menyimpan transaksi...",
+        );
+        if (ok) closeVoice();
       }
 
       /* ---------- Mulai ---------- */
