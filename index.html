@@ -47,6 +47,7 @@
       }
     </style>
     <style>
+      /* ── Pengaman overflow: card/grid/flex tidak boleh lebih lebar dari kontainernya ── */
       .card {
         min-width: 0;
         overflow-wrap: break-word;
@@ -59,6 +60,8 @@
       body {
         overflow-x: hidden;
       }
+
+      /* ── Scrollbar tipis & rapi (desktop + area overflow-x tabel) ── */
       * {
         scrollbar-width: thin;
         scrollbar-color: #c7d2fe transparent;
@@ -74,6 +77,11 @@
         background: #c7d2fe;
         border-radius: 999px;
       }
+      *::-webkit-scrollbar-thumb:hover {
+        background: #a5b4fc;
+      }
+
+      /* ── Input jumlah data: sembunyikan spinner bawaan browser (dipakai tombol +/- sendiri) ── */
       .no-spinner::-webkit-outer-spin-button,
       .no-spinner::-webkit-inner-spin-button {
         -webkit-appearance: none;
@@ -82,6 +90,9 @@
       .no-spinner {
         -moz-appearance: textfield;
       }
+
+      /* ── Pembatas elegan pada modal: memisahkan area mengambang (header/footer) dari area input ──
+         Garis gradasi tipis + glow lembut, cukup untuk menegaskan batas tanpa terlihat mencolok. */
       .modal-divider {
         height: 2px;
         border-radius: 999px;
@@ -95,6 +106,8 @@
         );
         box-shadow: 0 1px 6px 0 rgba(99, 102, 241, 0.35);
       }
+
+      /* ── Animasi pop-up "Catat dengan suara" ── */
       .voice-ring {
         position: absolute;
         inset: 0;
@@ -122,14 +135,31 @@
         background: linear-gradient(180deg, #6366f1, #8b5cf6);
         animation: voiceBarBeat 1s ease-in-out infinite;
       }
-      .voice-bar:nth-child(1) { animation-delay: 0s; }
-      .voice-bar:nth-child(2) { animation-delay: 0.12s; }
-      .voice-bar:nth-child(3) { animation-delay: 0.24s; }
-      .voice-bar:nth-child(4) { animation-delay: 0.36s; }
-      .voice-bar:nth-child(5) { animation-delay: 0.48s; }
+      .voice-bar:nth-child(1) {
+        animation-delay: 0s;
+      }
+      .voice-bar:nth-child(2) {
+        animation-delay: 0.12s;
+      }
+      .voice-bar:nth-child(3) {
+        animation-delay: 0.24s;
+      }
+      .voice-bar:nth-child(4) {
+        animation-delay: 0.36s;
+      }
+      .voice-bar:nth-child(5) {
+        animation-delay: 0.48s;
+      }
       @keyframes voiceBarBeat {
-        0%, 100% { height: 8px; opacity: 0.6; }
-        50% { height: 28px; opacity: 1; }
+        0%,
+        100% {
+          height: 8px;
+          opacity: 0.6;
+        }
+        50% {
+          height: 28px;
+          opacity: 1;
+        }
       }
       .voice-bar.idle {
         animation: none;
@@ -137,14 +167,125 @@
         opacity: 0.35;
       }
     </style>
+    <style>
+      #printArea {
+        display: none;
+      }
+      @media print {
+        body {
+          background: #fff !important;
+          padding: 0 !important;
+        }
+        body > *:not(#printArea) {
+          display: none !important;
+        }
+        #printArea {
+          display: block !important;
+        }
+        @page {
+          size: A4;
+          margin: 14mm;
+        }
+      }
+      .pr {
+        font-family: "Plus Jakarta Sans", Arial, sans-serif;
+        color: #0f172a;
+        font-size: 11px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .pr h1 {
+        font-size: 20px;
+        margin: 0 0 2px;
+      }
+      .pr h2 {
+        font-size: 13px;
+        margin: 18px 0 6px;
+        color: #4f46e5;
+      }
+      .pr table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .pr th,
+      .pr td {
+        padding: 5px 6px;
+        border-bottom: 1px solid #e2e8f0;
+        text-align: left;
+      }
+      .pr th {
+        background: #eef2ff;
+        font-weight: 700;
+      }
+      .pr .r {
+        text-align: right;
+      }
+      .pr .m {
+        color: #64748b;
+        margin: 0;
+      }
+      .pr .sum {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .pr .sum div {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 8px;
+      }
+      .pr .sum span {
+        display: block;
+        color: #64748b;
+      }
+      .pr .sum b {
+        font-size: 14px;
+      }
+      .pr tr {
+        break-inside: avoid;
+      }
+      .pr thead {
+        display: table-header-group;
+      }
+      .pr .g2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .pr figure {
+        margin: 0;
+        break-inside: avoid;
+      }
+      .pr figure b {
+        display: block;
+        margin-bottom: 3px;
+      }
+      .pr img {
+        width: 100%;
+      }
+      .pr ul {
+        margin: 4px 0 4px 16px;
+        padding: 0;
+      }
+      .pr li {
+        margin: 3px 0;
+      }
+    </style>
   </head>
   <body class="bg-slate-100 text-slate-800 min-h-screen pb-32 md:pb-10">
     <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div
+        class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3"
+      >
         <div>
           <h1 class="text-lg font-extrabold tracking-tight">Keuangan Cerdas</h1>
-          <p id="sync" class="text-[11px] text-slate-400 flex items-center gap-1.5">
-            <span id="dot" class="w-2 h-2 rounded-full bg-slate-500"></span><span id="syncTxt">Menghubungkan...</span>
+          <p
+            id="sync"
+            class="text-[11px] text-slate-400 flex items-center gap-1.5"
+          >
+            <span id="dot" class="w-2 h-2 rounded-full bg-slate-500"></span
+            ><span id="syncTxt">Menghubungkan...</span>
           </p>
         </div>
         <nav id="navTop" class="hidden md:flex gap-1"></nav>
@@ -182,7 +323,9 @@
         <div id="mini" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
         <div class="grid lg:grid-cols-2 gap-4">
           <div class="card">
-            <h3 class="font-bold text-sm mb-3">Tren harian: pemasukan vs pengeluaran</h3>
+            <h3 class="font-bold text-sm mb-3">
+              Tren harian: pemasukan vs pengeluaran
+            </h3>
             <div class="h-64"><canvas id="cTren"></canvas></div>
           </div>
           <div class="card">
@@ -205,11 +348,16 @@
         <div class="card space-y-3">
           <div class="flex items-center justify-between gap-2">
             <h2 class="text-lg font-extrabold">
-              Transaksi <span id="cnt" class="text-slate-400 font-medium text-sm"></span>
+              Transaksi
+              <span id="cnt" class="text-slate-400 font-medium text-sm"></span>
             </h2>
             <div class="flex gap-2">
-              <button id="btnSelMode" onclick="toggleSelMode()" class="act">☑️ Pilih</button>
-              <button onclick="printReport()" class="btn !py-2">🖨️ Cetak PDF</button>
+              <button id="btnSelMode" onclick="toggleSelMode()" class="act">
+                ☑️ Pilih
+              </button>
+              <button onclick="printReport()" class="btn !py-2">
+                🖨️ Cetak PDF
+              </button>
             </div>
           </div>
           <div class="flex flex-col sm:flex-row gap-2">
@@ -219,7 +367,10 @@
             ></select>
             <input
               id="q"
-              oninput="S.q = this.value.toLowerCase(); renderList();"
+              oninput="
+                S.q = this.value.toLowerCase();
+                renderList();
+              "
               placeholder="Cari nama, kategori, catatan..."
               class="inp sm:flex-1"
             />
@@ -229,7 +380,9 @@
           <div class="overflow-x-auto -mx-2">
             <table class="w-full text-sm">
               <thead>
-                <tr class="text-left text-xs text-slate-400 border-b border-slate-100">
+                <tr
+                  class="text-left text-xs text-slate-400 border-b border-slate-100"
+                >
                   <th id="thSel" class="p-2 w-8 hidden">
                     <input
                       type="checkbox"
@@ -239,10 +392,16 @@
                       aria-label="Pilih semua"
                     />
                   </th>
-                  <th class="p-2 font-semibold hidden md:table-cell">Tanggal</th>
+                  <th class="p-2 font-semibold hidden md:table-cell">
+                    Tanggal
+                  </th>
                   <th class="p-2 font-semibold">Transaksi</th>
-                  <th class="p-2 font-semibold hidden md:table-cell">Kategori</th>
-                  <th class="p-2 font-semibold hidden lg:table-cell">Catatan</th>
+                  <th class="p-2 font-semibold hidden md:table-cell">
+                    Kategori
+                  </th>
+                  <th class="p-2 font-semibold hidden lg:table-cell">
+                    Catatan
+                  </th>
                   <th class="p-2 font-semibold text-right">Nominal</th>
                   <th class="p-2"></th>
                 </tr>
@@ -262,7 +421,9 @@
               onchange="setRange(this.value)"
               class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
             ></select>
-            <button onclick="printReport()" class="btn !py-2">🖨️ Cetak / Simpan PDF</button>
+            <button onclick="printReport()" class="btn !py-2">
+              🖨️ Cetak / Simpan PDF
+            </button>
           </div>
         </div>
         <div id="lKpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
@@ -272,7 +433,9 @@
             <div class="overflow-x-auto">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="text-left text-xs text-slate-400 border-b border-slate-100">
+                  <tr
+                    class="text-left text-xs text-slate-400 border-b border-slate-100"
+                  >
                     <th class="p-2 font-semibold">Bulan</th>
                     <th class="p-2 font-semibold text-right">Masuk</th>
                     <th class="p-2 font-semibold text-right">Keluar</th>
@@ -294,7 +457,9 @@
       <section id="v-Pintar" class="hidden space-y-4">
         <div>
           <h2 class="text-xl font-extrabold">Asisten keuangan pintar</h2>
-          <p class="text-xs text-slate-500">Dianalisis otomatis dari data bulan berjalan</p>
+          <p class="text-xs text-slate-500">
+            Dianalisis otomatis dari data bulan berjalan
+          </p>
         </div>
         <div class="grid lg:grid-cols-3 gap-4">
           <div class="card text-center">
@@ -302,7 +467,10 @@
             <div class="relative h-32 mt-3">
               <canvas id="cSkor"></canvas>
               <div class="absolute inset-x-0 bottom-0">
-                <p id="skorNum" class="text-3xl font-extrabold leading-none"></p>
+                <p
+                  id="skorNum"
+                  class="text-3xl font-extrabold leading-none"
+                ></p>
                 <p id="skorLbl" class="text-xs font-bold"></p>
               </div>
             </div>
@@ -321,7 +489,9 @@
           <div class="card">
             <div class="flex justify-between items-center mb-3">
               <h3 class="font-bold">Target tabungan</h3>
-              <button onclick="formTarget()" class="btn !py-1.5 !px-3 !text-xs">+ Tambah target</button>
+              <button onclick="formTarget()" class="btn !py-1.5 !px-3 !text-xs">
+                + Tambah target
+              </button>
             </div>
             <div id="pTarget" class="space-y-3"></div>
           </div>
@@ -329,7 +499,9 @@
         <div class="card">
           <div class="flex justify-between items-center mb-3">
             <h3 class="font-bold">Anggaran bulan ini</h3>
-            <button onclick="formAnggaran()" class="btn !py-1.5 !px-3 !text-xs">+ Tambah anggaran</button>
+            <button onclick="formAnggaran()" class="btn !py-1.5 !px-3 !text-xs">
+              + Tambah anggaran
+            </button>
           </div>
           <div id="pBudget" class="grid sm:grid-cols-2 gap-3"></div>
         </div>
@@ -342,28 +514,44 @@
           <div class="card space-y-3">
             <h3 class="font-bold">Peringatan dan target</h3>
             <div id="setForm" class="space-y-3"></div>
-            <button onclick="saveSet()" class="btn w-full">Simpan pengaturan</button>
+            <button onclick="saveSet()" class="btn w-full">
+              Simpan pengaturan
+            </button>
           </div>
           <div class="space-y-4">
             <div class="card">
               <div class="flex justify-between items-center mb-3">
                 <h3 class="font-bold">Anggaran per kategori</h3>
-                <button onclick="formAnggaran()" class="chip on">+ Tambah</button>
+                <button onclick="formAnggaran()" class="chip on">
+                  + Tambah
+                </button>
               </div>
               <div id="setBudget" class="space-y-2"></div>
             </div>
             <div class="card">
               <div class="flex justify-between items-center mb-3">
                 <h3 class="font-bold">Kategori</h3>
-                <button onclick="formKategori()" class="chip on">+ Tambah</button>
+                <button onclick="formKategori()" class="chip on">
+                  + Tambah
+                </button>
               </div>
               <div id="setKat" class="flex flex-wrap gap-2"></div>
             </div>
             <div class="card space-y-3">
               <h3 class="font-bold">Sinkronisasi data</h3>
-              <p class="text-xs text-slate-400">Data disinkronkan dengan Google Sheets setiap 8 detik.</p>
+              <p class="text-xs text-slate-400">
+                Data disinkronkan dengan Google Sheets setiap 8 detik, termasuk
+                perubahan yang Anda ketik langsung di sheet.
+              </p>
               <button
-                onclick="refresh(true).then((ok) => Toast.fire({ icon: ok ? 'success' : 'error', title: ok ? 'Data disegarkan' : 'Gagal' }))"
+                onclick="
+                  refresh(true).then((ok) =>
+                    Toast.fire({
+                      icon: ok ? 'success' : 'error',
+                      title: ok ? 'Data disegarkan' : 'Gagal menyegarkan data',
+                    }),
+                  )
+                "
                 class="btn !bg-slate-200 !text-slate-700 hover:!bg-slate-300"
               >
                 Segarkan data
@@ -374,17 +562,27 @@
       </section>
     </main>
 
-    <!-- Tombol Mengambang (Mobile) -->
+    <!-- Mobile nav + tombol tambah -->
     <button
       onclick="openForm()"
       class="md:hidden fixed right-4 bottom-24 z-40 w-14 h-14 rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-400/50 active:scale-90 transition flex items-center justify-center"
       aria-label="Tambah transaksi"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6 block m-auto">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-6 h-6 block m-auto"
+      >
         <line x1="12" y1="5" x2="12" y2="19"></line>
         <line x1="5" y1="12" x2="19" y2="12"></line>
       </svg>
     </button>
+    <!-- Tombol mengambang: catat transaksi dengan suara -->
     <button
       onclick="openVoice()"
       class="fixed right-4 bottom-44 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition flex items-center justify-center"
@@ -399,14 +597,23 @@
       style="padding-bottom: max(0.375rem, env(safe-area-inset-bottom))"
     ></nav>
 
-    <!-- Tombol & Panel List Mengambang -->
+    <!-- Tombol & panel list mengambang (hanya tampak saat form tambah dengan jumlah data > 1) -->
     <button
       id="btnListFloat"
       onclick="toggleListPanel()"
       class="hidden fixed right-4 bottom-20 z-[60] w-12 h-12 rounded-full bg-slate-900 text-white shadow-xl active:scale-90 transition flex items-center justify-center"
       aria-label="Daftar data"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 block m-auto">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        class="w-5 h-5 block m-auto"
+      >
         <line x1="8" y1="6" x2="21" y2="6"></line>
         <line x1="8" y1="12" x2="21" y2="12"></line>
         <line x1="8" y1="18" x2="21" y2="18"></line>
@@ -420,43 +627,61 @@
       class="hidden fixed right-4 bottom-36 z-[60] w-52 max-h-72 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 space-y-1"
     ></div>
 
-    <!-- Bar Aksi Massal -->
+    <!-- Bar aksi mengambang: muncul saat mode "Pilih" aktif dan ada data tercentang -->
     <div
       id="selBar"
       class="hidden fixed inset-x-3 bottom-24 md:inset-x-auto md:right-6 md:left-auto md:w-80 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center justify-between gap-3"
     >
       <span id="selCount" class="text-sm font-semibold"></span>
       <div class="flex gap-2">
-        <button onclick="bulkEdit()" class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition">✏️ Edit</button>
-        <button onclick="bulkDelete()" class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold transition">🗑️ Hapus</button>
+        <button
+          onclick="bulkEdit()"
+          class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition"
+        >
+          ✏️ Edit
+        </button>
+        <button
+          onclick="bulkDelete()"
+          class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold transition"
+        >
+          🗑️ Hapus
+        </button>
       </div>
     </div>
 
-    <!-- Modal Form Transaksi -->
+    <!-- Modal form transaksi -->
     <div
       id="modal"
       class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
       onclick="if (event.target === this) closeForm();"
     >
-      <div class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl relative">
+      <div
+        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl relative"
+      >
+        <!-- Floating Header Container (Flush to top, Jumlah data langsung menempel di bawah judul) -->
         <div class="shrink-0 bg-slate-50/95 backdrop-blur-md px-5 pt-4 pb-2.5 z-20 relative">
           <div class="flex justify-between items-center">
             <h3 id="mTitle" class="font-extrabold text-lg text-slate-800"></h3>
             <button
               onclick="closeForm()"
-              class="w-8 h-8 rounded-full bg-slate-200/65 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition"
+              class="w-8 h-8 rounded-full bg-slate-200/60 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition"
               aria-label="Tutup"
             >
               ×
             </button>
           </div>
+
+          <!-- Jumlah data: dempet tepat di bawah judul, hanya muncul saat menambah transaksi baru (bukan edit) -->
           <div id="jumlahWrap" class="hidden pt-2.5">
-            <label class="lbl text-slate-600 font-semibold">Jumlah data yang ingin ditambahkan</label>
+            <label class="lbl text-slate-600 font-semibold"
+              >Jumlah data yang ingin ditambahkan</label
+            >
             <div class="flex items-stretch gap-2 mt-1">
               <button
                 type="button"
                 onclick="stepJumlah(-1)"
                 class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
+                aria-label="Kurangi jumlah"
               >
                 <span class="block translate-y-[-1px]">&minus;</span>
               </button>
@@ -475,147 +700,246 @@
                 type="button"
                 onclick="stepJumlah(1)"
                 class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
+                aria-label="Tambah jumlah"
               >
                 <span class="block translate-y-[-1px]">+</span>
               </button>
             </div>
+            <p class="text-[11px] text-slate-400 mt-1">
+              Ubah angka ini untuk menambah beberapa transaksi sekaligus (maks.
+              50).
+            </p>
           </div>
+
+          <!-- Pembatas elegan: memisahkan area mengambang (judul + jumlah data) dari area input di bawahnya -->
           <div class="modal-divider mt-3.5 -mx-5"></div>
         </div>
 
+        <!-- Scrollable Form Body -->
         <div class="flex-1 overflow-y-auto p-5 pt-4 space-y-3">
+          <!-- Mode edit: 1 transaksi -->
           <div id="editWrap" class="hidden space-y-3">
             <div class="grid grid-cols-2 gap-2" id="segJenis"></div>
             <div>
-              <label class="lbl">Nama transaksi</label>
-              <input id="fNama" class="inp" placeholder="Contoh: Makan siang" />
+              <label class="lbl">Nama transaksi</label
+              ><input
+                id="fNama"
+                class="inp"
+                placeholder="Contoh: Makan siang"
+              />
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="lbl">Nominal (Rp)</label>
-                <input id="fNom" type="number" inputmode="numeric" class="inp" placeholder="0" />
+                <label class="lbl">Nominal (Rp)</label
+                ><input
+                  id="fNom"
+                  type="number"
+                  inputmode="numeric"
+                  class="inp"
+                  placeholder="0"
+                />
               </div>
               <div>
-                <label class="lbl">Kategori</label>
-                <input id="fKat" list="dlKat" class="inp" placeholder="Makanan" />
+                <label class="lbl">Kategori</label
+                ><input
+                  id="fKat"
+                  list="dlKat"
+                  class="inp"
+                  placeholder="Makanan"
+                />
               </div>
             </div>
             <div>
-              <label class="lbl">Tanggal & waktu</label>
-              <input id="fTgl" type="datetime-local" class="inp" />
+              <label class="lbl">Tanggal & waktu</label
+              ><input id="fTgl" type="datetime-local" class="inp" />
             </div>
             <div>
-              <label class="lbl">Catatan (opsional)</label>
-              <input id="fKet" class="inp" placeholder="Catatan tambahan" />
+              <label class="lbl">Catatan (opsional)</label
+              ><input id="fKet" class="inp" placeholder="Catatan tambahan" />
             </div>
           </div>
+
+          <!-- Mode tambah: bisa banyak transaksi sekaligus -->
           <div id="multiWrap" class="hidden space-y-3"></div>
           <datalist id="dlKat"></datalist>
         </div>
 
+        <!-- Floating Footer Container (dempet ke paling bawah, tanpa celah tambahan) -->
         <div
           class="shrink-0 bg-slate-50/95 backdrop-blur-md px-4 pt-3 z-20 relative"
           style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
         >
           <div class="modal-divider absolute top-0 left-4 right-4"></div>
-          <button onclick="saveForm()" class="btn w-full !py-3.5 font-bold text-base shadow-md shadow-indigo-600/20">
+          <button
+            onclick="saveForm()"
+            class="btn w-full !py-3.5 font-bold text-base shadow-md shadow-indigo-600/20"
+          >
             Simpan transaksi
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal Target Tabungan -->
+    <!-- Modal target tabungan (tambah / edit) -->
     <div
       id="mTarget"
       class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
       onclick="if (event.target === this) closeTarget();"
     >
-      <div class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[92vh] overflow-y-auto space-y-3">
+      <div
+        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[92vh] overflow-y-auto space-y-3"
+      >
         <div class="flex justify-between items-center">
           <h3 id="tgTitle" class="font-extrabold text-lg"></h3>
-          <button onclick="closeTarget()" class="text-slate-400 text-2xl leading-none">×</button>
+          <button
+            onclick="closeTarget()"
+            class="text-slate-400 text-2xl leading-none"
+            aria-label="Tutup"
+          >
+            ×
+          </button>
         </div>
         <div>
-          <label class="lbl">Nama target</label>
-          <input id="tgN" class="inp" maxlength="60" placeholder="Contoh: Dana darurat" />
+          <label class="lbl" for="tgN">Nama target</label
+          ><input
+            id="tgN"
+            class="inp"
+            maxlength="60"
+            placeholder="Contoh: Dana darurat"
+          />
         </div>
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="lbl">Target (Rp)</label>
-            <input id="tgT" type="number" inputmode="numeric" min="0" class="inp" placeholder="10000000" oninput="previewTarget()" />
+            <label class="lbl" for="tgT">Target (Rp)</label
+            ><input
+              id="tgT"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              class="inp"
+              placeholder="10000000"
+              oninput="previewTarget()"
+            />
           </div>
           <div>
-            <label class="lbl">Sudah terkumpul (Rp)</label>
-            <input id="tgC" type="number" inputmode="numeric" min="0" class="inp" placeholder="0" oninput="previewTarget()" />
+            <label class="lbl" for="tgC">Sudah terkumpul (Rp)</label
+            ><input
+              id="tgC"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              class="inp"
+              placeholder="0"
+              oninput="previewTarget()"
+            />
           </div>
         </div>
         <div>
-          <label class="lbl">Tenggat (opsional)</label>
-          <input id="tgD" type="date" class="inp" />
+          <label class="lbl" for="tgD">Tenggat (opsional)</label
+          ><input id="tgD" type="date" class="inp" />
         </div>
         <div>
-          <div class="flex justify-between text-xs font-semibold text-slate-500 mb-1">
+          <div
+            class="flex justify-between text-xs font-semibold text-slate-500 mb-1"
+          >
             <span>Progres</span><span id="tgPct">0%</span>
           </div>
           <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-            <div id="tgBar" class="h-full rounded-full transition-all duration-500" style="width: 0%; background: #4f46e5"></div>
+            <div
+              id="tgBar"
+              class="h-full rounded-full transition-all duration-500"
+              style="width: 0%; background: #4f46e5"
+            ></div>
           </div>
         </div>
         <div class="flex gap-2 pt-1">
-          <button id="tgDel" onclick="hapusDariForm()" class="hidden px-4 py-3 rounded-2xl text-sm font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 transition">Hapus</button>
-          <button onclick="saveTarget()" class="btn flex-1 !py-3">Simpan target</button>
+          <button
+            id="tgDel"
+            onclick="hapusDariForm()"
+            class="hidden px-4 py-3 rounded-2xl text-sm font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 transition"
+          >
+            Hapus
+          </button>
+          <button onclick="saveTarget()" class="btn flex-1 !py-3">
+            Simpan target
+          </button>
         </div>
       </div>
     </div>
 
-    <!-- Modal Setoran -->
+    <!-- Modal setoran ke target -->
     <div
       id="mSetor"
       class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
       onclick="if (event.target === this) closeSetor();"
     >
-      <div class="bg-white w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-5 space-y-3">
+      <div
+        class="bg-white w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-5 space-y-3"
+      >
         <div class="flex justify-between items-center">
           <h3 id="sgTitle" class="font-extrabold text-lg truncate"></h3>
-          <button onclick="closeSetor()" class="text-slate-400 text-2xl leading-none">×</button>
+          <button
+            onclick="closeSetor()"
+            class="text-slate-400 text-2xl leading-none"
+            aria-label="Tutup"
+          >
+            ×
+          </button>
         </div>
         <p id="sgInfo" class="text-xs text-slate-500"></p>
         <div>
-          <label class="lbl">Jumlah setoran (Rp)</label>
-          <input id="sgJml" type="number" inputmode="numeric" min="0" class="inp" placeholder="0" />
+          <label class="lbl" for="sgJml">Jumlah setoran (Rp)</label
+          ><input
+            id="sgJml"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            class="inp"
+            placeholder="0"
+          />
         </div>
         <button onclick="isiSisa()" class="act pri">Isi sisa target</button>
-        <button onclick="saveSetor()" class="btn w-full !py-3">Simpan setoran</button>
+        <button onclick="saveSetor()" class="btn w-full !py-3">
+          Simpan setoran
+        </button>
       </div>
     </div>
 
-    <!-- Modal Catat dengan Suara (Pintar) -->
+    <!-- Modal catat transaksi dengan suara -->
     <div
       id="mVoice"
       class="hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
       onclick="if (event.target === this) closeVoice();"
     >
-      <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+      <div
+        class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative overflow-hidden"
+      >
         <button
           onclick="closeVoice()"
           class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition z-10"
+          aria-label="Tutup"
         >
           ×
         </button>
 
-        <!-- State: Mendengarkan -->
+        <!-- State: mendengarkan -->
         <div id="voiceListen" class="flex flex-col items-center text-center pt-2">
-          <h3 class="font-extrabold text-lg text-slate-800 mb-1">Catat dengan Suara</h3>
+          <h3 class="font-extrabold text-lg text-slate-800 mb-1">
+            Catat dengan Suara
+          </h3>
           <p class="text-xs text-slate-400 mb-5">
-            Contoh: "transaksi pengeluaran, makan siang 25 ribu, kategori makanan, alasan lapar"
+            Contoh: "transaksi pengeluaran, makan siang 25 ribu, kategori
+            makanan"
           </p>
 
           <div class="relative w-32 h-32 flex items-center justify-center mb-5">
             <span class="voice-ring"></span>
             <span class="voice-ring" style="animation-delay: 0.6s"></span>
             <span class="voice-ring" style="animation-delay: 1.2s"></span>
-            <div class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40">
+            <div
+              id="voiceMicWrap"
+              class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40"
+            >
               🎙️
             </div>
           </div>
@@ -628,36 +952,52 @@
             <span class="voice-bar"></span>
           </div>
 
-          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">Menyiapkan mikrofon...</p>
-          <div class="w-full min-h-[3rem] rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-700">
-            <span id="voiceTranscript" class="italic text-slate-400">Silakan bicara...</span>
+          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">
+            Menyiapkan mikrofon...
+          </p>
+          <div
+            class="w-full min-h-[3rem] rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-700"
+          >
+            <span id="voiceTranscript" class="italic text-slate-400"
+              >Silakan bicara...</span
+            >
           </div>
         </div>
 
-        <!-- State: Konfirmasi Hasil Analisis Backend -->
+        <!-- State: hasil / konfirmasi -->
         <div id="voiceReview" class="hidden space-y-3">
-          <h3 class="font-extrabold text-lg text-slate-800 text-center mb-1">Periksa Hasil Suara</h3>
-          <p class="text-xs text-slate-400 text-center mb-2 bg-slate-50 rounded-xl px-3 py-2">
+          <h3 class="font-extrabold text-lg text-slate-800 text-center mb-1">
+            Periksa hasilnya
+          </h3>
+          <p
+            class="text-xs text-slate-400 text-center mb-2 bg-slate-50 rounded-xl px-3 py-2"
+          >
             Terdengar: "<span id="voiceRawText"></span>"
           </p>
           <div class="grid grid-cols-2 gap-2" id="voiceJenis"></div>
           <div>
-            <label class="lbl">Nama transaksi</label>
-            <input id="vNama" class="inp" placeholder="Contoh: Makan Siang" />
+            <label class="lbl">Nama transaksi</label
+            ><input id="vNama" class="inp" placeholder="Contoh: Makan siang" />
           </div>
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="lbl">Nominal (Rp)</label>
-              <input id="vNom" type="number" inputmode="numeric" class="inp" placeholder="0" />
+              <label class="lbl">Nominal (Rp)</label
+              ><input
+                id="vNom"
+                type="number"
+                inputmode="numeric"
+                class="inp"
+                placeholder="0"
+              />
             </div>
             <div>
-              <label class="lbl">Kategori</label>
-              <input id="vKat" list="dlKat" class="inp" placeholder="Makanan" />
+              <label class="lbl">Kategori</label
+              ><input id="vKat" list="dlKat" class="inp" placeholder="Makanan" />
             </div>
           </div>
           <div>
-            <label class="lbl">Alasan / catatan</label>
-            <input id="vKet" class="inp" placeholder="Alasan / catatan" />
+            <label class="lbl">Alasan / catatan</label
+            ><input id="vKet" class="inp" placeholder="Catatan tambahan" />
           </div>
           <div class="flex gap-2 pt-1">
             <button
@@ -666,20 +1006,28 @@
             >
               🎙️ Ulangi
             </button>
-            <button onclick="voiceSave()" class="btn flex-1 !py-3">Simpan transaksi</button>
+            <button onclick="voiceSave()" class="btn flex-1 !py-3">
+              Simpan transaksi
+            </button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Loading Overlay -->
+    <!-- Loading -->
     <div
       id="loader"
       class="hidden fixed inset-0 z-[1000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center"
     >
-      <div class="bg-white rounded-3xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl">
-        <div class="w-10 h-10 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin"></div>
-        <p id="loaderTxt" class="text-sm font-semibold text-slate-600">Memproses...</p>
+      <div
+        class="bg-white rounded-3xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl"
+      >
+        <div
+          class="w-10 h-10 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin"
+        ></div>
+        <p id="loaderTxt" class="text-sm font-semibold text-slate-600">
+          Memproses...
+        </p>
       </div>
     </div>
 
@@ -709,7 +1057,16 @@
         ["Pintar", "💡"],
         ["Pengaturan", "⚙️"],
       ];
-      const PAL = ["#4F46E5", "#F43F5E", "#10B981", "#F59E0B", "#06B6D4", "#8B5CF6", "#EC4899", "#84CC16"];
+      const PAL = [
+        "#4F46E5",
+        "#F43F5E",
+        "#10B981",
+        "#F59E0B",
+        "#06B6D4",
+        "#8B5CF6",
+        "#EC4899",
+        "#84CC16",
+      ];
       const Toast = Swal.mixin({
         toast: true,
         position: "bottom-end",
@@ -719,12 +1076,28 @@
       });
       const $ = (id) => document.getElementById(id);
       const rp = (n) =>
-        new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(n);
+        new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          maximumFractionDigits: 0,
+        }).format(n);
       const pad = (n) => String(n).padStart(2, "0");
-      const ymd = (d) => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+      const ymd = (d) =>
+        d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
       const esc = (s) =>
-        String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-      const sum = (a, j) => a.filter((t) => t.jenis === j).reduce((s, t) => s + t.nominal, 0);
+        String(s ?? "").replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      const sum = (a, j) =>
+        a.filter((t) => t.jenis === j).reduce((s, t) => s + t.nominal, 0);
       const group = (a, keyFn) => {
         const m = {};
         a.forEach((t) => {
@@ -734,12 +1107,19 @@
         return m;
       };
       const bln = (ym, l) =>
-        new Date(ym + "-01T00:00:00").toLocaleDateString("id-ID", { month: l ? "long" : "short", year: "numeric" });
+        new Date(ym + "-01T00:00:00").toLocaleDateString("id-ID", {
+          month: l ? "long" : "short",
+          year: "numeric",
+        });
       const cats = (a, j) =>
-        Object.entries(group(a.filter((t) => t.jenis === j), (t) => t.kategori))
+        Object.entries(
+          group(
+            a.filter((t) => t.jenis === j),
+            (t) => t.kategori,
+          ),
+        )
           .map(([k, v]) => [k, sum(v, j)])
           .sort((a, b) => b[1] - a[1]);
-
       function rangeLabel() {
         return S.range === "month"
           ? "Bulan ini (" + bln(ymd(new Date()).slice(0, 7), true) + ")"
@@ -752,13 +1132,20 @@
       function renderFilter() {
         const cur = ymd(new Date()).slice(0, 7);
         const ms = [
-          ...new Set([cur, ...S.data.trx.map((t) => t.tanggal.slice(0, 7)).filter((m) => /^\d{4}-\d{2}$/.test(m))]),
+          ...new Set([
+            cur,
+            ...S.data.trx
+              .map((t) => t.tanggal.slice(0, 7))
+              .filter((m) => /^\d{4}-\d{2}$/.test(m)),
+          ]),
         ]
           .sort()
           .reverse();
         const html =
           '<option value="month">Bulan ini</option><option value="30">30 hari terakhir</option><option value="all">Semua waktu</option><optgroup label="Pilih bulan">' +
-          ms.map((m) => `<option value="${m}">${bln(m, true)}</option>`).join("") +
+          ms
+            .map((m) => `<option value="${m}">${bln(m, true)}</option>`)
+            .join("") +
           "</optgroup>";
         document.querySelectorAll(".rangeSel").forEach((el) => {
           if (el.dataset.h !== html) {
@@ -777,13 +1164,19 @@
         renderLaporan();
       }
 
+      /* ---------- Loading, panggilan server, notifikasi ---------- */
       function loading(on, txt) {
         S.busy += on ? 1 : -1;
         if (on) $("loaderTxt").textContent = txt || "Memproses...";
         $("loader").classList.toggle("hidden", S.busy <= 0);
       }
-
-      const CFG_URL_KEY = "kc_apiUrl", CFG_TOKEN_KEY = "kc_apiToken";
+      /* ---------- Sambungan ke backend Google Apps Script (Web App) ----------
+         Frontend ini dihosting terpisah (mis. Vercel), jadi tidak bisa memakai
+         google.script.run. Semua panggilan dikirim lewat fetch() sebagai POST
+         dengan Content-Type: text/plain — supaya browser TIDAK melakukan CORS
+         preflight (Apps Script tidak mendukung preflight OPTIONS). */
+      const CFG_URL_KEY = "kc_apiUrl",
+        CFG_TOKEN_KEY = "kc_apiToken";
       function getCfg() {
         return {
           url: (localStorage.getItem(CFG_URL_KEY) || "").trim(),
@@ -794,6 +1187,9 @@
         localStorage.setItem(CFG_URL_KEY, (url || "").trim());
         localStorage.setItem(CFG_TOKEN_KEY, (token || "").trim());
       }
+      /** Kalau browser ini belum pernah disambungkan manual, coba ambil default
+       * dari /api/config (Environment Variables di Vercel: API_URL, API_TOKEN).
+       * Gagal/tidak ada -> diamkan saja, nanti jatuh ke dialog sambungan manual. */
       async function ensureCfg() {
         let cfg = getCfg();
         if (cfg.url) return cfg;
@@ -822,16 +1218,17 @@
       }
       const call = (fn, ...args) => {
         const cfg = getCfg();
-        if (!cfg.url) return Promise.reject(new Error("Belum tersambung ke Google Sheets"));
+        if (!cfg.url)
+          return Promise.reject(new Error("Belum tersambung ke Google Sheets"));
         return rawCall(cfg.url, fn, args, cfg.token);
       };
-
+      /** Dialog untuk mengisi/mengubah URL Web App Apps Script + token. forced=true: tidak bisa ditutup sebelum berhasil (dipakai saat pertama kali buka). */
       async function openSambungan(forced) {
         const cur = getCfg();
         const r = await Swal.fire({
           title: "Sambungan ke Google Sheets",
           html: `<div class="text-left space-y-3">
-            <p class="text-xs text-slate-500">Masukkan URL Web App Apps Script, diakhiri <code>/exec</code>.</p>
+            <p class="text-xs text-slate-500">Masukkan URL Web App Apps Script (deploy sebagai Web App, akses "Siapa saja"), diakhiri <code>/exec</code>. Isi token hanya jika kamu sudah mengatur <code>APP_TOKEN</code> di Script Properties pada Code.gs.</p>
             <div><label class="lbl">URL Web App</label><input id="cfgUrl" class="inp" placeholder="https://script.google.com/macros/s/xxxxx/exec" value="${esc(cur.url)}"></div>
             <div><label class="lbl">Token (opsional)</label><input id="cfgToken" type="password" class="inp" placeholder="Token rahasia" value="${esc(cur.token)}"></div>
           </div>`,
@@ -846,7 +1243,9 @@
             const url = $("cfgUrl").value.trim();
             const token = $("cfgToken").value.trim();
             if (!/^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/.+\/exec$/.test(url)) {
-              Swal.showValidationMessage("URL harus link Web App Apps Script yang diakhiri /exec");
+              Swal.showValidationMessage(
+                "URL harus link Web App Apps Script yang diakhiri /exec",
+              );
               return false;
             }
             Swal.showLoading();
@@ -861,7 +1260,10 @@
         });
         if (r.isConfirmed) {
           setCfg(r.value.url, r.value.token);
-          Toast.fire({ icon: "success", title: "Berhasil tersambung ke Google Sheets" });
+          Toast.fire({
+            icon: "success",
+            title: "Berhasil tersambung ke Google Sheets",
+          });
           await refresh(true);
           return true;
         }
@@ -871,24 +1273,47 @@
       async function act(fn, args, txt) {
         loading(true, txt);
         let on = true;
-        const stop = () => { if (on) { on = false; loading(false); } };
+        const stop = () => {
+          if (on) {
+            on = false;
+            loading(false);
+          }
+        };
         try {
           const r = await call(fn, ...args);
           if (r && r.status === "error") throw new Error(r.message);
           await refresh(true);
           stop();
-          Toast.fire({ icon: "success", title: (r && r.message) || "Berhasil" });
+          const nw = analyze().A.filter(
+            (a) => (a.lv === "danger" || a.lv === "warn") && !S.seen.has(a.t),
+          );
+          analyze().A.forEach((a) => S.seen.add(a.t));
+          Toast.fire({
+            icon: "success",
+            title: (r && r.message) || "Berhasil",
+          });
+          if (nw.length && G("ALERT_POPUP"))
+            setTimeout(
+              () =>
+                Toast.fire({ icon: "warning", title: nw[0].t, timer: 6000 }),
+              3200,
+            );
           return true;
         } catch (e) {
           stop();
-          Toast.fire({ icon: "error", title: (e.message || "Terjadi kesalahan").replace(/^Error:\s*/, "") });
+          Toast.fire({
+            icon: "error",
+            title: (e.message || "Terjadi kesalahan").replace(/^Error:\s*/, ""),
+          });
           return false;
         }
       }
 
+      /* ---------- Sinkronisasi realtime dengan Sheet ---------- */
       async function refresh(force) {
         try {
-          const d = await call("getAllData"), h = JSON.stringify(d);
+          const d = await call("getAllData"),
+            h = JSON.stringify(d);
           if (force || h !== S.hash) {
             S.hash = h;
             S.data = d;
@@ -902,11 +1327,21 @@
         }
       }
       function setSync(ok) {
-        $("dot").className = "w-2 h-2 rounded-full " + (ok ? "bg-emerald-400 animate-pulse" : "bg-rose-500");
-        $("syncTxt").textContent = ok ? "Terhubung ke Sheet · " + new Date().toLocaleTimeString("id-ID") : "Koneksi terputus...";
+        $("dot").className =
+          "w-2 h-2 rounded-full " +
+          (ok ? "bg-emerald-400 animate-pulse" : "bg-rose-500");
+        $("syncTxt").textContent = ok
+          ? "Terhubung ke Sheet · " + new Date().toLocaleTimeString("id-ID")
+          : "Koneksi terputus, mencoba lagi...";
       }
-      setInterval(() => { if (!document.hidden && S.busy <= 0) refresh(false); }, 8000);
+      setInterval(() => {
+        if (!document.hidden && S.busy <= 0) refresh(false);
+      }, 8000);
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && S.busy <= 0) refresh(false);
+      });
 
+      /* ---------- Navigasi ---------- */
       function renderNav() {
         const t = (on, tab, ic) =>
           on
@@ -917,17 +1352,22 @@
                 <span>${tab}</span>
               </button>`;
         $("navTop").innerHTML = TABS.map((x) => t(true, x[0])).join("");
-        $("navBottom").innerHTML = TABS.map((x) => t(false, x[0], x[1])).join("");
+        $("navBottom").innerHTML = TABS.map((x) => t(false, x[0], x[1])).join(
+          "",
+        );
       }
       function tabTo(t) {
         S.tab = t;
-        TABS.forEach((x) => $("v-" + x[0]).classList.toggle("hidden", x[0] !== t));
+        TABS.forEach((x) =>
+          $("v-" + x[0]).classList.toggle("hidden", x[0] !== t),
+        );
         renderNav();
         window.scrollTo({ top: 0 });
         if (t === "Dashboard") renderDash();
         if (t === "Pintar") renderPintar();
       }
 
+      /* ---------- Render ---------- */
       function render() {
         renderFilter();
         renderDash();
@@ -939,8 +1379,10 @@
       }
       function inRange(t) {
         const d = t.tanggal.slice(0, 10);
-        if (S.range === "month") return d.slice(0, 7) === ymd(new Date()).slice(0, 7);
-        if (S.range === "30") return d >= ymd(new Date(Date.now() - 29 * 864e5));
+        if (S.range === "month")
+          return d.slice(0, 7) === ymd(new Date()).slice(0, 7);
+        if (S.range === "30")
+          return d >= ymd(new Date(Date.now() - 29 * 864e5));
         if (S.range === "all") return true;
         return d.slice(0, 7) === S.range;
       }
@@ -951,36 +1393,88 @@
           old.update("none");
           return;
         }
-        cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false, plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } } } }, cfg.options || {});
+        cfg.options = Object.assign(
+          {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 10, usePointStyle: true },
+              },
+            },
+          },
+          cfg.options || {},
+        );
         new Chart($(id), cfg);
       }
       function renderDash() {
-        const all = S.data.trx, r = all.filter(inRange);
-        const inc = sum(r, "Pemasukan"), out = sum(r, "Pengeluaran"), saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
+        const all = S.data.trx,
+          r = all.filter(inRange);
+        const inc = sum(r, "Pemasukan"),
+          out = sum(r, "Pengeluaran"),
+          saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
         const rate = inc ? Math.round(((inc - out) / inc) * 100) : 0;
         const kpi = (l, v, c, sub) =>
           `<div class="card !p-4 ${c}"><p class="text-xs font-semibold opacity-80">${l}</p><p class="text-lg sm:text-2xl font-extrabold mt-1 break-words">${v}</p><p class="text-[11px] opacity-70 mt-1">${sub}</p></div>`;
         $("kpi").innerHTML =
-          kpi("Saldo total", rp(saldo), "!bg-gradient-to-br from-indigo-600 to-violet-600 text-white", "Seluruh transaksi") +
+          kpi(
+            "Saldo total",
+            rp(saldo),
+            "!bg-gradient-to-br from-indigo-600 to-violet-600 text-white",
+            "Seluruh transaksi",
+          ) +
           kpi("Pemasukan", rp(inc), "text-emerald-600", "Periode terpilih") +
           kpi("Pengeluaran", rp(out), "text-rose-600", "Periode terpilih") +
-          kpi("Rasio tabungan", rate + "%", rate >= 20 ? "text-emerald-600" : rate >= 0 ? "text-amber-500" : "text-rose-600", rate >= 20 ? "Sehat" : "Target 20%");
+          kpi(
+            "Rasio tabungan",
+            rate + "%",
+            rate >= 20
+              ? "text-emerald-600"
+              : rate >= 0
+                ? "text-amber-500"
+                : "text-rose-600",
+            rate >= 20 ? "Sehat, target 20%" : "Target minimal 20%",
+          );
 
-        const top = analyze().A.filter((a) => a.lv === "danger" || a.lv === "warn").slice(0, 3);
+        const top = analyze()
+          .A.filter((a) => a.lv === "danger" || a.lv === "warn")
+          .slice(0, 3);
         $("notif").innerHTML = top.length
-          ? top.map((a) => `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`).join("") +
+          ? top
+              .map(
+                (a) =>
+                  `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`,
+              )
+              .join("") +
             `<button onclick="tabTo('Pintar')" class="text-xs font-semibold text-indigo-600">Lihat semua peringatan dan saran</button>`
           : `<div class="${LV.ok} rounded-2xl p-3 text-sm font-medium">Tidak ada peringatan. Keuangan bulan ini terkendali.</div>`;
 
-        const ex = r.filter((t) => t.jenis === "Pengeluaran"), days = Object.keys(group(ex, (t) => t.tanggal.slice(0, 10))).length;
+        const ex = r.filter((t) => t.jenis === "Pengeluaran"),
+          days = Object.keys(group(ex, (t) => t.tanggal.slice(0, 10))).length;
         const big = ex.slice().sort((a, b) => b.nominal - a.nominal)[0];
-        const byKat = Object.entries(group(ex, (t) => t.kategori)).map(([k, v]) => [k, sum(v, "Pengeluaran")]).sort((a, b) => b[1] - a[1]);
-        const mini = (l, v, s) => `<div class="card !p-4"><p class="text-xs text-slate-400 font-semibold">${l}</p><p class="font-bold mt-1 truncate">${v}</p><p class="text-[11px] text-slate-400 truncate">${s}</p></div>`;
+        const byKat = Object.entries(group(ex, (t) => t.kategori))
+          .map(([k, v]) => [k, sum(v, "Pengeluaran")])
+          .sort((a, b) => b[1] - a[1]);
+        const mini = (l, v, s) =>
+          `<div class="card !p-4"><p class="text-xs text-slate-400 font-semibold">${l}</p><p class="font-bold mt-1 truncate">${v}</p><p class="text-[11px] text-slate-400 truncate">${s}</p></div>`;
         $("mini").innerHTML =
-          mini("Rata-rata pengeluaran", rp(days ? out / days : 0), "per hari aktif") +
-          mini("Pengeluaran terbesar", big ? rp(big.nominal) : "-", big ? esc(big.nama) : "Belum ada") +
+          mini(
+            "Rata-rata pengeluaran",
+            rp(days ? out / days : 0),
+            "per hari aktif",
+          ) +
+          mini(
+            "Pengeluaran terbesar",
+            big ? rp(big.nominal) : "-",
+            big ? esc(big.nama) : "Belum ada",
+          ) +
           mini("Jumlah transaksi", r.length, "pada periode ini") +
-          mini("Kategori terboros", byKat[0] ? esc(byKat[0][0]) : "-", byKat[0] ? rp(byKat[0][1]) : "Belum ada");
+          mini(
+            "Kategori terboros",
+            byKat[0] ? esc(byKat[0][0]) : "-",
+            byKat[0] ? rp(byKat[0][1]) : "Belum ada",
+          );
 
         const C = cfgs(r, all);
         drawChart("cTren", C.tren);
@@ -989,50 +1483,122 @@
         drawChart("cSaldo", C.saldo);
       }
       function cfgs(r, all) {
-        const per = r.slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal)), g = group(per, (t) => t.tanggal.slice(0, 10)), dk = Object.keys(g).slice(-31);
-        const bk = cats(r, "Pengeluaran"), gm = group(all, (t) => t.tanggal.slice(0, 7)), mk = Object.keys(gm).sort().slice(-6);
-        const ga = group(all.slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal)), (t) => t.tanggal.slice(0, 10));
+        const per = r
+            .slice()
+            .sort((a, b) => a.tanggal.localeCompare(b.tanggal)),
+          g = group(per, (t) => t.tanggal.slice(0, 10)),
+          dk = Object.keys(g).slice(-31);
+        const bk = cats(r, "Pengeluaran"),
+          gm = group(all, (t) => t.tanggal.slice(0, 7)),
+          mk = Object.keys(gm).sort().slice(-6);
+        const ga = group(
+          all.slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal)),
+          (t) => t.tanggal.slice(0, 10),
+        );
         let run = 0;
-        const cum = Object.keys(ga).map((d) => ((run += sum(ga[d], "Pemasukan") - sum(ga[d], "Pengeluaran")), [d, run])).slice(-60);
+        const cum = Object.keys(ga)
+          .map(
+            (d) => (
+              (run += sum(ga[d], "Pemasukan") - sum(ga[d], "Pengeluaran")),
+              [d, run]
+            ),
+          )
+          .slice(-60);
         return {
           tren: {
             type: "line",
             data: {
               labels: dk.map((d) => d.slice(8) + "/" + d.slice(5, 7)),
               datasets: [
-                { label: "Pemasukan", data: dk.map((d) => sum(g[d], "Pemasukan")), borderColor: "#10B981", backgroundColor: "#10B98122", fill: true, tension: 0.35 },
-                { label: "Pengeluaran", data: dk.map((d) => sum(g[d], "Pengeluaran")), borderColor: "#F43F5E", backgroundColor: "#F43F5E22", fill: true, tension: 0.35 },
+                {
+                  label: "Pemasukan",
+                  data: dk.map((d) => sum(g[d], "Pemasukan")),
+                  borderColor: "#10B981",
+                  backgroundColor: "#10B98122",
+                  fill: true,
+                  tension: 0.35,
+                },
+                {
+                  label: "Pengeluaran",
+                  data: dk.map((d) => sum(g[d], "Pengeluaran")),
+                  borderColor: "#F43F5E",
+                  backgroundColor: "#F43F5E22",
+                  fill: true,
+                  tension: 0.35,
+                },
               ],
             },
           },
           kat: {
             type: "doughnut",
-            data: { labels: bk.map((x) => x[0]), datasets: [{ data: bk.map((x) => x[1]), backgroundColor: PAL, borderWidth: 0 }] },
-            options: { cutout: "62%", plugins: { legend: { position: "bottom", labels: { boxWidth: 10, usePointStyle: true } } } },
+            data: {
+              labels: bk.map((x) => x[0]),
+              datasets: [
+                {
+                  data: bk.map((x) => x[1]),
+                  backgroundColor: PAL,
+                  borderWidth: 0,
+                },
+              ],
+            },
+            options: {
+              cutout: "62%",
+              plugins: {
+                legend: {
+                  position: "bottom",
+                  labels: { boxWidth: 10, usePointStyle: true },
+                },
+              },
+            },
           },
           bulan: {
             type: "bar",
             data: {
               labels: mk.map((m) => bln(m)),
               datasets: [
-                { label: "Pemasukan", data: mk.map((k) => sum(gm[k], "Pemasukan")), backgroundColor: "#10B981", borderRadius: 8 },
-                { label: "Pengeluaran", data: mk.map((k) => sum(gm[k], "Pengeluaran")), backgroundColor: "#F43F5E", borderRadius: 8 },
+                {
+                  label: "Pemasukan",
+                  data: mk.map((k) => sum(gm[k], "Pemasukan")),
+                  backgroundColor: "#10B981",
+                  borderRadius: 8,
+                },
+                {
+                  label: "Pengeluaran",
+                  data: mk.map((k) => sum(gm[k], "Pengeluaran")),
+                  backgroundColor: "#F43F5E",
+                  borderRadius: 8,
+                },
               ],
             },
           },
           saldo: {
             type: "line",
-            data: { labels: cum.map((x) => x[0].slice(8) + "/" + x[0].slice(5, 7)), datasets: [{ label: "Saldo", data: cum.map((x) => x[1]), borderColor: "#4F46E5", backgroundColor: "#4F46E522", fill: true, tension: 0.3, pointRadius: 2 }] },
+            data: {
+              labels: cum.map((x) => x[0].slice(8) + "/" + x[0].slice(5, 7)),
+              datasets: [
+                {
+                  label: "Saldo",
+                  data: cum.map((x) => x[1]),
+                  borderColor: "#4F46E5",
+                  backgroundColor: "#4F46E522",
+                  fill: true,
+                  tension: 0.3,
+                  pointRadius: 2,
+                },
+              ],
+            },
             options: { plugins: { legend: { display: false } } },
           },
         };
       }
+      /** Daftar transaksi yang sedang tampil sesuai filter aktif (dipakai renderList & pilih semua). */
       function filteredTrx() {
         return S.data.trx.filter(
           (t) =>
             inRange(t) &&
             (S.jenis === "all" || t.jenis === S.jenis) &&
-            (!S.q || (t.nama + t.kategori + t.keterangan).toLowerCase().includes(S.q))
+            (!S.q ||
+              (t.nama + t.kategori + t.keterangan).toLowerCase().includes(S.q)),
         );
       }
       function renderList() {
@@ -1041,30 +1607,35 @@
           ["Pemasukan", "Pemasukan"],
           ["Pengeluaran", "Pengeluaran"],
         ]
-          .map((c) => `<button onclick="S.jenis='${c[0]}';renderList()" class="chip ${S.jenis === c[0] ? "on" : ""}">${c[1]}</button>`)
+          .map(
+            (c) =>
+              `<button onclick="S.jenis='${c[0]}';renderList()" class="chip ${S.jenis === c[0] ? "on" : ""}">${c[1]}</button>`,
+          )
           .join("");
         const rows = filteredTrx();
         $("cnt").textContent = `(${rows.length})`;
-        $("lsum").textContent = `${rangeLabel()}: masuk ${rp(sum(rows, "Pemasukan"))}, keluar ${rp(sum(rows, "Pengeluaran"))}`;
+        $("lsum").textContent =
+          `${rangeLabel()}: masuk ${rp(sum(rows, "Pemasukan"))}, keluar ${rp(sum(rows, "Pengeluaran"))}`;
         $("tbody").innerHTML = rows.length
           ? rows
               .map((t) => {
-                const inc = t.jenis === "Pemasukan", c = inc ? "text-emerald-600" : "text-rose-600";
+                const inc = t.jenis === "Pemasukan",
+                  c = inc ? "text-emerald-600" : "text-rose-600";
                 return `<tr class="hover:bg-slate-50">
-                  <td class="p-2 ${S.selMode ? "" : "hidden"}"><input type="checkbox" data-id="${esc(t.id)}" onchange="toggleSel(this.dataset.id,this.checked)" ${S.sel.has(t.id) ? "checked" : ""} class="w-4 h-4 rounded accent-indigo-600"></td>
-                  <td class="p-2 text-xs text-slate-500 hidden md:table-cell whitespace-nowrap">${esc(t.tanggal.slice(0, 16))}</td>
-                  <td class="p-2"><p class="font-semibold">${esc(t.nama)}</p><p class="md:hidden text-[11px] text-slate-400">${esc(t.kategori)} · ${esc(t.tanggal.slice(5, 16))}</p></td>
-                  <td class="p-2 hidden md:table-cell"><span class="chip">${esc(t.kategori)}</span></td>
-                  <td class="p-2 text-xs text-slate-500 hidden lg:table-cell">${esc(t.keterangan) || "-"}</td>
-                  <td class="p-2 text-right font-bold whitespace-nowrap ${c}">${inc ? "+" : "-"}${rp(t.nominal)}</td>
-                  <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5">✏️</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5">🗑️</button></td>
-                </tr>`;
+      <td class="p-2 ${S.selMode ? "" : "hidden"}"><input type="checkbox" data-id="${esc(t.id)}" onchange="toggleSel(this.dataset.id,this.checked)" ${S.sel.has(t.id) ? "checked" : ""} class="w-4 h-4 rounded accent-indigo-600" aria-label="Pilih transaksi"></td>
+      <td class="p-2 text-xs text-slate-500 hidden md:table-cell whitespace-nowrap">${esc(t.tanggal.slice(0, 16))}</td>
+      <td class="p-2"><p class="font-semibold">${esc(t.nama)}</p><p class="md:hidden text-[11px] text-slate-400">${esc(t.kategori)} · ${esc(t.tanggal.slice(5, 16))}</p></td>
+      <td class="p-2 hidden md:table-cell"><span class="chip">${esc(t.kategori)}</span></td>
+      <td class="p-2 text-xs text-slate-500 hidden lg:table-cell">${esc(t.keterangan) || "-"}</td>
+      <td class="p-2 text-right font-bold whitespace-nowrap ${c}">${inc ? "+" : "-"}${rp(t.nominal)}</td>
+      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5" aria-label="Edit">✏️</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5" aria-label="Hapus">🗑️</button></td></tr>`;
               })
               .join("")
           : `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada transaksi yang cocok. Tekan + untuk menambah.</td></tr>`;
         renderSelBar();
       }
 
+      /* ---------- Mode pilih banyak (hapus/edit massal) ---------- */
       function setSelMode(on) {
         S.selMode = on;
         if (!on) S.sel.clear();
@@ -1074,13 +1645,17 @@
         if (!on) $("chkAll").checked = false;
         renderList();
       }
-      function toggleSelMode() { setSelMode(!S.selMode); }
+      function toggleSelMode() {
+        setSelMode(!S.selMode);
+      }
       function toggleSel(id, checked) {
-        if (checked) S.sel.add(id); else S.sel.delete(id);
+        if (checked) S.sel.add(id);
+        else S.sel.delete(id);
         renderSelBar();
       }
       function selAllToggle(checked) {
-        filteredTrx().forEach((t) => (checked ? S.sel.add(t.id) : S.sel.delete(t.id)));
+        const rows = filteredTrx();
+        rows.forEach((t) => (checked ? S.sel.add(t.id) : S.sel.delete(t.id)));
         renderList();
       }
       function renderSelBar() {
@@ -1091,9 +1666,24 @@
       async function bulkDelete() {
         const ids = [...S.sel];
         if (!ids.length) return;
-        const c = await Swal.fire({ title: `Hapus ${ids.length} transaksi?`, icon: "warning", showCancelButton: true, confirmButtonText: "Hapus", confirmButtonColor: "#F43F5E" });
+        const c = await Swal.fire({
+          title: `Hapus ${ids.length} transaksi?`,
+          text: "Data yang dihapus tidak bisa dikembalikan.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Hapus",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
         if (!c.isConfirmed) return;
-        if (await act("hapusTransaksiBanyak", [ids], `Menghapus...`)) setSelMode(false);
+        if (
+          await act(
+            "hapusTransaksiBanyak",
+            [ids],
+            `Menghapus ${ids.length} transaksi...`,
+          )
+        )
+          setSelMode(false);
       }
       async function bulkEdit() {
         const ids = [...S.sel];
@@ -1104,59 +1694,183 @@
             <div class="text-left space-y-3">
               <div>
                 <label class="lbl">Ubah jenis (opsional)</label>
-                <div class="flex gap-3 text-sm">
-                  <label><input type="radio" name="bulkJenis" value="" checked> Tidak diubah</label>
-                  <label><input type="radio" name="bulkJenis" value="Pengeluaran"> Pengeluaran</label>
-                  <label><input type="radio" name="bulkJenis" value="Pemasukan"> Pemasukan</label>
+                <div class="flex flex-wrap gap-3 text-sm">
+                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="" checked> Tidak diubah</label>
+                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="Pengeluaran"> Pengeluaran</label>
+                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="Pemasukan"> Pemasukan</label>
                 </div>
               </div>
-              <div><label class="lbl">Ubah kategori</label><input id="bKat" list="dlKat" class="inp" placeholder="Kosongkan jika tetap"></div>
+              <div>
+                <label class="lbl">Ubah kategori (opsional)</label>
+                <input id="bKat" list="dlKat" class="inp" placeholder="Kosongkan jika tidak diubah">
+              </div>
             </div>`,
-          focusConfirm: false, showCancelButton: true, confirmButtonText: "Terapkan", confirmButtonColor: "#4F46E5",
-          preConfirm: () => ({ jenis: document.querySelector("input[name=bulkJenis]:checked").value, kategori: document.getElementById("bKat").value.trim() }),
+          focusConfirm: false,
+          showCancelButton: true,
+          confirmButtonText: "Terapkan",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#4F46E5",
+          preConfirm: () => ({
+            jenis: document.querySelector("input[name=bulkJenis]:checked")
+              .value,
+            kategori: document.getElementById("bKat").value.trim(),
+          }),
         });
         if (!form) return;
-        if (await act("editTransaksiBanyak", [ids, form], `Memperbarui...`)) setSelMode(false);
+        if (!form.jenis && !form.kategori)
+          return Toast.fire({
+            icon: "warning",
+            title: "Tidak ada perubahan yang dipilih",
+          });
+        if (
+          await act(
+            "editTransaksiBanyak",
+            [ids, form],
+            `Memperbarui ${ids.length} transaksi...`,
+          )
+        )
+          setSelMode(false);
       }
       function renderLaporan() {
-        const r = S.data.trx.filter(inRange), inc = sum(r, "Pemasukan"), out = sum(r, "Pengeluaran");
-        const k = (l, v, c) => `<div class="card !p-4"><p class="text-xs font-semibold text-slate-400">${l}</p><p class="text-lg sm:text-xl font-extrabold mt-1 break-words ${c}">${v}</p></div>`;
-        $("lKpi").innerHTML = k("Total pemasukan", rp(inc), "text-emerald-600") + k("Total pengeluaran", rp(out), "text-rose-600") + k("Selisih", rp(inc - out), inc - out < 0 ? "text-rose-600" : "text-indigo-600");
+        const r = S.data.trx.filter(inRange),
+          inc = sum(r, "Pemasukan"),
+          out = sum(r, "Pengeluaran");
+        const k = (l, v, c) =>
+          `<div class="card !p-4"><p class="text-xs font-semibold text-slate-400">${l}</p><p class="text-lg sm:text-xl font-extrabold mt-1 break-words ${c}">${v}</p></div>`;
+        $("lKpi").innerHTML =
+          k("Total pemasukan", rp(inc), "text-emerald-600") +
+          k("Total pengeluaran", rp(out), "text-rose-600") +
+          k(
+            "Selisih",
+            rp(inc - out),
+            inc - out < 0 ? "text-rose-600" : "text-indigo-600",
+          );
         const gm = group(r, (t) => t.tanggal.slice(0, 7));
-        $("tRekap").innerHTML = Object.keys(gm).sort().reverse().map((m) => {
-          const i = sum(gm[m], "Pemasukan"), o = sum(gm[m], "Pengeluaran");
-          return `<tr><td class="p-2 font-semibold">${bln(m)}</td><td class="p-2 text-right text-emerald-600">${rp(i)}</td><td class="p-2 text-right text-rose-600">${rp(o)}</td><td class="p-2 text-right font-bold ${i - o < 0 ? "text-rose-600" : ""}">${rp(i - o)}</td></tr>`;
-        }).join("") || `<tr><td colspan="4" class="p-6 text-center text-slate-400">Belum ada data.</td></tr>`;
-        const c = cats(r, "Pengeluaran").slice(0, 8), tot = out || 1;
-        $("lKat").innerHTML = c.map(([k, v], i) => `<div><div class="flex justify-between text-sm"><span class="font-semibold truncate">${esc(k)}</span><span class="text-slate-500">${rp(v)} · ${Math.round((v / tot) * 100)}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 rounded-full" style="width:${(v / tot) * 100}%;background:${PAL[i % PAL.length]}"></div></div></div>`).join("") || '<p class="text-slate-400 text-sm">Belum ada pengeluaran.</p>';
+        $("tRekap").innerHTML =
+          Object.keys(gm)
+            .sort()
+            .reverse()
+            .map((m) => {
+              const i = sum(gm[m], "Pemasukan"),
+                o = sum(gm[m], "Pengeluaran");
+              return `<tr><td class="p-2 font-semibold">${bln(m)}</td><td class="p-2 text-right text-emerald-600">${rp(i)}</td><td class="p-2 text-right text-rose-600">${rp(o)}</td><td class="p-2 text-right font-bold ${i - o < 0 ? "text-rose-600" : ""}">${rp(i - o)}</td></tr>`;
+            })
+            .join("") ||
+          `<tr><td colspan="4" class="p-6 text-center text-slate-400">Belum ada data pada periode ini.</td></tr>`;
+        const c = cats(r, "Pengeluaran").slice(0, 8),
+          tot = out || 1;
+        $("lKat").innerHTML =
+          c
+            .map(
+              ([k, v], i) =>
+                `<div><div class="flex justify-between items-center gap-2 text-sm"><span class="font-semibold truncate min-w-0">${esc(k)}</span><span class="text-slate-500 shrink-0 whitespace-nowrap">${rp(v)} · ${Math.round((v / tot) * 100)}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 rounded-full" style="width:${(v / tot) * 100}%;background:${PAL[i % PAL.length]}"></div></div></div>`,
+            )
+            .join("") ||
+          '<p class="text-slate-400 text-sm">Belum ada pengeluaran pada periode ini.</p>';
       }
 
+      /* ---------- Cetak / simpan PDF ---------- */
       function printReport() {
-        const r = S.data.trx.filter(inRange).slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-        if (!r.length) return Toast.fire({ icon: "warning", title: "Tidak ada transaksi" });
-        window.print();
+        const r = S.data.trx
+          .filter(inRange)
+          .slice()
+          .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+        if (!r.length)
+          return Toast.fire({
+            icon: "warning",
+            title: "Tidak ada transaksi pada periode ini",
+          });
+        const inc = sum(r, "Pemasukan"),
+          out = sum(r, "Pengeluaran"),
+          net = inc - out,
+          rate = inc ? Math.round((net / inc) * 100) : 0;
+        const catT = (j) => {
+          const c = cats(r, j),
+            t = sum(r, j) || 1;
+          return c.length
+            ? `<table><tr><th>Kategori</th><th class="r">Jumlah</th><th class="r">Porsi</th></tr>${c.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r">${rp(v)}</td><td class="r">${Math.round((v / t) * 100)}%</td></tr>`).join("")}</table>`
+            : '<p class="m">Tidak ada data.</p>';
+        };
+        const gm = group(r, (t) => t.tanggal.slice(0, 7));
+        const rekap = Object.keys(gm)
+          .sort()
+          .map(
+            (m) =>
+              `<tr><td>${bln(m, true)}</td><td class="r">${rp(sum(gm[m], "Pemasukan"))}</td><td class="r">${rp(sum(gm[m], "Pengeluaran"))}</td><td class="r"><b>${rp(sum(gm[m], "Pemasukan") - sum(gm[m], "Pengeluaran"))}</b></td></tr>`,
+          )
+          .join("");
+        const C = cfgs(r, S.data.trx),
+          R = analyze(),
+          lb = scoreLbl(R.score);
+        const fig = (t, cf) =>
+          `<figure><b>${t}</b><img src="${chartImg(cf)}"></figure>`;
+        const li = (a) =>
+          a.map((x) => `<li>${esc(x)}</li>`).join("") || "<li>Tidak ada.</li>";
+        const bud = R.budgets.length
+          ? `<h2>Anggaran bulan berjalan</h2><table><tr><th>Kategori</th><th class="r">Batas</th><th class="r">Terpakai</th><th class="r">Persen</th></tr>${R.budgets.map((b) => `<tr><td>${esc(b.kategori)}</td><td class="r">${rp(b.batas)}</td><td class="r">${rp(b.sp)}</td><td class="r">${Math.round(b.p)}%</td></tr>`).join("")}</table>`
+          : "";
+        $("printArea").innerHTML = `<div class="pr">
+    <h1>Laporan Keuangan</h1>
+    <p class="m">Periode: ${esc(rangeLabel())}. Dicetak ${new Date().toLocaleString("id-ID")}</p>
+    <div class="sum"><div><span>Pemasukan</span><b>${rp(inc)}</b></div><div><span>Pengeluaran</span><b>${rp(out)}</b></div><div><span>Selisih</span><b>${rp(net)}</b></div><div><span>Rasio tabungan</span><b>${rate}%</b></div></div>
+    <h2>Grafik keuangan</h2>
+    <div class="g2">${fig("Tren harian", C.tren)}${fig("Pengeluaran per kategori", C.kat)}${fig("Arus kas 6 bulan terakhir", C.bulan)}${fig("Pertumbuhan saldo", C.saldo)}</div>
+    <h2>Rekap bulanan</h2><table><tr><th>Bulan</th><th class="r">Masuk</th><th class="r">Keluar</th><th class="r">Selisih</th></tr>${rekap}</table>
+    <h2>Pengeluaran per kategori</h2>${catT("Pengeluaran")}
+    <h2>Pemasukan per kategori</h2>${catT("Pemasukan")}
+    ${bud}
+    <h2>Skor kesehatan keuangan: ${R.score}/100 (${lb[0]})</h2>
+    <p class="m">Peringatan dan saran dihitung dari kondisi bulan berjalan.</p>
+    <h2>Peringatan</h2><ul>${li(R.A.map((a) => a.t))}</ul>
+    <h2>Saran</h2><ul>${li(R.T)}</ul>
+    <h2>Daftar transaksi (${r.length})</h2>
+    <table><thead><tr><th>Tanggal</th><th>Transaksi</th><th>Kategori</th><th>Jenis</th><th class="r">Nominal</th><th>Catatan</th></tr></thead><tbody>
+    ${r.map((t) => `<tr><td>${esc(t.tanggal.slice(0, 16))}</td><td>${esc(t.nama)}</td><td>${esc(t.kategori)}</td><td>${t.jenis}</td><td class="r">${rp(t.nominal)}</td><td>${esc(t.keterangan)}</td></tr>`).join("")}
+    </tbody></table></div>`;
+        Toast.fire({
+          icon: "info",
+          title: 'Di dialog cetak, pilih "Simpan sebagai PDF"',
+        });
+        setTimeout(() => window.print(), 500);
       }
       function renderKategori() {
-        $("dlKat").innerHTML = [...new Set(S.data.kategori.map((k) => k.nama))].map((n) => `<option value="${esc(n)}">`).join("");
+        $("dlKat").innerHTML = [...new Set(S.data.kategori.map((k) => k.nama))]
+          .map((n) => `<option value="${esc(n)}">`)
+          .join("");
       }
 
+      /* ---------- Form CRUD transaksi ---------- */
       function setJenis(j) {
         S.jf = j;
-        $("segJenis").innerHTML = ["Pengeluaran", "Pemasukan"].map((x) => `<button onclick="setJenis('${x}')" class="py-2.5 rounded-2xl text-sm font-bold ${x === j ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${x}</button>`).join("");
+        $("segJenis").innerHTML = ["Pengeluaran", "Pemasukan"]
+          .map(
+            (x) =>
+              `<button onclick="setJenis('${x}')" class="py-2.5 rounded-2xl text-sm font-bold ${x === j ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${x}</button>`,
+          )
+          .join("");
       }
 
+      /** Baris kosong untuk mode tambah banyak data. */
       function blankEntry() {
         const n = new Date();
-        return { jenis: "Pengeluaran", nama: "", nominal: "", kategori: "", tanggal: ymd(n) + "T" + pad(n.getHours()) + ":" + pad(n.getMinutes()), keterangan: "" };
+        return {
+          jenis: "Pengeluaran",
+          nama: "",
+          nominal: "",
+          kategori: "",
+          tanggal: ymd(n) + "T" + pad(n.getHours()) + ":" + pad(n.getMinutes()),
+          keterangan: "",
+        };
       }
       let multiData = [blankEntry()];
 
-      function openForm(id, prefillData = null) {
+      function openForm(id) {
         const t = id ? S.data.trx.find((x) => x.id === id) : null;
         S.edit = t ? t.id : null;
         $("mTitle").textContent = t ? "Edit transaksi" : "Transaksi baru";
 
         if (t) {
+          // Mode edit: selalu 1 transaksi, tanpa input jumlah data
           $("jumlahWrap").classList.add("hidden");
           $("multiWrap").classList.add("hidden");
           $("editWrap").classList.remove("hidden");
@@ -1167,16 +1881,12 @@
           $("fKet").value = t.keterangan;
           $("fTgl").value = t.tanggal.slice(0, 16).replace(" ", "T");
         } else {
+          // Mode tambah: bisa 1 atau banyak data sekaligus
           $("editWrap").classList.add("hidden");
           $("jumlahWrap").classList.remove("hidden");
           $("multiWrap").classList.remove("hidden");
           $("fJumlah").value = 1;
-          
-          if (prefillData) {
-            multiData = [prefillData];
-          } else {
-            multiData = [blankEntry()];
-          }
+          multiData = [blankEntry()];
           renderMulti();
         }
         updateListFloat();
@@ -1189,6 +1899,7 @@
         $("listPanel").classList.add("hidden");
       }
 
+      /** Simpan nilai yang sudah diketik user di DOM ke dalam multiData sebelum re-render. */
       function syncMultiFromDom() {
         multiData.forEach((e, i) => {
           const el = $("mNama_" + i);
@@ -1201,7 +1912,11 @@
         });
       }
 
-      function stepJumlah(delta) { onJumlahChange(Number($("fJumlah").value || 1) + delta); }
+      /** Tombol +/- di sebelah input "Jumlah data" (tanpa perlu mengetik). */
+      function stepJumlah(delta) {
+        onJumlahChange(Number($("fJumlah").value || 1) + delta);
+      }
+      /** Dipanggil saat input "Jumlah data" berubah: menambah/mengurangi blok input transaksi. */
       function onJumlahChange(v) {
         let n = Math.round(Number(v));
         if (!n || n < 1) n = 1;
@@ -1215,34 +1930,88 @@
       }
 
       function renderMulti() {
-        $("multiWrap").innerHTML = multiData.map((e, i) => `
-          <div id="entry_${i}" class="rounded-2xl border border-slate-100 p-3 space-y-2">
-            <div class="flex justify-between items-center"><p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>${multiData.length > 1 ? `<button type="button" onclick="hapusEntry(${i})" class="text-xs text-rose-500">Hapus</button>` : ""}</div>
-            <div class="grid grid-cols-2 gap-2">
-              <button type="button" onclick="setMultiJenis(${i},'Pengeluaran')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pengeluaran" ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-500"}">Pengeluaran</button>
-              <button type="button" onclick="setMultiJenis(${i},'Pemasukan')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pemasukan" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}">Pemasukan</button>
-            </div>
-            <input id="mNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(e.nama)}" oninput="multiData[${i}].nama=this.value">
-            <div class="grid grid-cols-2 gap-2">
-              <input id="mNom_${i}" type="number" inputmode="numeric" class="inp" placeholder="Nominal" value="${esc(e.nominal)}" oninput="multiData[${i}].nominal=this.value">
-              <input id="mKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(e.kategori)}" oninput="multiData[${i}].kategori=this.value">
-            </div>
-            <input id="mTgl_${i}" type="datetime-local" class="inp" value="${esc(e.tanggal)}" oninput="multiData[${i}].tanggal=this.value">
-            <input id="mKet_${i}" class="inp" placeholder="Alasan / catatan" value="${esc(e.keterangan)}" oninput="multiData[${i}].keterangan=this.value">
-          </div>`).join("");
+        $("multiWrap").innerHTML = multiData
+          .map(
+            (e, i) => `
+    <div id="entry_${i}" class="rounded-2xl border border-slate-100 p-3 space-y-2 scroll-mt-28 transition">
+      <div class="flex items-center justify-between">
+        <p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>
+        ${multiData.length > 1 ? `<button type="button" onclick="hapusEntry(${i})" class="text-xs font-semibold text-rose-500">Hapus</button>` : ""}
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" onclick="setMultiJenis(${i},'Pengeluaran')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pengeluaran" ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-500"}">Pengeluaran</button>
+        <button type="button" onclick="setMultiJenis(${i},'Pemasukan')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pemasukan" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}">Pemasukan</button>
+      </div>
+      <input id="mNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(e.nama)}" oninput="multiData[${i}].nama=this.value">
+      <div class="grid grid-cols-2 gap-2">
+        <input id="mNom_${i}" type="number" inputmode="numeric" class="inp" placeholder="Nominal (Rp)" value="${esc(e.nominal)}" oninput="multiData[${i}].nominal=this.value">
+        <input id="mKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(e.kategori)}" oninput="multiData[${i}].kategori=this.value">
+      </div>
+      <input id="mTgl_${i}" type="datetime-local" class="inp" value="${esc(e.tanggal)}" oninput="multiData[${i}].tanggal=this.value">
+      <input id="mKet_${i}" class="inp" placeholder="Catatan (opsional)" value="${esc(e.keterangan)}" oninput="multiData[${i}].keterangan=this.value">
+    </div>`,
+          )
+          .join("");
         updateListFloat();
       }
-      function setMultiJenis(i, j) { syncMultiFromDom(); multiData[i].jenis = j; renderMulti(); }
-      function hapusEntry(i) { syncMultiFromDom(); multiData.splice(i, 1); $("fJumlah").value = multiData.length; renderMulti(); updateListFloat(); }
+      function setMultiJenis(i, j) {
+        syncMultiFromDom();
+        multiData[i].jenis = j;
+        renderMulti();
+      }
+      function hapusEntry(i) {
+        syncMultiFromDom();
+        multiData.splice(i, 1);
+        $("fJumlah").value = multiData.length;
+        renderMulti();
+        updateListFloat();
+      }
 
+      /* ---------- Tombol & panel list mengambang (navigasi antar data saat tambah banyak) ---------- */
       function updateListFloat() {
         const show = S.edit === null && multiData.length > 1;
         $("btnListFloat").classList.toggle("hidden", !show);
+        if (!show) {
+          $("listPanel").classList.add("hidden");
+          return;
+        }
+        $("listPanel").innerHTML = multiData
+          .map(
+            (e, i) =>
+              `<button type="button" onclick="scrollToEntry(${i})" class="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold hover:bg-slate-100 flex justify-between items-center gap-2"><span>Data ${i + 1}</span><span class="text-xs text-slate-400 truncate max-w-[90px]">${esc(e.nama) || "Kosong"}</span></button>`,
+          )
+          .join("");
       }
-      function toggleListPanel() { $("listPanel").classList.toggle("hidden"); }
+      function toggleListPanel() {
+        $("listPanel").classList.toggle("hidden");
+      }
+      function scrollToEntry(i) {
+        syncMultiFromDom();
+        const modalBody =
+          document.querySelector("#modal .overflow-y-auto") ||
+          document.querySelector("#modal > div");
+        const el = $("entry_" + i);
+        if (el && modalBody) {
+          // Hitung posisi elemen relatif terhadap kontainer modal yang sedang di-scroll
+          const topPos = el.offsetTop - modalBody.offsetTop - 12;
+          modalBody.scrollTo({ top: topPos, behavior: "smooth" });
+          el.classList.add("ring-2", "ring-indigo-500", "bg-indigo-50/30");
+          setTimeout(
+            () =>
+              el.classList.remove(
+                "ring-2",
+                "ring-indigo-500",
+                "bg-indigo-50/30",
+              ),
+            1200,
+          );
+        }
+        $("listPanel").classList.add("hidden");
+      }
 
       async function saveForm() {
         if (S.edit) {
+          // Mode edit: 1 transaksi seperti biasa
           const f = {
             id: S.edit,
             nama: $("fNama").value.trim(),
@@ -1252,16 +2021,29 @@
             tanggal: ($("fTgl").value || "").replace("T", " ") + ":00",
             keterangan: $("fKet").value.trim(),
           };
-          if (!f.nama || !(f.nominal > 0)) return Toast.fire({ icon: "warning", title: "Nama & nominal wajib diisi" });
-          if (await act("simpanDataTransaksi", [f], "Menyimpan...")) closeForm();
+          if (!f.nama || !(f.nominal > 0))
+            return Toast.fire({
+              icon: "warning",
+              title: "Nama dan nominal wajib diisi",
+            });
+          if (await act("simpanDataTransaksi", [f], "Menyimpan transaksi..."))
+            closeForm();
           return;
         }
 
+        // Mode tambah: kirim 1 atau banyak transaksi sekaligus
         syncMultiFromDom();
         const list = [];
         for (let i = 0; i < multiData.length; i++) {
-          const e = multiData[i], nominal = Number(e.nominal);
-          if (!e.nama || !e.nama.trim() || !(nominal > 0)) return Toast.fire({ icon: "warning", title: `Data ${i + 1}: nama dan nominal wajib diisi` });
+          const e = multiData[i],
+            nominal = Number(e.nominal);
+          if (!e.nama || !e.nama.trim() || !(nominal > 0)) {
+            scrollToEntry(i);
+            return Toast.fire({
+              icon: "warning",
+              title: `Data ${i + 1}: nama dan nominal wajib diisi`,
+            });
+          }
           list.push({
             nama: e.nama.trim(),
             jenis: e.jenis,
@@ -1271,144 +2053,983 @@
             keterangan: (e.keterangan || "").trim(),
           });
         }
-        if (await act("simpanBanyakTransaksi", [list], "Menyimpan...")) closeForm();
+        const txt =
+          list.length > 1
+            ? `Menyimpan ${list.length} transaksi...`
+            : "Menyimpan transaksi...";
+        if (await act("simpanBanyakTransaksi", [list], txt)) closeForm();
       }
-
       async function del(id) {
-        const c = await Swal.fire({ title: "Hapus transaksi?", icon: "warning", showCancelButton: true, confirmButtonColor: "#F43F5E" });
-        if (c.isConfirmed) act("hapusTransaksi", [id], "Menghapus...");
+        const t = S.data.trx.find((x) => x.id === id);
+        if (!t) return;
+        const c = await Swal.fire({
+          title: "Hapus transaksi?",
+          text: `"${t.nama}" akan dihapus dari Google Sheets.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Hapus",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
+        if (c.isConfirmed)
+          act("hapusTransaksi", [id], "Menghapus transaksi...");
       }
 
-      const DEF = { MIN_SALDO_WARNING: 50000, TARGET_TABUNGAN: 20, BUDGET_TOTAL: 0, ALERT_BUDGET_PCT: 80, LONJAKAN_PCT: 30, BATAS_TRX_BESAR: 500000, HARI_TANPA_CATAT: 3, DANA_DARURAT_BULAN: 3, ALERT_POPUP: 1 };
+      /* ---------- Mesin analisis pintar (peringatan, saran, skor) ---------- */
+      const DEF = {
+        MIN_SALDO_WARNING: 50000,
+        TARGET_TABUNGAN: 20,
+        BUDGET_TOTAL: 0,
+        ALERT_BUDGET_PCT: 80,
+        LONJAKAN_PCT: 30,
+        BATAS_TRX_BESAR: 500000,
+        HARI_TANPA_CATAT: 3,
+        DANA_DARURAT_BULAN: 3,
+        ALERT_POPUP: 1,
+      };
       const FIELDS = [
-        ["MIN_SALDO_WARNING", "Batas saldo minimum", "Peringatan saldo", "Rp"],
-        ["BUDGET_TOTAL", "Anggaran pengeluaran bulanan", "Isi 0 jika nonaktif", "Rp"],
-        ["ALERT_BUDGET_PCT", "Peringatkan saat anggaran terpakai", "Persen", "%"],
-        ["TARGET_TABUNGAN", "Target rasio tabungan", "Persen", "%"],
+        [
+          "MIN_SALDO_WARNING",
+          "Batas saldo minimum",
+          "Peringatan muncul jika saldo total di bawah nilai ini",
+          "Rp",
+        ],
+        [
+          "BUDGET_TOTAL",
+          "Anggaran pengeluaran bulanan",
+          "Isi 0 untuk menonaktifkan",
+          "Rp",
+        ],
+        [
+          "ALERT_BUDGET_PCT",
+          "Peringatkan saat anggaran terpakai",
+          "Berlaku untuk anggaran total dan per kategori",
+          "%",
+        ],
+        [
+          "TARGET_TABUNGAN",
+          "Target rasio tabungan",
+          "Persentase pemasukan yang ingin Anda sisihkan",
+          "%",
+        ],
+        [
+          "LONJAKAN_PCT",
+          "Batas lonjakan pengeluaran kategori",
+          "Dibandingkan dengan bulan lalu",
+          "%",
+        ],
+        [
+          "BATAS_TRX_BESAR",
+          "Batas transaksi besar",
+          "Pengeluaran sebesar ini atau lebih akan ditandai",
+          "Rp",
+        ],
+        [
+          "HARI_TANPA_CATAT",
+          "Ingatkan jika tidak mencatat",
+          "Jumlah hari tanpa transaksi baru",
+          "hari",
+        ],
+        [
+          "DANA_DARURAT_BULAN",
+          "Target dana darurat",
+          "Berapa bulan saldo harus menutup pengeluaran",
+          "bulan",
+        ],
       ];
-      const LV = { danger: "bg-rose-50 text-rose-700", warn: "bg-amber-50 text-amber-700", info: "bg-sky-50 text-sky-700", ok: "bg-emerald-50 text-emerald-700" };
+      const LV = {
+        danger: "bg-rose-50 text-rose-700",
+        warn: "bg-amber-50 text-amber-700",
+        info: "bg-sky-50 text-sky-700",
+        ok: "bg-emerald-50 text-emerald-700",
+      };
       const IC = { danger: "⛔", warn: "⚠️", info: "ℹ️", ok: "✅" };
-      const G = (k) => { const v = S.data.settings && S.data.settings[k]; return v === undefined || v === "" || isNaN(v) ? DEF[k] : Number(v); };
-      const scoreLbl = (s) => s >= 80 ? ["Sangat sehat", "#10B981"] : s >= 60 ? ["Baik", "#4F46E5"] : s >= 40 ? ["Perlu perhatian", "#F59E0B"] : ["Kritis", "#F43F5E"];
+      const G = (k) => {
+        const v = S.data.settings && S.data.settings[k];
+        return v === undefined || v === "" || isNaN(v) ? DEF[k] : Number(v);
+      };
+      const scoreLbl = (s) =>
+        s >= 80
+          ? ["Sangat sehat", "#10B981"]
+          : s >= 60
+            ? ["Baik", "#4F46E5"]
+            : s >= 40
+              ? ["Perlu perhatian", "#F59E0B"]
+              : ["Kritis", "#F43F5E"];
+      const HARI = [
+        "Minggu",
+        "Senin",
+        "Selasa",
+        "Rabu",
+        "Kamis",
+        "Jumat",
+        "Sabtu",
+      ];
 
       function analyze() {
-        const all = S.data.trx, now = new Date(), ym = ymd(now).slice(0, 7), dn = now.getDate(), dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-        const M = all.filter((t) => t.tanggal.slice(0, 7) === ym);
-        const inc = sum(M, "Pemasukan"), out = sum(M, "Pengeluaran"), saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
-        const rate = inc ? ((inc - out) / inc) * 100 : 0;
-        const A = [], T = [], add = (lv, t) => A.push({ lv, t });
-        const bt = G("BUDGET_TOTAL"), tg = G("TARGET_TABUNGAN");
+        const all = S.data.trx,
+          now = new Date(),
+          ym = ymd(now).slice(0, 7),
+          dn = now.getDate();
+        const dim = new Date(
+          now.getFullYear(),
+          now.getMonth() + 1,
+          0,
+        ).getDate();
+        const pym = ymd(
+          new Date(now.getFullYear(), now.getMonth() - 1, 1),
+        ).slice(0, 7);
+        const M = all.filter((t) => t.tanggal.slice(0, 7) === ym),
+          P = all.filter((t) => t.tanggal.slice(0, 7) === pym);
+        const inc = sum(M, "Pemasukan"),
+          out = sum(M, "Pengeluaran"),
+          saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
+        const proj = (out / dn) * dim,
+          rate = inc ? ((inc - out) / inc) * 100 : 0;
+        const A = [],
+          T = [],
+          add = (lv, t) => A.push({ lv, t });
+        const ap = G("ALERT_BUDGET_PCT"),
+          bt = G("BUDGET_TOTAL"),
+          tg = G("TARGET_TABUNGAN"),
+          dd = G("DANA_DARURAT_BULAN");
 
-        if (saldo < G("MIN_SALDO_WARNING")) add("danger", `Saldo ${rp(saldo)} di bawah batas minimum.`);
+        if (saldo < G("MIN_SALDO_WARNING"))
+          add(
+            "danger",
+            `Saldo ${rp(saldo)} berada di bawah batas minimum ${rp(G("MIN_SALDO_WARNING"))}.`,
+          );
         if (bt > 0) {
           const p = (out / bt) * 100;
-          if (p >= 100) add("danger", `Anggaran bulanan terlampaui (${Math.round(p)}%).`);
-          else if (p >= G("ALERT_BUDGET_PCT")) add("warn", `Anggaran terpakai ${Math.round(p)}%.`);
-        }
+          if (p >= 100)
+            add(
+              "danger",
+              `Anggaran bulanan terlampaui ${rp(out - bt)} (${Math.round(p)}% terpakai).`,
+            );
+          else if (p >= ap)
+            add(
+              "warn",
+              `Anggaran bulanan terpakai ${Math.round(p)}%, sisa ${rp(bt - out)}.`,
+            );
+          if (out < bt) {
+            T.push(
+              `Agar tidak melewati anggaran, batasi belanja sekitar ${rp((bt - out) / (dim - dn + 1))} per hari sampai akhir bulan.`,
+            );
+            if (proj > bt && dn >= 5)
+              add(
+                "warn",
+                `Dengan laju sekarang, pengeluaran akhir bulan diprediksi ${rp(proj)} dan melewati anggaran.`,
+              );
+          }
+        } else
+          T.push(
+            "Atur anggaran bulanan di menu Pengaturan supaya peringatan dan prediksi lebih akurat.",
+          );
+
         const budgets = S.data.anggaran.map((b) => {
-          const sp = sum(M.filter((t) => t.kategori.toLowerCase() === b.kategori.toLowerCase()), "Pengeluaran");
-          return Object.assign({}, b, { sp, p: b.batas ? (sp / b.batas) * 100 : 0 });
+          const sp = sum(
+            M.filter(
+              (t) => t.kategori.toLowerCase() === b.kategori.toLowerCase(),
+            ),
+            "Pengeluaran",
+          );
+          return Object.assign({}, b, {
+            sp,
+            p: b.batas ? (sp / b.batas) * 100 : 0,
+          });
         });
-        budgets.forEach((b) => { if (b.p >= 100) add("danger", `Anggaran ${b.kategori} terlampaui.`); });
-        return { A, T, budgets, out, bt, score: 75 };
+        budgets.forEach((b) => {
+          if (b.p >= 100)
+            add(
+              "danger",
+              `Anggaran ${b.kategori} terlampaui ${rp(b.sp - b.batas)}.`,
+            );
+          else if (b.p >= ap)
+            add("warn", `Anggaran ${b.kategori} terpakai ${Math.round(b.p)}%.`);
+        });
+
+        if (inc > 0 && proj > inc && dn >= 5)
+          add(
+            "warn",
+            `Prediksi pengeluaran bulan ini ${rp(proj)} melebihi pemasukan ${rp(inc)}.`,
+          );
+        if (inc > 0) {
+          if (rate < tg)
+            add(
+              "warn",
+              `Rasio tabungan ${Math.round(rate)}% masih di bawah target ${tg}%.`,
+            );
+          else
+            add(
+              "ok",
+              `Rasio tabungan ${Math.round(rate)}% sudah mencapai target ${tg}%.`,
+            );
+          if (rate < tg)
+            T.push(
+              `Untuk mencapai target tabungan ${tg}%, tekan pengeluaran bulan ini maksimal ${rp(inc * (1 - tg / 100))}.`,
+            );
+        } else if (dn >= 3)
+          add("info", "Belum ada pemasukan yang tercatat bulan ini.");
+
+        const w7 = ymd(new Date(Date.now() - 6 * 864e5));
+        all
+          .filter(
+            (t) =>
+              t.jenis === "Pengeluaran" &&
+              t.nominal >= G("BATAS_TRX_BESAR") &&
+              t.tanggal.slice(0, 10) >= w7,
+          )
+          .slice(0, 2)
+          .forEach((t) =>
+            add(
+              "info",
+              `Transaksi besar minggu ini: ${t.nama} ${rp(t.nominal)}.`,
+            ),
+          );
+        if (all[0]) {
+          const gap = Math.floor(
+            (new Date(ymd(now) + "T00:00:00") -
+              new Date(all[0].tanggal.slice(0, 10) + "T00:00:00")) /
+              864e5,
+          );
+          if (gap >= G("HARI_TANPA_CATAT"))
+            add(
+              "info",
+              `Sudah ${gap} hari tidak ada transaksi baru. Jangan lupa mencatat.`,
+            );
+        }
+        cats(M, "Pengeluaran").forEach(([k, v]) => {
+          const pv = sum(
+              P.filter((t) => t.kategori === k),
+              "Pengeluaran",
+            ),
+            pj = (v / dn) * dim;
+          if (dn >= 7 && pv > 0 && pj > pv * (1 + G("LONJAKAN_PCT") / 100))
+            add(
+              "warn",
+              `Pengeluaran ${k} diprediksi naik ${Math.round((pj / pv - 1) * 100)}% dibanding bulan lalu.`,
+            );
+        });
+
+        const months = [
+          ...new Set(
+            all.map((t) => t.tanggal.slice(0, 7)).filter((m) => m < ym),
+          ),
+        ]
+          .sort()
+          .slice(-3);
+        const avgOut = months.length
+          ? months.reduce(
+              (s, m) =>
+                s +
+                sum(
+                  all.filter((t) => t.tanggal.slice(0, 7) === m),
+                  "Pengeluaran",
+                ),
+              0,
+            ) / months.length
+          : proj;
+        const runway = avgOut > 0 ? saldo / avgOut : 0;
+        if (avgOut > 0)
+          T.push(
+            runway < dd
+              ? `Dana darurat baru cukup ${runway.toFixed(1)} bulan pengeluaran. Targetkan ${dd} bulan (sekitar ${rp(avgOut * dd)}).`
+              : `Dana darurat aman: saldo mencukupi ${runway.toFixed(1)} bulan pengeluaran.`,
+          );
+
+        const ck = cats(M, "Pengeluaran");
+        if (out > 0 && ck[0] && ck[0][1] / out > 0.4)
+          T.push(
+            `${ck[0][0]} menyerap ${Math.round((ck[0][1] / out) * 100)}% pengeluaran bulan ini. Mulai berhemat dari kategori ini.`,
+          );
+        const rc = group(
+          all.filter(
+            (t) =>
+              t.jenis === "Pengeluaran" &&
+              t.tanggal.slice(0, 10) >= ymd(new Date(Date.now() - 89 * 864e5)),
+          ),
+          (t) => t.nama.toLowerCase(),
+        );
+        Object.values(rc)
+          .filter((v) => v.length >= 3)
+          .sort((a, b) => b.length - a.length)
+          .slice(0, 2)
+          .forEach((v) =>
+            T.push(
+              `"${v[0].nama}" tercatat ${v.length} kali dalam 90 hari (total ${rp(sum(v, "Pengeluaran"))}). Jadikan anggaran rutin atau kurangi frekuensinya.`,
+            ),
+          );
+        const ex = all.filter((t) => t.jenis === "Pengeluaran");
+        if (ex.length >= 10) {
+          const w = [0, 0, 0, 0, 0, 0, 0];
+          ex.forEach(
+            (t) =>
+              (w[new Date(t.tanggal.slice(0, 10) + "T00:00:00").getDay()] +=
+                t.nominal),
+          );
+          T.push(
+            `Pengeluaran paling besar biasanya terjadi pada hari ${HARI[w.indexOf(Math.max(...w))]}. Rencanakan belanja di hari itu.`,
+          );
+        }
+        const pOut = sum(P, "Pengeluaran");
+        if (pOut > 0 && dn >= 7)
+          T.push(
+            proj <= pOut
+              ? `Laju pengeluaran lebih hemat dari bulan lalu (${rp(pOut)}). Pertahankan.`
+              : `Laju pengeluaran lebih tinggi dari bulan lalu (${rp(pOut)}). Tinjau kategori terbesar.`,
+          );
+        S.data.target.forEach((g) => {
+          const sisa = g.target - g.terkumpul;
+          if (sisa <= 0) return add("ok", `Target "${g.nama}" sudah tercapai.`);
+          if (!g.tenggat) return;
+          const ml = Math.ceil(
+            (new Date(g.tenggat + "T00:00:00") - now) / (30 * 864e5),
+          );
+          if (ml <= 0)
+            add(
+              "warn",
+              `Tenggat target "${g.nama}" sudah lewat, masih kurang ${rp(sisa)}.`,
+            );
+          else
+            T.push(
+              `Untuk target "${g.nama}", sisihkan sekitar ${rp(sisa / ml)} per bulan selama ${ml} bulan.`,
+            );
+        });
+
+        const over = budgets.filter((b) => b.p >= 100).length;
+        const sT =
+          inc > 0
+            ? Math.min(1, Math.max(0, rate) / (tg || 1)) * 30
+            : out === 0
+              ? 15
+              : 0;
+        const sA =
+          bt > 0
+            ? out <= bt
+              ? 30
+              : Math.max(0, 30 - (out / bt - 1) * 60)
+            : budgets.length
+              ? Math.max(0, 30 - over * 10)
+              : 20;
+        const sD = avgOut > 0 ? Math.min(1, runway / (dd || 1)) * 20 : 10;
+        const act14 = new Set(
+          all
+            .filter(
+              (t) =>
+                t.tanggal.slice(0, 10) >=
+                ymd(new Date(Date.now() - 13 * 864e5)),
+            )
+            .map((t) => t.tanggal.slice(0, 10)),
+        ).size;
+        const parts = [
+          ["Tabungan", sT, 30],
+          ["Kepatuhan anggaran", sA, 30],
+          ["Dana darurat", sD, 20],
+          ["Konsistensi mencatat", Math.min(1, act14 / 7) * 20, 20],
+        ];
+        const O = { danger: 0, warn: 1, info: 2, ok: 3 };
+        A.sort((a, b) => O[a.lv] - O[b.lv]);
+        return {
+          A,
+          T,
+          budgets,
+          out,
+          bt,
+          parts,
+          score: Math.round(parts.reduce((s, p) => s + p[1], 0)),
+        };
       }
 
+      /* ---------- Kartu progres: anggaran dan target ---------- */
+      const barColor = (p) =>
+        p >= 100
+          ? "#F43F5E"
+          : p >= G("ALERT_BUDGET_PCT")
+            ? "#F59E0B"
+            : "#10B981";
+
+      /** Kartu anggaran. kat kosong = anggaran total bulanan. */
       function budgetRow(nama, sp, batas, kat, cls) {
-        const p = batas ? (sp / batas) * 100 : 0, c = p >= 100 ? "#F43F5E" : "#10B981";
-        return `<div class="${cls || ""} rounded-2xl border border-slate-100 p-3"><div class="flex justify-between"><p class="font-semibold text-sm">${esc(nama)}</p><span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span></div><div class="h-2.5 bg-slate-100 rounded-full mt-2"><div class="h-full rounded-full" style="width:${Math.min(100, p)}%;background:${c}"></div></div></div>`;
+        const p = batas ? (sp / batas) * 100 : 0,
+          c = barColor(p),
+          sisa = batas - sp;
+        const edit = kat
+          ? "formAnggaran(this.dataset.k)"
+          : "formTotalAnggaran()";
+        const hapus = kat
+          ? "delItem('hapusAnggaran',this.dataset.k,'anggaran')"
+          : "hapusTotalAnggaran()";
+        return `<div class="${cls || ""} rounded-2xl border border-slate-100 p-3">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0"><p class="font-semibold text-sm truncate">${esc(nama)}</p><p class="text-xs text-slate-500">${rp(sp)} dari ${rp(batas)}</p></div>
+      <span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span>
+    </div>
+    <div class="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div></div>
+    <div class="flex items-center justify-between gap-2 mt-2">
+      <span class="text-xs font-medium ${p >= 100 ? "text-rose-600" : "text-slate-500"}">${p >= 100 ? "Lewat " + rp(Math.abs(sisa)) : "Sisa " + rp(sisa)}</span>
+      <span class="flex gap-1.5"><button data-k="${esc(kat || "")}" onclick="${edit}" class="act pri">Edit</button><button data-k="${esc(kat || "")}" onclick="${hapus}" class="act del">Hapus</button></span>
+    </div></div>`;
       }
+
+      /** Kartu target tabungan dengan progress bar. */
       function targetRow(g) {
-        const p = g.target ? (g.terkumpul / g.target) * 100 : 0;
-        return `<div class="rounded-2xl border border-slate-100 p-3"><div class="flex justify-between"><p class="font-semibold text-sm">${esc(g.nama)}</p><span class="text-sm font-extrabold">${Math.round(p)}%</span></div><div class="h-2.5 bg-slate-100 rounded-full mt-2"><div class="h-full rounded-full" style="width:${Math.min(100, p)}%;background:#4F46E5"></div></div></div>`;
+        const p = g.target ? (g.terkumpul / g.target) * 100 : 0,
+          done = p >= 100,
+          c = done ? "#10B981" : "#4F46E5";
+        let info = done
+          ? "Target tercapai 🎉"
+          : "Kurang " + rp(g.target - g.terkumpul);
+        if (g.tenggat && !done) {
+          const d = Math.ceil(
+            (new Date(g.tenggat + "T00:00:00") -
+              new Date(ymd(new Date()) + "T00:00:00")) /
+              864e5,
+          );
+          info +=
+            d < 0
+              ? ` · lewat ${-d} hari`
+              : d === 0
+                ? " · tenggat hari ini"
+                : ` · ${d} hari lagi`;
+        }
+        return `<div class="rounded-2xl border border-slate-100 p-3">
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0"><p class="font-semibold text-sm truncate">${esc(g.nama)}</p><p class="text-xs text-slate-500">${rp(g.terkumpul)} dari ${rp(g.target)}</p></div>
+      <span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span>
+    </div>
+    <div class="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div></div>
+    <div class="flex flex-wrap items-center justify-between gap-2 mt-2">
+      <span class="text-xs font-medium ${done ? "text-emerald-600" : "text-slate-500"}">${esc(info)}</span>
+      <span class="flex gap-1.5">
+        <button data-id="${esc(g.id)}" onclick="setor(this.dataset.id)" class="act pri">+ Setor</button>
+        <button data-id="${esc(g.id)}" onclick="formTarget(this.dataset.id)" class="act">Edit</button>
+        <button data-id="${esc(g.id)}" onclick="delItem('hapusTarget',this.dataset.id,'target')" class="act del">Hapus</button>
+      </span>
+    </div></div>`;
       }
 
       function renderPintar() {
-        const R = analyze(), lb = scoreLbl(R.score);
+        const R = analyze(),
+          lb = scoreLbl(R.score);
         $("skorNum").textContent = R.score;
         $("skorLbl").textContent = lb[0];
         $("skorLbl").style.color = lb[1];
-        $("pAlerts").innerHTML = R.A.map((a) => `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`).join("") || '<p class="text-sm text-slate-400">Tidak ada peringatan.</p>';
-        $("pTips").innerHTML = R.T.map((t) => `<li>💡 ${esc(t)}</li>`).join("") || '<li class="text-slate-400">Belum ada saran.</li>';
-        $("pBudget").innerHTML = (R.bt > 0 ? budgetRow("Total bulanan", R.out, R.bt, "", "sm:col-span-2") : "") + R.budgets.map((b) => budgetRow(b.kategori, b.sp, b.batas, b.kategori)).join("") || '<p class="text-slate-400 text-sm sm:col-span-2">Belum ada anggaran.</p>';
-        $("pTarget").innerHTML = S.data.target.map(targetRow).join("") || '<p class="text-slate-400 text-sm">Belum ada target.</p>';
+        drawChart("cSkor", {
+          type: "doughnut",
+          data: {
+            datasets: [
+              {
+                data: [R.score, 100 - R.score],
+                backgroundColor: [lb[1], "#E2E8F0"],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            rotation: -90,
+            circumference: 180,
+            cutout: "78%",
+            plugins: {
+              legend: { display: false },
+              tooltip: { enabled: false },
+            },
+          },
+        });
+        $("skorParts").innerHTML = R.parts
+          .map(
+            (p) =>
+              `<div><div class="flex justify-between text-xs"><span class="font-semibold">${p[0]}</span><span class="text-slate-400">${Math.round(p[1])}/${p[2]}</span></div><div class="h-1.5 bg-slate-100 rounded-full mt-1"><div class="h-1.5 rounded-full bg-indigo-600" style="width:${(p[1] / p[2]) * 100}%"></div></div></div>`,
+          )
+          .join("");
+        $("pAlerts").innerHTML =
+          R.A.map(
+            (a) =>
+              `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`,
+          ).join("") ||
+          '<p class="text-sm text-slate-400">Belum ada peringatan.</p>';
+        $("pTips").innerHTML =
+          R.T.map(
+            (t) =>
+              `<li class="flex gap-2"><span>💡</span><span>${esc(t)}</span></li>`,
+          ).join("") ||
+          '<li class="text-slate-400">Tambahkan lebih banyak transaksi agar saran muncul.</li>';
+
+        // Anggaran bulan ini
+        const total =
+          R.bt > 0
+            ? budgetRow("Total bulanan", R.out, R.bt, "", "sm:col-span-2")
+            : `<div class="sm:col-span-2 rounded-2xl border border-dashed border-slate-200 p-3 flex items-center justify-between gap-2"><span class="text-xs text-slate-500">Anggaran total bulanan belum diatur</span><button onclick="formTotalAnggaran()" class="act pri">+ Atur total</button></div>`;
+        $("pBudget").innerHTML =
+          total +
+          (R.budgets
+            .map((b) => budgetRow(b.kategori, b.sp, b.batas, b.kategori))
+            .join("") ||
+            '<p class="text-sm text-slate-400 sm:col-span-2">Belum ada anggaran per kategori. Tekan + Tambah anggaran untuk membuat batas.</p>');
+
+        // Target tabungan
+        $("pTarget").innerHTML =
+          S.data.target.map(targetRow).join("") ||
+          '<p class="text-sm text-slate-400">Belum ada target. Tekan + Tambah target untuk membuat, misalnya dana darurat atau liburan.</p>';
       }
 
+      /* ---------- Pengaturan lengkap ---------- */
       function renderSet() {
         if (!$("setForm").contains(document.activeElement))
-          $("setForm").innerHTML = FIELDS.map(([k, l, h, u]) => `<div><label class="lbl">${l} (${u})</label><input data-k="${k}" type="number" class="inp" value="${G(k)}"><p class="text-[11px] text-slate-400 mt-1">${h}</p></div>`).join("");
-        $("setKat").innerHTML = S.data.kategori.map((k) => `<span class="chip">${esc(k.nama)}</span>`).join("");
+          $("setForm").innerHTML =
+            FIELDS.map(
+              ([k, l, h, u]) =>
+                `<div><label class="lbl">${l} (${u})</label><input data-k="${k}" type="number" inputmode="numeric" class="inp" value="${G(k)}"><p class="text-[11px] text-slate-400 mt-1">${h}</p></div>`,
+            ).join("") +
+            `<label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="setPop" ${G("ALERT_POPUP") ? "checked" : ""} class="w-4 h-4 accent-indigo-600"> Tampilkan peringatan otomatis saat aplikasi dibuka</label>`;
+        $("setBudget").innerHTML =
+          S.data.anggaran
+            .map(
+              (b) =>
+                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5" aria-label="Edit">✏️</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5" aria-label="Hapus">🗑️</button></span></div>`,
+            )
+            .join("") ||
+          '<p class="text-sm text-slate-400">Belum ada anggaran kategori.</p>';
+        $("setKat").innerHTML = S.data.kategori
+          .map(
+            (k) =>
+              `<span class="chip !inline-flex items-center gap-1 ${k.tipe === "Pemasukan" ? "!bg-emerald-50 !text-emerald-600" : ""}">${esc(k.nama)}<button data-k="${esc(k.nama)}" onclick="hapusKategoriConfirm(this.dataset.k)" aria-label="Hapus kategori">×</button></span>`,
+          )
+          .join("");
       }
       function saveSet() {
         const o = {};
-        document.querySelectorAll("#setForm [data-k]").forEach((i) => (o[i.dataset.k] = Number(i.value)));
-        act("simpanPengaturan", [o], "Menyimpan...");
+        document
+          .querySelectorAll("#setForm [data-k]")
+          .forEach(
+            (i) =>
+              (o[i.dataset.k] =
+                i.value === "" ? DEF[i.dataset.k] : Number(i.value)),
+          );
+        o.ALERT_POPUP = $("setPop").checked ? 1 : 0;
+        act("simpanPengaturan", [o], "Menyimpan pengaturan...");
       }
 
-      function previewTarget() {}
-      function formTarget() {}
-      function closeTarget() {}
-      function saveTarget() {}
-      function hapusDariForm() {}
-      function setor() {}
-      function closeSetor() {}
-      function isiSisa() {}
-      function saveSetor() {}
-      function formAnggaran() {}
-      function formTotalAnggaran() {}
-      function formKategori() {}
+      /* ---------- Popup target tabungan: tambah, edit, hapus, setor ---------- */
+      function previewTarget() {
+        const t = Number($("tgT").value) || 0,
+          c = Number($("tgC").value) || 0,
+          p = t ? (c / t) * 100 : 0;
+        $("tgPct").textContent = Math.round(p) + "%";
+        $("tgBar").style.width = Math.min(100, p) + "%";
+        $("tgBar").style.background = p >= 100 ? "#10B981" : "#4F46E5";
+      }
+      function formTarget(id) {
+        const g = id ? S.data.target.find((x) => x.id === id) : null;
+        if (id && !g)
+          return Toast.fire({
+            icon: "error",
+            title: "Target tidak ditemukan, mungkin sudah dihapus",
+          });
+        S.tEdit = g ? g.id : null;
+        $("tgTitle").textContent = g
+          ? "Edit target tabungan"
+          : "Target tabungan baru";
+        $("tgN").value = g ? g.nama : "";
+        $("tgT").value = g ? g.target : "";
+        $("tgC").value = g ? g.terkumpul : 0;
+        $("tgD").value = g ? g.tenggat : "";
+        $("tgDel").classList.toggle("hidden", !g);
+        previewTarget();
+        $("mTarget").classList.remove("hidden");
+        setTimeout(() => $("tgN").focus(), 60);
+      }
+      function closeTarget() {
+        $("mTarget").classList.add("hidden");
+      }
+      async function saveTarget() {
+        if (S.busy > 0) return;
+        const o = {
+          id: S.tEdit || "",
+          nama: $("tgN").value.trim(),
+          target: Number($("tgT").value),
+          terkumpul: Number($("tgC").value) || 0,
+          tenggat: $("tgD").value,
+        };
+        if (!o.nama || !(o.target > 0))
+          return Toast.fire({
+            icon: "warning",
+            title: "Nama dan nominal target wajib diisi",
+          });
+        if (o.terkumpul < 0)
+          return Toast.fire({
+            icon: "warning",
+            title: "Jumlah terkumpul tidak boleh negatif",
+          });
+        if (await act("simpanTarget", [o], "Menyimpan target..."))
+          closeTarget();
+      }
+      async function hapusDariForm() {
+        const g = S.data.target.find((x) => x.id === S.tEdit);
+        if (!g) return;
+        const c = await Swal.fire({
+          title: "Hapus target?",
+          text: `"${g.nama}" akan dihapus dari Google Sheets.`,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Hapus",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
+        if (
+          c.isConfirmed &&
+          (await act("hapusTarget", [g.id], "Menghapus target..."))
+        )
+          closeTarget();
+      }
+      function setor(id) {
+        const g = S.data.target.find((x) => x.id === id);
+        if (!g) return;
+        S.sId = id;
+        $("sgTitle").textContent = "Setor ke " + g.nama;
+        $("sgInfo").textContent =
+          "Terkumpul " + rp(g.terkumpul) + " dari " + rp(g.target);
+        $("sgJml").value = "";
+        $("mSetor").classList.remove("hidden");
+        setTimeout(() => $("sgJml").focus(), 60);
+      }
+      function closeSetor() {
+        $("mSetor").classList.add("hidden");
+      }
+      function isiSisa() {
+        const g = S.data.target.find((x) => x.id === S.sId);
+        if (!g) return;
+        $("sgJml").value = Math.max(0, g.target - g.terkumpul);
+      }
+      async function saveSetor() {
+        if (S.busy > 0) return;
+        const n = Number($("sgJml").value);
+        if (!(n > 0))
+          return Toast.fire({
+            icon: "warning",
+            title: "Isi jumlah setoran lebih dari 0",
+          });
+        if (await act("setorTarget", [S.sId, n], "Menyimpan setoran..."))
+          closeSetor();
+      }
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          closeForm();
+          closeTarget();
+          closeSetor();
+          closeVoice();
+        }
+        if (e.key === "Enter" && e.target && e.target.tagName === "INPUT") {
+          if (!$("mTarget").classList.contains("hidden")) saveTarget();
+          else if (!$("mSetor").classList.contains("hidden")) saveSetor();
+        }
+      });
 
-      /* ---------- Fitur Suara Pintar Terintegrasi dengan Backend ---------- */
-      let voiceRec = null;
+      /* ---------- Dialog anggaran, kategori ---------- */
+      const DLG = {
+        showCancelButton: true,
+        confirmButtonText: "Simpan",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#4F46E5",
+        focusConfirm: false,
+      };
+      async function formAnggaran(kat) {
+        const b = S.data.anggaran.find((x) => x.kategori === kat);
+        const r = await Swal.fire({
+          ...DLG,
+          title: b ? "Ubah anggaran" : "Anggaran baru",
+          html: `<div class="text-left space-y-3"><div><label class="lbl">Kategori</label><input id="sK" list="dlKat" class="inp" value="${esc(kat || "")}" ${b ? "disabled" : ""} placeholder="Makanan"></div><div><label class="lbl">Batas per bulan (Rp)</label><input id="sN" type="number" inputmode="numeric" class="inp" value="${b ? b.batas : ""}"></div></div>`,
+          preConfirm: () => {
+            const o = { k: $("sK").value.trim(), n: Number($("sN").value) };
+            if (!o.k || !(o.n > 0)) {
+              Swal.showValidationMessage("Isi kategori dan batas lebih dari 0");
+              return false;
+            }
+            return o;
+          },
+        });
+        if (r.isConfirmed)
+          act(
+            "simpanAnggaran",
+            [r.value.k, r.value.n],
+            "Menyimpan anggaran...",
+          );
+      }
+      /** Anggaran total bulanan (disimpan di Pengaturan: BUDGET_TOTAL). */
+      async function formTotalAnggaran() {
+        const r = await Swal.fire({
+          ...DLG,
+          title: "Anggaran total bulanan",
+          input: "number",
+          inputLabel: "Batas pengeluaran per bulan (Rp)",
+          inputValue: G("BUDGET_TOTAL") || "",
+          inputAttributes: { inputmode: "numeric" },
+          inputValidator: (v) =>
+            Number(v) > 0 ? null : "Isi jumlah lebih dari 0",
+        });
+        if (r.isConfirmed)
+          act(
+            "simpanPengaturan",
+            [{ BUDGET_TOTAL: Number(r.value) }],
+            "Menyimpan anggaran...",
+          );
+      }
+      async function hapusTotalAnggaran() {
+        const c = await Swal.fire({
+          title: "Hapus anggaran total?",
+          text: "Anggaran total bulanan akan dinonaktifkan.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Hapus",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
+        if (c.isConfirmed)
+          act(
+            "simpanPengaturan",
+            [{ BUDGET_TOTAL: 0 }],
+            "Menghapus anggaran...",
+          );
+      }
+      async function formKategori() {
+        const r = await Swal.fire({
+          ...DLG,
+          title: "Kategori baru",
+          html: `<div class="text-left space-y-3"><div><label class="lbl">Nama kategori</label><input id="kN" class="inp" placeholder="Kesehatan"></div><div><label class="lbl">Jenis</label><select id="kT" class="inp"><option>Pengeluaran</option><option>Pemasukan</option></select></div></div>`,
+          preConfirm: () => {
+            const n = $("kN").value.trim();
+            if (!n) {
+              Swal.showValidationMessage("Nama kategori wajib diisi");
+              return false;
+            }
+            return [n, $("kT").value];
+          },
+        });
+        if (r.isConfirmed)
+          act("simpanKategori", r.value, "Menyimpan kategori...");
+      }
+      async function delItem(fn, arg, label) {
+        const c = await Swal.fire({
+          title: "Hapus " + label + "?",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Hapus",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
+        if (c.isConfirmed) act(fn, [arg], "Menghapus...");
+      }
+      /** Hapus kategori: kasih tahu dulu berapa transaksi & anggaran yang akan ikut terhapus (cascade). */
+      async function hapusKategoriConfirm(nama) {
+        const jmlTrx = S.data.trx.filter(
+          (t) => t.kategori.toLowerCase() === nama.toLowerCase(),
+        ).length;
+        const adaAnggaran = S.data.anggaran.some(
+          (b) => b.kategori.toLowerCase() === nama.toLowerCase(),
+        );
+        const rincian = [];
+        if (jmlTrx) rincian.push(jmlTrx + " transaksi");
+        if (adaAnggaran) rincian.push("anggaran kategori ini");
+        const html = rincian.length
+          ? `Kategori <b>${esc(nama)}</b> akan dihapus, beserta <b>${rincian.join(" dan ")}</b> yang terhubung. Tindakan ini tidak bisa dibatalkan.`
+          : `Kategori <b>${esc(nama)}</b> akan dihapus. Tindakan ini tidak bisa dibatalkan.`;
+        const c = await Swal.fire({
+          title: "Hapus kategori?",
+          html,
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Ya, hapus semua",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#F43F5E",
+        });
+        if (c.isConfirmed)
+          act("hapusKategori", [nama], "Menghapus kategori...");
+      }
+
+      /* ---------- Gambar grafik untuk PDF ---------- */
+      function chartImg(cf) {
+        const c = document.createElement("canvas");
+        c.width = 640;
+        c.height = 300;
+        c.style.cssText = "position:fixed;left:-9999px;top:0";
+        document.body.appendChild(c);
+        cf.options = Object.assign(
+          {
+            plugins: {
+              legend: {
+                position: "bottom",
+                labels: { boxWidth: 10, usePointStyle: true },
+              },
+            },
+          },
+          cf.options,
+          { responsive: false, animation: false, devicePixelRatio: 2 },
+        );
+        const ch = new Chart(c, cf),
+          u = ch.toBase64Image();
+        ch.destroy();
+        c.remove();
+        return u;
+      }
+
+      /* ---------- Catat dengan suara (pop-up mengambang) ---------- */
+      const Vst = {
+        rec: null,
+        listening: false,
+        jenis: "Pengeluaran",
+        raw: "",
+      };
+
+      /** Ubah angka bicara ("25 ribu", "5 juta", "20.000") jadi nominal + posisi kemunculannya di teks. */
+      function parseNominalV_(str) {
+        const m = str.match(
+          /(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(ribu|rb|k|juta|jt)?/i,
+        );
+        if (!m) return null;
+        let n = /\.\d{3}/.test(m[1])
+          ? parseFloat(m[1].replace(/\./g, ""))
+          : parseFloat(m[1].replace(",", "."));
+        const suf = (m[2] || "").toLowerCase();
+        if (/^(ribu|rb|k)$/.test(suf)) n *= 1000;
+        else if (/^(juta|jt)$/.test(suf)) n *= 1000000;
+        return { value: Math.round(n), index: m.index, length: m[0].length };
+      }
+      const capV_ = (s) =>
+        String(s || "")
+          .trim()
+          .replace(/\s+/g, " ")
+          .replace(/^./, (c) => c.toUpperCase());
+
+      /**
+       * Format yang didukung: "transaksi <jenis>, <nama> <nominal>, kategori
+       * <kategori>, alasan <alasan>" — koma & kata kunci boleh dalam urutan
+       * bebas. Kalau "alasan" tidak disebut, alasan otomatis dipakai dari
+       * kalimat nama+nominal itu sendiri.
+       */
+      function parseVoiceCommand_(text) {
+        const raw = String(text || "").trim();
+        const segs = raw
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        let jenis = "Pengeluaran",
+          kategori = "",
+          alasan = "";
+        const sisaSegs = [];
+        segs.forEach((seg) => {
+          const low = seg.toLowerCase();
+          if (/\btransaksi\b/.test(low)) {
+            if (/pemasukan|masuk|pendapatan|terima|gaji/.test(low))
+              jenis = "Pemasukan";
+            else if (/pengeluaran|keluar/.test(low)) jenis = "Pengeluaran";
+          } else if (/\b(kategori|katagori|ketgory|category)\b/.test(low)) {
+            kategori = seg.replace(/.*\b(kategori|katagori|ketgory|category)\b/i, "").trim();
+          } else if (/\b(alasan|karena)\b/.test(low)) {
+            alasan = seg.replace(/.*\b(alasan|karena)\b/i, "").trim();
+          } else {
+            sisaSegs.push(seg);
+          }
+        });
+        const namaNominalSeg = sisaSegs.join(", ") || raw;
+        const nomInfo = parseNominalV_(namaNominalSeg);
+        let nama = namaNominalSeg,
+          nominal = 0;
+        if (nomInfo) {
+          nominal = nomInfo.value;
+          nama = namaNominalSeg.slice(0, nomInfo.index).trim().replace(/[-,.]+$/, "");
+        }
+        if (!nama) nama = namaNominalSeg;
+        if (!alasan) alasan = namaNominalSeg;
+        return {
+          jenis,
+          nama: capV_(nama),
+          nominal,
+          kategori: capV_(kategori),
+          keterangan: capV_(alasan),
+          raw,
+        };
+      }
+
+      function setVoiceJenis(j) {
+        Vst.jenis = j;
+        $("voiceJenis").innerHTML = ["Pengeluaran", "Pemasukan"]
+          .map(
+            (x) =>
+              `<button type="button" onclick="setVoiceJenis('${x}')" class="py-2.5 rounded-2xl text-sm font-bold ${x === j ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${x}</button>`,
+          )
+          .join("");
+      }
 
       function openVoice() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return Toast.fire({ icon: "error", title: "Browser tidak mendukung suara" });
+        if (!SR)
+          return Toast.fire({
+            icon: "error",
+            title: "Browser tidak mendukung input suara",
+          });
         $("mVoice").classList.remove("hidden");
         $("voiceListen").classList.remove("hidden");
         $("voiceReview").classList.add("hidden");
-        $("voiceTranscript").innerHTML = '<span class="italic text-slate-400">Silakan bicara...</span>';
-        $("voiceStatus").textContent = "Mendengarkan ucapan Anda...";
+        $("voiceTranscript").innerHTML =
+          '<span class="italic text-slate-400">Silakan bicara...</span>';
+        $("voiceStatus").textContent = "Menyiapkan mikrofon...";
+        document
+          .querySelectorAll("#voiceBars .voice-bar")
+          .forEach((b) => b.classList.remove("idle"));
 
         const r = new SR();
-        voiceRec = r;
+        Vst.rec = r;
         r.lang = "id-ID";
         r.interimResults = true;
         r.continuous = false;
+        r.maxAlternatives = 1;
 
+        r.onstart = () => {
+          Vst.listening = true;
+          $("voiceStatus").textContent = "Mendengarkan...";
+        };
         r.onresult = (e) => {
           let t = "";
           for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+          Vst.raw = t;
           $("voiceTranscript").textContent = t;
           if (e.results[e.results.length - 1].isFinal) {
             r.stop();
-            processVoiceResult(t);
           }
         };
-        r.onerror = () => {
-          $("voiceStatus").textContent = "Gagal menangkap suara. Coba lagi.";
+        r.onerror = (e) => {
+          Vst.listening = false;
+          document
+            .querySelectorAll("#voiceBars .voice-bar")
+            .forEach((b) => b.classList.add("idle"));
+          if (e.error === "no-speech") {
+            $("voiceStatus").textContent =
+              "Tidak terdengar suara. Coba lagi, bicara lebih jelas.";
+          } else {
+            $("voiceStatus").textContent =
+              "Gagal menangkap suara. Pastikan izin mikrofon aktif.";
+            Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
+          }
+        };
+        r.onend = () => {
+          Vst.listening = false;
+          document
+            .querySelectorAll("#voiceBars .voice-bar")
+            .forEach((b) => b.classList.add("idle"));
+          if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
         };
         r.start();
       }
 
-      async function processVoiceResult(text) {
-        loading(true, "Menganalisis suara pintar...");
-        try {
-          // Panggil fungsi backend analisisSuaraPintar yang sudah disempurnakan
-          const res = await call("analisisSuaraPintar", text);
-          loading(false);
-          closeVoice();
-          Toast.fire({ icon: "success", title: res.message || "Transaksi berhasil dicatat via suara!" });
-        } catch (e) {
-          loading(false);
-          // Jika gagal otomatis, buka form review manual prefilled dari hasil tangkapan suara
-          $("voiceListen").classList.add("hidden");
-          $("voiceReview").classList.remove("hidden");
-          $("voiceRawText").textContent = text;
-          $("vNama").value = text;
-          $("vNom").value = "";
-          $("vKat").value = "";
-          $("vKet").value = text;
-        }
+      function showVoiceReview_(text) {
+        const p = parseVoiceCommand_(text);
+        $("voiceListen").classList.add("hidden");
+        $("voiceReview").classList.remove("hidden");
+        $("voiceRawText").textContent = text;
+        setVoiceJenis(p.jenis);
+        $("vNama").value = p.nama;
+        $("vNom").value = p.nominal || "";
+        $("vKat").value = p.kategori;
+        $("vKet").value = p.keterangan;
       }
 
       function voiceRetry() {
@@ -1418,35 +3039,76 @@
       }
 
       function closeVoice() {
-        if (voiceRec) { try { voiceRec.stop(); } catch (_) {} }
+        if (Vst.rec && Vst.listening) {
+          try {
+            Vst.rec.stop();
+          } catch (_) {}
+        }
+        Vst.raw = "";
         $("mVoice").classList.add("hidden");
       }
 
       async function voiceSave() {
-        const nama = $("vNama").value.trim(), nominal = Number($("vNom").value);
-        if (!nama || !(nominal > 0)) return Toast.fire({ icon: "warning", title: "Nama & nominal wajib diisi" });
-        const ok = await act("simpanDataTransaksi", [{
-          jenis: "Pengeluaran",
-          nama,
-          nominal,
-          kategori: $("vKat").value.trim() || "Umum",
-          keterangan: $("vKet").value.trim(),
-          tanggal: ""
-        }], "Menyimpan...");
+        const nama = $("vNama").value.trim(),
+          nominal = Number($("vNom").value);
+        if (!nama || !(nominal > 0))
+          return Toast.fire({
+            icon: "warning",
+            title: "Nama dan nominal (lebih dari 0) wajib diisi",
+          });
+        const ok = await act(
+          "simpanDataTransaksi",
+          [
+            {
+              jenis: Vst.jenis,
+              nama,
+              nominal,
+              kategori: $("vKat").value.trim() || "Umum",
+              keterangan: $("vKet").value.trim(),
+              tanggal: "",
+            },
+          ],
+          "Menyimpan transaksi...",
+        );
         if (ok) closeVoice();
       }
 
+      /* ---------- Mulai ---------- */
       (async function () {
         renderNav();
         setJenis("Pengeluaran");
+
+        // Coba pakai sambungan dari /api/config (Environment Variables Vercel)
+        // dulu; kalau tidak ada baru minta diisi manual.
         if (!(await ensureCfg()).url) {
           const done = await openSambungan(true);
           if (!done) return;
         }
-        loading(true, "Memuat data...");
+
+        loading(true, "Memuat data dari Google Sheets...");
         const ok = await refresh(true);
         loading(false);
-        if (!ok) return openSambungan(true);
+        if (!ok) {
+          Toast.fire({
+            icon: "error",
+            title: "Gagal memuat data dari Sheet. Periksa sambungan.",
+          });
+          return openSambungan(true);
+        }
+        const R = analyze();
+        R.A.forEach((a) => S.seen.add(a.t));
+        const w = R.A.filter((a) => a.lv === "danger" || a.lv === "warn");
+        if (w.length && G("ALERT_POPUP"))
+          Toast.fire({
+            icon: "warning",
+            title: `${w.length} peringatan keuangan. Ketuk untuk melihat.`,
+            timer: 6000,
+            didOpen: (t) =>
+              t.addEventListener("click", () => {
+                tabTo("Pintar");
+                Swal.close();
+              }),
+          });
       })();
     </script>
   </body>
