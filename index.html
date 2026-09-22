@@ -928,8 +928,7 @@
             Catat dengan Suara
           </h3>
           <p class="text-xs text-slate-400 mb-5">
-            Contoh: "transaksi pengeluaran, makan siang 25 ribu, kategori
-            makanan"
+            Bicara natural saja, contoh: "makan siang 25 ribu karena lapar"
           </p>
 
           <div class="relative w-32 h-32 flex items-center justify-center mb-5">
@@ -962,6 +961,12 @@
               >Silakan bicara...</span
             >
           </div>
+          <button
+            onclick="voiceStop()"
+            class="btn !py-3 mt-4 w-full"
+          >
+            ✓ Selesai
+          </button>
         </div>
 
         <!-- State: hasil / konfirmasi -->
@@ -988,11 +993,14 @@
                 inputmode="numeric"
                 class="inp"
                 placeholder="0"
+                oninput="voiceHint_()"
               />
+              <p id="vNomInfo" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
             </div>
             <div>
               <label class="lbl">Kategori</label
-              ><input id="vKat" list="dlKat" class="inp" placeholder="Makanan" />
+              ><input id="vKat" list="dlKat" class="inp" placeholder="Makanan" oninput="voiceHint_()" />
+              <p id="vKatInfo" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
             </div>
           </div>
           <div>
@@ -2872,83 +2880,329 @@
       }
 
       /* ---------- Catat dengan suara (pop-up mengambang) ---------- */
-      const Vst = {
-        rec: null,
-        listening: false,
-        jenis: "Pengeluaran",
-        raw: "",
-      };
+      const Vst = { rec: null, listening: false, jenis: "Pengeluaran", raw: "", timer: null };
 
-      /** Ubah angka bicara ("25 ribu", "5 juta", "20.000") jadi nominal + posisi kemunculannya di teks. */
-      function parseNominalV_(str) {
-        const m = str.match(
-          /(\d{1,3}(?:\.\d{3})+|\d+(?:[.,]\d+)?)\s*(ribu|rb|k|juta|jt)?/i,
-        );
-        if (!m) return null;
-        let n = /\.\d{3}/.test(m[1])
-          ? parseFloat(m[1].replace(/\./g, ""))
-          : parseFloat(m[1].replace(",", "."));
-        const suf = (m[2] || "").toLowerCase();
-        if (/^(ribu|rb|k)$/.test(suf)) n *= 1000;
-        else if (/^(juta|jt)$/.test(suf)) n *= 1000000;
-        return { value: Math.round(n), index: m.index, length: m[0].length };
+      /* ===== 1) Alat bantu teks: token, jarak ketikan (typo), kosakata ===== */
+      const tokenV_ = (text) =>
+        String(text || "")
+          .toLowerCase()
+          .replace(/(\d)([a-z])/g, "$1 $2")
+          .replace(/([a-z])(\d)/g, "$1 $2")
+          .split(/\s+/)
+          .map((w) => w.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, ""))
+          .filter(Boolean);
+
+      function lev_(a, b) {
+        const m = a.length, n = b.length;
+        let prev = Array.from({ length: n + 1 }, (_, j) => j);
+        for (let i = 1; i <= m; i++) {
+          const cur = [i];
+          for (let j = 1; j <= n; j++)
+            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+          prev = cur;
+        }
+        return prev[n];
       }
-      const capV_ = (s) =>
-        String(s || "")
-          .trim()
-          .replace(/\s+/g, " ")
-          .replace(/^./, (c) => c.toUpperCase());
+      /** Toleransi salah ketik berdasarkan panjang kata. */
+      const thr_ = (n) => (n <= 4 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
+
+      const VTITLE_ = { bpjs: "BPJS", pln: "PLN", atm: "ATM", thr: "THR", bbm: "BBM", wifi: "WiFi", spp: "SPP", pdam: "PDAM", dp: "DP", bri: "BRI", bca: "BCA", bni: "BNI" };
+      const titleV_ = (s) =>
+        tokenV_(s).map((w) => VTITLE_[w] || w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+      const capV_ = (s) => String(s || "").trim().replace(/\s+/g, " ").replace(/^./, (c) => c.toUpperCase());
+
+      /** Kata-kata kunci perintah (dicocokkan dengan toleransi typo). */
+      const VK_ = {
+        kat: ["kategori", "kategorinya", "category", "kategory", "katagori"],
+        alasan: ["alasan", "alasannya", "karena", "karna", "krn", "sebab", "soalnya", "lantaran"],
+        keluar: ["pengeluaran"],
+        masuk: ["pemasukan", "pendapatan"],
+        trx: ["transaksi"],
+      };
+      function cueV_(t) {
+        if (!/^[a-z]+$/.test(t)) return null;
+        for (const [cue, list] of Object.entries(VK_)) {
+          if (list.includes(t)) return cue;
+          if (t.length >= 5 && list.some((k) => k.length >= 5 && Math.abs(k.length - t.length) <= 2 && lev_(t, k) <= thr_(k.length)))
+            return cue;
+        }
+        return null;
+      }
+
+      /** Sinonim → nama kategori umum (dipakai bila kategori tidak disebut / tidak ada yang cocok). */
+      const VSYN_ = {
+        Makanan: "makan minum sarapan kopi teh nasi ayam bakso mie soto sate roti kue jajan snack jus susu kuliner resto restoran warung cafe kafe bubur gorengan lauk",
+        Transportasi: "bensin solar bbm parkir tol ojek ojol gojek grab taksi bus kereta angkot tiket pesawat travel bengkel servis oli ban",
+        Belanja: "belanja belanjaan sayur buah daging ikan telur beras minyak gula sabun sampo baju celana sepatu tas kaos jaket hijab toko mall pasar shopee tokopedia",
+        Tagihan: "listrik token pulsa paket internet wifi tagihan cicilan kredit sewa kos kontrakan pajak asuransi bpjs pdam",
+        Hiburan: "nonton bioskop film game langganan netflix spotify youtube liburan wisata konser karaoke",
+        Kesehatan: "obat dokter apotek klinik vitamin sakit periksa gym olahraga medis",
+        Pendidikan: "sekolah kuliah buku kursus les spp seminar pelatihan",
+        Sosial: "sedekah zakat infaq donasi amal arisan hadiah kado sumbangan",
+        Gaji: "gaji upah honor thr bonus komisi",
+      };
+      const VSYN_MASUK_ = new Set(["Gaji"]);
+      const VBASE_ = (
+        "dan yang untuk dengan saya aku lagi tadi sudah telah hari ini itu di ke dari pada atau juga sama waktunya waktu karena lapar haus capek sakit " +
+        "kemarin besok nama judul nominal harga sebesar senilai seharga sejumlah rupiah rp ribu juta ratus puluh belas miliar " +
+        "nol satu dua tiga empat lima enam tujuh delapan sembilan sepuluh sebelas seribu sejuta seratus setengah koma " +
+        "beli bayar belanja jual isi topup transfer terima siang malam pagi sore cuci laundry potong rambut salon hutang utang piutang pinjaman lunas " +
+        "tabungan investasi saham emas reksadana uang saku lain lainnya umum " +
+        Object.values(VSYN_).join(" ") + " " + Object.keys(VSYN_).join(" ").toLowerCase()
+      ).split(/\s+/);
+
+      /** Kosakata = kata bawaan + semua kata dari nama/kategori transaksi milik pengguna sendiri. */
+      function vocabV_() {
+        const V = new Set(VBASE_);
+        (S.data.kategori || []).forEach((k) => tokenV_(k.nama).forEach((w) => V.add(w)));
+        (S.data.trx || []).forEach((t) => tokenV_(t.nama + " " + t.kategori).forEach((w) => V.add(w)));
+        return V;
+      }
+      /** Perbaiki typo: ganti dengan kata terdekat di kosakata (huruf awal harus sama). */
+      const fixThr_ = (n) => (n <= 3 ? 0 : n <= 5 ? 1 : n <= 8 ? 2 : 3);
+      function fixWord_(w, V) {
+        if (V.has(w) || w.length < 4 || /\d/.test(w) || cueV_(w)) return w;
+        const T = Math.min(fixThr_(w.length), 2);
+        let best = w, bd = T + 1;
+        for (const v of V) {
+          if (v[0] !== w[0] || Math.abs(v.length - w.length) > T) continue;
+          const d = lev_(w, v);
+          if (d < bd) { bd = d; best = v; }
+        }
+        return best;
+      }
+
+      /* ===== 2) Angka: "25 ribu", "Rp25.000", "dua puluh lima ribu", "1,5 juta" ===== */
+      const NW_ = new Map([["nol", 0], ["satu", 1], ["dua", 2], ["tiga", 3], ["empat", 4], ["lima", 5], ["enam", 6], ["tujuh", 7], ["delapan", 8], ["sembilan", 9]]);
+      const isDig_ = (t) => /^\d+(?:[.,]\d+)*$/.test(t);
+      const isCur_ = (t) => /^(rp|rupiah|idr)$/.test(t);
+      const MAG_ = /^(belas|puluh|ratus|ribu|juta|miliar|seribu|sejuta|seratus|sepuluh|sebelas|setengah|koma)$/;
+      const isNumTok_ = (t, prev) =>
+        isDig_(t) || NW_.has(t) || MAG_.test(t) || (/^(rb|jt|k)$/.test(t) && !!prev && isDig_(prev));
+
+      function digitVal_(t) {
+        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return parseFloat(t.replace(/\./g, "").replace(",", "."));
+        if (/^\d{1,3}(,\d{3})+$/.test(t)) return parseFloat(t.replace(/,/g, ""));
+        return parseFloat(t.replace(",", "."));
+      }
+      function numValue_(toks) {
+        let total = 0, group = 0, cur = 0, dec = false;
+        for (let i = 0; i < toks.length; i++) {
+          const t = toks[i], nx = toks[i + 1] || "";
+          if (isCur_(t)) continue;
+          if (isDig_(t)) {
+            const v = digitVal_(t);
+            if (dec) { cur += v / Math.pow(10, t.length); dec = false; continue; }
+            // "25.000 ribu" → angkanya sudah ribuan, jangan dikali lagi
+            if ((v >= 1000 && /^(ribu|rb|k)$/.test(nx)) || (v >= 1e6 && /^(juta|jt)$/.test(nx))) i++;
+            group += cur; cur = v; continue;
+          }
+          if (NW_.has(t)) {
+            if (dec) { cur += NW_.get(t) / 10; dec = false; } else { group += cur; cur = NW_.get(t); }
+            continue;
+          }
+          if (t === "sepuluh") { group += cur + 10; cur = 0; }
+          else if (t === "sebelas") { group += cur + 11; cur = 0; }
+          else if (t === "seratus") { group += cur + 100; cur = 0; }
+          else if (t === "belas") { group += cur + 10; cur = 0; }
+          else if (t === "puluh") { group += (cur || 1) * 10; cur = 0; }
+          else if (t === "ratus") { group += (cur || 1) * 100; cur = 0; }
+          else if (t === "setengah") cur += 0.5;
+          else if (t === "koma") dec = true;
+          else if (/^(ribu|seribu|rb|k)$/.test(t)) { total += (group + cur || 1) * 1e3; group = cur = 0; }
+          else if (/^(juta|sejuta|jt)$/.test(t)) { total += (group + cur || 1) * 1e6; group = cur = 0; }
+          else if (t === "miliar") { total += (group + cur || 1) * 1e9; group = cur = 0; }
+        }
+        return Math.round(total + group + cur);
+      }
+      /** Cari deretan kata angka dalam satu bagian; pilih yang paling meyakinkan sebagai nominal. */
+      function findNominal_(items) {
+        const runs = [];
+        let run = null;
+        items.forEach((it, i) => {
+          const prev = run ? run.w[run.w.length - 1] : "";
+          const ok = (isNumTok_(it.w, prev) || isCur_(it.w)) && (!run || run.sec === it.sec);
+          if (!ok) { run = null; return; }
+          if (!run) { run = { start: i, end: i, sec: it.sec, w: [] }; runs.push(run); }
+          run.w.push(it.w); run.end = i;
+        });
+        const cand = runs
+          .filter((r) => r.w.some((w) => isDig_(w) || NW_.has(w) || /^(seribu|sejuta|seratus|sepuluh|sebelas|setengah)$/.test(w)))
+          .map((r) => {
+            r.value = numValue_(r.w);
+            r.strong = r.w.some((w) => isCur_(w) || /^(ribu|juta|rb|jt|k|miliar|seribu|sejuta|ratus|seratus)$/.test(w)) || r.value >= 1000;
+            r.tier = (r.strong ? 2 : 0) + (r.sec === "head" ? 1 : 0);
+            return r;
+          })
+          .filter((r) => r.value > 0 && r.value < 1e12);
+        cand.sort((a, b) => b.tier - a.tier || b.value - a.value);
+        return cand[0] || null;
+      }
+
+      /* ===== 3) Kategori: cocokkan dengan data yang sudah ada ===== */
+      function stemV_(w) {
+        let s = w.replace(/(lah|kah|nya)$/, "");
+        let m = s.match(/^(?:meng|meny|men|mem|me|peng|peny|pen|pem|per|pe|ber|ter|di|ke|se)(.{4,})$/);
+        if (m) s = m[1];
+        m = s.match(/^(.{4,}?)(?:kan|an|i)$/);
+        return m ? m[1] : s;
+      }
+      /** Skor kemiripan dua kata: 3 sama persis, 2.6 satu akar, 2.2 saling memuat, 1.8 mirip (typo). */
+      function wordMatch_(a, b) {
+        if (a === b) return 3;
+        if (a.length < 3 || b.length < 3) return 0;
+        if (stemV_(a) === stemV_(b)) return 2.6;
+        if (a.length >= 4 && b.length >= 4 && (a.includes(b) || b.includes(a))) return 2.2;
+        const L = Math.max(a.length, b.length);
+        if (a[0] === b[0] && lev_(a, b) <= Math.min(thr_(L), 2)) return 1.8;
+        return 0;
+      }
+      const VSTOP_ = /^(dan|atau|yang|di|ke|untuk|dengan|lain|lainnya|nya|hari|ini|itu|saya|aku|tadi|beli|bayar)$/;
+      function katPoolV_() {
+        const m = new Map();
+        const add = (nama, tipe, n) => {
+          const k = String(nama || "").trim();
+          if (!k) return;
+          const o = m.get(k.toLowerCase()) || { nama: k, tipe: "", n: 0 };
+          if (!o.tipe && tipe) o.tipe = tipe;
+          o.n += n;
+          m.set(k.toLowerCase(), o);
+        };
+        (S.data.kategori || []).forEach((k) => add(k.nama, k.tipe, 0));
+        (S.data.trx || []).forEach((t) => add(t.kategori, t.jenis, 1));
+        return [...m.values()];
+      }
+      function pickKat_(words, jenis, minScore) {
+        const ws = words.filter((w) => w.length >= 3 && !VSTOP_.test(w) && !/\d/.test(w));
+        let best = null, bs = 0;
+        katPoolV_().forEach((c) => {
+          let s = 0;
+          tokenV_(c.nama).filter((w) => !VSTOP_.test(w)).forEach((a) => ws.forEach((b) => (s = Math.max(s, wordMatch_(a, b)))));
+          if (!s) return;
+          if (c.tipe && c.tipe !== jenis && s < 2.9) return; // beda jenis: harus hampir persis
+          s += (c.tipe === jenis ? 0.3 : 0) + Math.min(c.n, 20) * 0.01;
+          if (s > bs) { bs = s; best = c; }
+        });
+        return bs >= minScore ? best : null;
+      }
+      /** Kategori dari riwayat: transaksi lama dengan nama yang mirip → pakai kategorinya. */
+      function katRiwayat_(namaWords, jenis) {
+        const ws = namaWords.filter((w) => w.length >= 3 && !VSTOP_.test(w));
+        if (!ws.length) return null;
+        const votes = new Map();
+        (S.data.trx || []).forEach((t) => {
+          if (t.jenis !== jenis || !t.kategori) return;
+          const tw = tokenV_(t.nama);
+          const hit = ws.filter((a) => tw.some((b) => wordMatch_(a, b) >= 2.2)).length;
+          if (hit / ws.length >= 0.75) votes.set(t.kategori, (votes.get(t.kategori) || 0) + hit);
+        });
+        return [...votes.entries()].sort((a, b) => b[1] - a[1]).map((x) => x[0])[0] || null;
+      }
+      function katSinonim_(words, jenis) {
+        let best = null, bc = 0;
+        Object.entries(VSYN_).forEach(([name, list]) => {
+          if (VSYN_MASUK_.has(name) !== (jenis === "Pemasukan")) return;
+          const set = list.split(" ");
+          const c = words.filter((w) => set.includes(w)).length;
+          if (c > bc) { bc = c; best = name; }
+        });
+        return best;
+      }
+      /** Hasil: { nama, baru } — baru=false artinya memakai kategori yang sudah ada. */
+      function resolveKat_(spoken, namaWords, ctxWords, jenis) {
+        if (spoken.length) {
+          const c = pickKat_(spoken, jenis, 1.8);
+          return c ? { nama: c.nama, baru: false } : { nama: titleV_(spoken.join(" ")), baru: true };
+        }
+        const rw = katRiwayat_(namaWords, jenis);
+        if (rw) return { nama: rw, baru: false };
+        const c = pickKat_(ctxWords, jenis, 2.2);
+        if (c) return { nama: c.nama, baru: false };
+        const sn = katSinonim_(ctxWords, jenis);
+        if (sn) {
+          const e = pickKat_([sn.toLowerCase()], jenis, 1.8);
+          return e ? { nama: e.nama, baru: false } : { nama: sn, baru: true };
+        }
+        const u = katPoolV_().find((k) => k.nama.toLowerCase() === "umum");
+        return { nama: u ? u.nama : "Umum", baru: !u };
+      }
+
+      /* ===== 4) Parser utama ===== */
+      const VLEAD_ = /^(transaksi|catat|catatkan|tambah|tambahkan|tolong|saya|aku|tadi|barusan|baru|saja|sudah|telah|lagi|nama|judul|pengeluaran|pemasukan|hari|ini)$/;
+      const VTAIL_ = /^(sebesar|senilai|seharga|harga|nominal|sejumlah|sebanyak|dengan|yaitu|adalah|dan|rp|rupiah|sebesar)$/;
+      const VMASUK_ = /^(gaji|bonus|honor|upah|thr|komisi|menerima|diterima|terima)$/;
 
       /**
-       * Format yang didukung: "transaksi <jenis>, <nama> <nominal>, kategori
-       * <kategori>, alasan <alasan>" — koma & kata kunci boleh dalam urutan
-       * bebas. Kalau "alasan" tidak disebut, alasan otomatis dipakai dari
-       * kalimat nama+nominal itu sendiri.
+       * Contoh yang dipahami (koma tidak wajib, urutan bebas setelah nama):
+       *  "transaksi pengeluaran makan siang 25 ribu kategori makanan alasan lapar"
+       *  "saya makan siang 25 rb karna lapar dan waktunya makan"
        */
       function parseVoiceCommand_(text) {
         const raw = String(text || "").trim();
-        const segs = raw
-          .split(",")
-          .map((s) => s.trim())
-          .filter(Boolean);
-        let jenis = "Pengeluaran",
-          kategori = "",
-          alasan = "";
-        const sisaSegs = [];
-        segs.forEach((seg) => {
-          const low = seg.toLowerCase();
-          if (/\btransaksi\b/.test(low)) {
-            if (/pemasukan|masuk|pendapatan|terima|gaji/.test(low))
-              jenis = "Pemasukan";
-            else if (/pengeluaran|keluar/.test(low)) jenis = "Pengeluaran";
-          } else if (/\b(kategori|katagori|ketgory|category)\b/.test(low)) {
-            kategori = seg.replace(/.*\b(kategori|katagori|ketgory|category)\b/i, "").trim();
-          } else if (/\b(alasan|karena)\b/.test(low)) {
-            alasan = seg.replace(/.*\b(alasan|karena)\b/i, "").trim();
-          } else {
-            sisaSegs.push(seg);
+        const V = vocabV_();
+        const toks = tokenV_(raw);
+
+        // a) bagi ucapan jadi bagian: head (nama+nominal) | kategori | alasan
+        const items = [];
+        let sec = "head", jenisEksplisit = null;
+        for (let i = 0; i < toks.length; i++) {
+          const t = toks[i];
+          let c = cueV_(t);
+          if (!c && toks[i + 1] && t.length <= 6 && /^[a-z]+$/.test(t + toks[i + 1]) && (t + toks[i + 1]).length >= 6) {
+            const j = cueV_(t + toks[i + 1]);
+            if (j) { c = j; i++; }
           }
-        });
-        const namaNominalSeg = sisaSegs.join(", ") || raw;
-        const nomInfo = parseNominalV_(namaNominalSeg);
-        let nama = namaNominalSeg,
-          nominal = 0;
-        if (nomInfo) {
-          nominal = nomInfo.value;
-          nama = namaNominalSeg.slice(0, nomInfo.index).trim().replace(/[-,.]+$/, "");
+          if (c === "kat" || c === "alasan") { sec = c; continue; }
+          if (c === "trx") continue;
+          if (c === "keluar" || c === "masuk") { jenisEksplisit = c === "masuk" ? "Pemasukan" : "Pengeluaran"; continue; }
+          items.push({ w: t, sec });
         }
-        if (!nama) nama = namaNominalSeg;
-        if (!alasan) alasan = namaNominalSeg;
-        return {
-          jenis,
-          nama: capV_(nama),
-          nominal,
-          kategori: capV_(kategori),
-          keterangan: capV_(alasan),
-          raw,
-        };
+        // b) perbaiki typo tiap kata
+        items.forEach((it) => { if (!isNumTok_(it.w, "") && !isCur_(it.w)) it.w = fixWord_(it.w, V); });
+
+        // c) nominal
+        const nom = findNominal_(items);
+        const nominal = nom ? nom.value : 0;
+        const rest = nom ? items.filter((_, i) => i < nom.start || i > nom.end) : items.slice();
+        const head = rest.filter((x) => x.sec === "head").map((x) => x.w);
+        const katW = rest.filter((x) => x.sec === "kat").map((x) => x.w).filter((w) => !VTAIL_.test(w));
+        const alsW = rest.filter((x) => x.sec === "alasan").map((x) => x.w);
+
+        // d) jenis
+        const semua = items.map((x) => x.w);
+        const jenis = jenisEksplisit || (semua.some((w) => VMASUK_.test(w)) ? "Pemasukan" : "Pengeluaran");
+
+        // e) nama transaksi: buang kata pembuka/penutup & nominal, rapikan jadi judul
+        const nm = head.slice();
+        while (nm.length && VLEAD_.test(nm[0])) nm.shift();
+        while (nm.length && VTAIL_.test(nm[nm.length - 1])) nm.pop();
+        const nama = nm.length ? titleV_(nm.join(" ")) : katW.length ? titleV_(katW.join(" ")) : jenis;
+
+        // f) kategori (cocokkan dengan data yang ada)
+        const ctx = nm.concat(alsW);
+        const kat = resolveKat_(katW, nm, ctx, jenis);
+
+        // g) alasan: yang diucapkan setelah "alasan/karena"; kalau tidak disebut sama sekali,
+        // pakai kalimat aslinya (nominal diganti format rupiah) sebagai alasan otomatis.
+        let alasan;
+        if (alsW.length) alasan = alsW.join(" ");
+        else {
+          const parts = [];
+          items.forEach((x, i) => {
+            if (x.sec !== "head") return;
+            if (nom && i >= nom.start && i <= nom.end) {
+              if (i === nom.start) parts.push(rp(nominal));
+              return;
+            }
+            parts.push(x.w);
+          });
+          while (parts.length && VLEAD_.test(parts[0])) parts.shift();
+          alasan = parts.join(" ");
+        }
+        return { jenis, nama: capV_(nama), nominal, kategori: kat.nama, kategoriBaru: kat.baru, keterangan: capV_(alasan || nama), raw };
       }
 
+      /* ===== 5) UI ===== */
       function setVoiceJenis(j) {
         Vst.jenis = j;
         $("voiceJenis").innerHTML = ["Pengeluaran", "Pemasukan"]
@@ -2958,66 +3212,77 @@
           )
           .join("");
       }
+      /** Petunjuk di bawah kolom kategori & nominal (juga jalan saat pengguna mengetik sendiri). */
+      function voiceHint_() {
+        const k = $("vKat").value.trim().toLowerCase();
+        const ada = katPoolV_().some((c) => c.nama.toLowerCase() === k);
+        $("vKatInfo").innerHTML = !k ? "" : ada ? "✓ Kategori sudah ada" : "✨ Akan dibuat sebagai kategori baru";
+        $("vKatInfo").className = "text-[11px] mt-1 font-semibold " + (ada ? "text-emerald-600" : "text-indigo-600");
+        const n = Number($("vNom").value) || 0;
+        $("vNomInfo").innerHTML =
+          n > 0 && n < 1000
+            ? `${rp(n)} — maksudnya ribuan? <button type="button" class="underline font-bold" onclick="$('vNom').value=${n * 1000};voiceHint_()">Jadikan ${rp(n * 1000)}</button>`
+            : n > 0 ? rp(n) : "";
+      }
 
+      function voiceBars_(idle) {
+        document.querySelectorAll("#voiceBars .voice-bar").forEach((b) => b.classList.toggle("idle", idle));
+      }
       function openVoice() {
         const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR)
-          return Toast.fire({
-            icon: "error",
-            title: "Browser tidak mendukung input suara",
-          });
+        if (!SR) return Toast.fire({ icon: "error", title: "Browser tidak mendukung input suara" });
         $("mVoice").classList.remove("hidden");
         $("voiceListen").classList.remove("hidden");
         $("voiceReview").classList.add("hidden");
-        $("voiceTranscript").innerHTML =
-          '<span class="italic text-slate-400">Silakan bicara...</span>';
+        $("voiceTranscript").innerHTML = '<span class="italic text-slate-400">Silakan bicara...</span>';
         $("voiceStatus").textContent = "Menyiapkan mikrofon...";
-        document
-          .querySelectorAll("#voiceBars .voice-bar")
-          .forEach((b) => b.classList.remove("idle"));
+        voiceBars_(false);
+        Vst.raw = "";
+        clearTimeout(Vst.timer);
 
         const r = new SR();
         Vst.rec = r;
         r.lang = "id-ID";
         r.interimResults = true;
-        r.continuous = false;
+        r.continuous = true; // tetap mendengarkan walau pengguna jeda sebentar
         r.maxAlternatives = 1;
 
         r.onstart = () => {
           Vst.listening = true;
-          $("voiceStatus").textContent = "Mendengarkan...";
+          $("voiceStatus").textContent = "Mendengarkan... ketuk Selesai kalau sudah";
         };
         r.onresult = (e) => {
-          let t = "";
-          for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
-          Vst.raw = t;
-          $("voiceTranscript").textContent = t;
-          if (e.results[e.results.length - 1].isFinal) {
-            r.stop();
+          // gabungkan semua potongan; buang duplikat (bug Chrome Android di mode continuous)
+          let acc = "";
+          for (let i = 0; i < e.results.length; i++) {
+            const s = e.results[i][0].transcript.trim(), a = acc.toLowerCase(), b = s.toLowerCase();
+            if (!s) continue;
+            if (!acc || b.startsWith(a)) acc = s;
+            else if (!a.endsWith(b)) acc += " " + s;
           }
+          Vst.raw = acc;
+          $("voiceTranscript").textContent = acc;
+          clearTimeout(Vst.timer);
+          Vst.timer = setTimeout(() => { try { r.stop(); } catch (_) {} }, 2200); // diam 2,2 dtk → selesai
         };
         r.onerror = (e) => {
           Vst.listening = false;
-          document
-            .querySelectorAll("#voiceBars .voice-bar")
-            .forEach((b) => b.classList.add("idle"));
-          if (e.error === "no-speech") {
-            $("voiceStatus").textContent =
-              "Tidak terdengar suara. Coba lagi, bicara lebih jelas.";
-          } else {
-            $("voiceStatus").textContent =
-              "Gagal menangkap suara. Pastikan izin mikrofon aktif.";
-            Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
-          }
+          voiceBars_(true);
+          $("voiceStatus").textContent =
+            e.error === "no-speech" ? "Tidak terdengar suara. Coba lagi, bicara lebih jelas." : "Gagal menangkap suara. Pastikan izin mikrofon aktif.";
+          if (e.error !== "no-speech" && e.error !== "aborted") Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
         };
         r.onend = () => {
           Vst.listening = false;
-          document
-            .querySelectorAll("#voiceBars .voice-bar")
-            .forEach((b) => b.classList.add("idle"));
+          clearTimeout(Vst.timer);
+          voiceBars_(true);
           if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
         };
         r.start();
+      }
+      function voiceStop() {
+        if (Vst.rec && Vst.listening) { try { Vst.rec.stop(); } catch (_) {} }
+        else if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
       }
 
       function showVoiceReview_(text) {
@@ -3030,6 +3295,7 @@
         $("vNom").value = p.nominal || "";
         $("vKat").value = p.kategori;
         $("vKet").value = p.keterangan;
+        voiceHint_();
       }
 
       function voiceRetry() {
@@ -3039,12 +3305,9 @@
       }
 
       function closeVoice() {
-        if (Vst.rec && Vst.listening) {
-          try {
-            Vst.rec.stop();
-          } catch (_) {}
-        }
+        clearTimeout(Vst.timer);
         Vst.raw = "";
+        if (Vst.rec && Vst.listening) { try { Vst.rec.stop(); } catch (_) {} }
         $("mVoice").classList.add("hidden");
       }
 
@@ -3052,26 +3315,15 @@
         const nama = $("vNama").value.trim(),
           nominal = Number($("vNom").value);
         if (!nama || !(nominal > 0))
-          return Toast.fire({
-            icon: "warning",
-            title: "Nama dan nominal (lebih dari 0) wajib diisi",
-          });
+          return Toast.fire({ icon: "warning", title: "Nama dan nominal (lebih dari 0) wajib diisi" });
         const ok = await act(
           "simpanDataTransaksi",
-          [
-            {
-              jenis: Vst.jenis,
-              nama,
-              nominal,
-              kategori: $("vKat").value.trim() || "Umum",
-              keterangan: $("vKet").value.trim(),
-              tanggal: "",
-            },
-          ],
+          [{ jenis: Vst.jenis, nama, nominal, kategori: $("vKat").value.trim() || "Umum", keterangan: $("vKet").value.trim(), tanggal: "" }],
           "Menyimpan transaksi...",
         );
         if (ok) closeVoice();
       }
+
 
       /* ---------- Mulai ---------- */
       (async function () {
