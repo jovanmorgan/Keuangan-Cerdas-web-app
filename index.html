@@ -562,30 +562,65 @@
       </section>
     </main>
 
-    <!-- Mobile nav + tombol tambah -->
-    <button
-      onclick="openForm()"
-      class="md:hidden fixed right-4 bottom-24 z-40 w-14 h-14 rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-400/50 active:scale-90 transition flex items-center justify-center"
-      aria-label="Tambah transaksi"
+    <!-- Mobile: satu FAB gabungan (tekan untuk membuka pilihan Tambah / Suara) -->
+    <div
+      id="fabMobile"
+      class="md:hidden fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3"
     >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="w-6 h-6 block m-auto"
+      <button
+        id="fabAdd"
+        onclick="closeFabMenu(); openForm()"
+        class="w-12 h-12 rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
+        aria-label="Tambah transaksi"
       >
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-    </button>
-    <!-- Tombol mengambang: catat transaksi dengan suara -->
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-5 h-5 block m-auto"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <button
+        id="fabVoice"
+        onclick="closeFabMenu(); openVoice()"
+        class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-lg shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
+        aria-label="Catat dengan suara"
+      >
+        🎙️
+      </button>
+      <button
+        id="fabMain"
+        onclick="toggleFabMenu()"
+        class="w-14 h-14 rounded-full bg-indigo-600 text-white opacity-60 shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center"
+        aria-label="Buka menu tambah transaksi"
+      >
+        <svg
+          id="fabMainIcon"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          class="w-6 h-6 block m-auto transition-transform duration-200"
+        >
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+    <!-- Desktop: tombol mengambang catat transaksi dengan suara (mobile pakai FAB gabungan di atas) -->
     <button
       onclick="openVoice()"
-      class="fixed right-4 bottom-44 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition flex items-center justify-center"
+      class="hidden md:flex fixed right-6 bottom-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition items-center justify-center"
       aria-label="Catat dengan suara"
       title="Catat dengan suara"
     >
@@ -2719,12 +2754,34 @@
         if (await act("setorTarget", [S.sId, n], "Menyimpan setoran..."))
           closeSetor();
       }
+      /* ---------- FAB mobile gabungan (Tambah + Suara) ---------- */
+      let fabOpen_ = false;
+      function toggleFabMenu() {
+        fabOpen_ = !fabOpen_;
+        const icon = $("fabMainIcon");
+        [$("fabAdd"), $("fabVoice")].forEach((b) => {
+          b.classList.toggle("opacity-0", !fabOpen_);
+          b.classList.toggle("scale-0", !fabOpen_);
+          b.classList.toggle("translate-y-2", !fabOpen_);
+          b.classList.toggle("pointer-events-none", !fabOpen_);
+        });
+        $("fabMain").classList.toggle("opacity-60", !fabOpen_);
+        $("fabMain").classList.toggle("opacity-100", fabOpen_);
+        icon.style.transform = fabOpen_ ? "rotate(45deg)" : "rotate(0deg)";
+      }
+      function closeFabMenu() {
+        if (fabOpen_) toggleFabMenu();
+      }
+      document.addEventListener("click", (e) => {
+        if (fabOpen_ && !$("fabMobile").contains(e.target)) closeFabMenu();
+      });
       document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           closeForm();
           closeTarget();
           closeSetor();
           closeVoice();
+          closeFabMenu();
         }
         if (e.key === "Enter" && e.target && e.target.tagName === "INPUT") {
           if (!$("mTarget").classList.contains("hidden")) saveTarget();
