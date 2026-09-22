@@ -14,6 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    
     <style type="text/tailwindcss">
       body {
         font-family: "Plus Jakarta Sans", system-ui, sans-serif;
@@ -480,6 +481,46 @@
         50% { background: rgba(16,185,129,0.15); }
         100% { background: rgba(255,255,255,0.07); }
       }
+
+      /* OTP Input Boxes */
+      .otp-box {
+        width: 44px;
+        height: 54px;
+        border-radius: 14px;
+        border: 2px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.06);
+        color: #fff;
+        font-size: 1.4rem;
+        font-weight: 800;
+        text-align: center;
+        font-family: inherit;
+        outline: none;
+        transition: all 0.2s;
+        caret-color: #6366f1;
+      }
+      .otp-box:focus {
+        border-color: #6366f1;
+        background: rgba(99,102,241,0.1);
+        box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
+        transform: scale(1.08);
+      }
+      .otp-box.filled {
+        border-color: rgba(99,102,241,0.6);
+        background: rgba(99,102,241,0.08);
+      }
+      .otp-box.error {
+        border-color: #f43f5e;
+        animation: pinShake 0.3s ease;
+      }
+      @media (max-width: 400px) {
+        .otp-box { width: 38px; height: 48px; font-size: 1.2rem; border-radius: 10px; }
+      }
+
+      /* Lupa PIN / Forgot PIN panel */
+      #forgotPinPanel, #loginLoading {
+        max-height: 92vh;
+        overflow-y: auto;
+      }
     </style>
     <style>
       #printArea {
@@ -651,11 +692,43 @@
           <div id="regConfErr" class="auth-error">PIN tidak cocok, coba lagi</div>
         </div>
 
-        <!-- Step indicator -->
+        <!-- Form register step 4: verifikasi OTP email -->
+        <div id="regStep4" style="display:none;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:2.5rem;margin-bottom:8px;">📧</div>
+            <p style="color:rgba(255,255,255,0.85);font-size:0.95rem;font-weight:700;">Cek Email Kamu!</p>
+            <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:6px;line-height:1.5;">
+              Kode OTP 6 digit telah dikirim ke<br>
+              <strong id="regOtpEmailHint" style="color:#a5b4fc;"></strong>
+            </p>
+          </div>
+          <!-- OTP input boxes -->
+          <div id="regOtpBoxes" style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;">
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+            <input class="otp-box" maxlength="1" type="text" inputmode="numeric" pattern="[0-9]" />
+          </div>
+          <div id="regOtpErr" class="auth-error"></div>
+          <button class="auth-btn auth-btn-primary" onclick="regVerifyOtp()" id="regOtpBtn" style="margin-top:8px;">
+            Verifikasi & Buat Akun
+          </button>
+          <!-- Countdown + resend -->
+          <p style="text-align:center;margin-top:14px;font-size:0.78rem;color:rgba(255,255,255,0.4);">
+            Tidak menerima email?
+            <button id="regResendBtn" onclick="regResendOtp()" style="color:#a5b4fc;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;display:none;">Kirim ulang</button>
+            <span id="regResendCountdown" style="color:rgba(255,255,255,0.35);">Kirim ulang dalam <span id="regResendSec">60</span>s</span>
+          </p>
+        </div>
+
+        <!-- Step indicator (4 titik) -->
         <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;" id="regStepDots">
           <div id="rsd1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;transition:all 0.3s;"></div>
           <div id="rsd2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
           <div id="rsd3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+          <div id="rsd4" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
         </div>
 
         <!-- Link ke login -->
@@ -723,8 +796,13 @@
           Masuk
         </button>
 
+        <!-- Lupa PIN -->
+        <p style="text-align:center;margin-top:10px;">
+          <button onclick="showForgotPin()" style="color:rgba(255,255,255,0.4);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px;">Lupa PIN?</button>
+        </p>
+
         <!-- Link ke register -->
-        <p style="text-align:center;margin-top:18px;font-size:0.82rem;color:rgba(255,255,255,0.4);">
+        <p style="text-align:center;margin-top:12px;font-size:0.82rem;color:rgba(255,255,255,0.4);">
           Belum punya akun?
           <button onclick="showRegister()" style="color:#a5b4fc;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;">Daftar</button>
         </p>
@@ -733,6 +811,84 @@
           <button onclick="openSambungan(true)" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
         </p>
       </div>
+
+      <!-- Panel: Lupa PIN (multi-step) -->
+      <div id="forgotPinPanel" class="auth-card auth-fade-in" style="display:none;">
+        <!-- Step FP1: Masukkan email -->
+        <div id="fpStep1">
+          <div style="text-align:center;margin-bottom:20px;">
+            <div style="font-size:2rem;margin-bottom:6px;">🔑</div>
+            <h2 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0;">Lupa PIN?</h2>
+            <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:6px;">Masukkan email akun kamu. Kami akan kirimkan kode OTP untuk reset PIN.</p>
+          </div>
+          <div style="margin-bottom:14px;">
+            <label class="auth-lbl">Email Akun</label>
+            <input id="fpEmail" type="email" class="auth-inp" placeholder="email@kamu.com" autocomplete="email" />
+          </div>
+          <div id="fpErr1" class="auth-error"></div>
+          <button class="auth-btn auth-btn-primary" onclick="fpSendOtp()" style="margin-top:6px;" id="fpSendBtn">
+            Kirim Kode OTP →
+          </button>
+          <p style="text-align:center;margin-top:14px;">
+            <button onclick="showLogin()" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Kembali ke login</button>
+          </p>
+        </div>
+
+        <!-- Step FP2: Masukkan OTP -->
+        <div id="fpStep2" style="display:none;">
+          <div style="text-align:center;margin-bottom:16px;">
+            <div style="font-size:2rem;margin-bottom:6px;">📧</div>
+            <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;font-weight:700;">Masukkan Kode OTP</p>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Cek inbox / spam email <strong id="fpEmailHint" style="color:#a5b4fc;"></strong></p>
+          </div>
+          <div id="fpOtpBoxes" style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;"></div>
+          <div id="fpErr2" class="auth-error"></div>
+          <button class="auth-btn auth-btn-primary" onclick="fpVerifyOtp()" style="margin-top:8px;" id="fpVerifyBtn">
+            Verifikasi OTP
+          </button>
+          <p style="text-align:center;margin-top:12px;font-size:0.78rem;color:rgba(255,255,255,0.4);">
+            <button id="fpResendBtn" onclick="fpSendOtp(true)" style="color:#a5b4fc;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;display:none;">Kirim ulang OTP</button>
+            <span id="fpResendCountdown">Kirim ulang dalam <span id="fpResendSec">60</span>s</span>
+          </p>
+        </div>
+
+        <!-- Step FP3: Buat PIN baru -->
+        <div id="fpStep3" style="display:none;">
+          <div style="text-align:center;margin-bottom:8px;">
+            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Buat PIN Baru</p>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Masukkan PIN 6 digit yang baru</p>
+          </div>
+          <div class="pin-dots" id="fpPinDots">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+          </div>
+          <div class="keypad" id="fpPinKeypad"></div>
+          <div id="fpErr3" class="auth-error"></div>
+        </div>
+
+        <!-- Step FP4: Konfirmasi PIN baru -->
+        <div id="fpStep4" style="display:none;">
+          <div style="text-align:center;margin-bottom:8px;">
+            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Konfirmasi PIN Baru</p>
+            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Ulangi PIN yang baru kamu buat</p>
+          </div>
+          <div class="pin-dots" id="fpConfDots">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+          </div>
+          <div class="keypad" id="fpConfKeypad"></div>
+          <div id="fpErr4" class="auth-error"></div>
+        </div>
+
+        <!-- Step indicator (4 titik) -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
+          <div id="fpsd1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;transition:all 0.3s;"></div>
+          <div id="fpsd2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+          <div id="fpsd3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+          <div id="fpsd4" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+        </div>
+      </div>
+
 
       <!-- State: loading (pengecekan device → biometric → memuat data) -->
       <div id="loginLoading" class="auth-card" style="display:none;">
@@ -1048,9 +1204,45 @@
                 Segarkan data
               </button>
             </div>
+            <div class="card space-y-3">
+              <h3 class="font-bold">Akun</h3>
+              <div id="akunInfo" class="text-sm text-slate-600 space-y-1">
+                <p>👤 <span id="akunNama" class="font-semibold">-</span></p>
+                <p class="text-slate-400 text-xs" id="akunEmail">-</p>
+              </div>
+              <div class="flex flex-col gap-2">
+                <button
+                  onclick="ubahPin()"
+                  class="btn !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 !shadow-none"
+                >
+                  🔑 Ubah PIN
+                </button>
+                <button
+                  onclick="doLogout()"
+                  class="btn !bg-rose-50 !text-rose-600 hover:!bg-rose-100 !shadow-none"
+                >
+                  🚪 Keluar dari akun
+                </button>
+                <button
+                  id="btnHapusBio"
+                  onclick="hapusBiometric()"
+                  class="btn !bg-slate-100 !text-slate-600 hover:!bg-slate-200 !shadow-none hidden"
+                >
+                  🫆 Hapus sidik jari tersimpan
+                </button>
+                <button
+                  onclick="offerBiometric()"
+                  id="btnDaftarBio"
+                  class="btn !bg-indigo-50 !text-indigo-600 hover:!bg-indigo-100 !shadow-none"
+                >
+                  🫆 Daftarkan sidik jari
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
     </main>
 
     <!-- Mobile: satu FAB gabungan (tekan untuk membuka pilihan Tambah / Suara) -->
@@ -1711,9 +1903,12 @@
          preflight (Apps Script tidak mendukung preflight OPTIONS). */
       const CFG_URL_KEY = "kc_apiUrl",
         CFG_TOKEN_KEY = "kc_apiToken";
+      /* URL default — langsung dipakai jika belum ada config manual */
+      const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyyGt0wZTShzENEV_ePptnSd1N3pNhdxjzV7CR-2Uu0q7Pe7ObUTN6Wa-YRESnaSnjh/exec";
+
       function getCfg() {
         return {
-          url: (localStorage.getItem(CFG_URL_KEY) || "").trim(),
+          url: (localStorage.getItem(CFG_URL_KEY) || DEFAULT_GAS_URL).trim(),
           token: (localStorage.getItem(CFG_TOKEN_KEY) || "").trim(),
         };
       }
@@ -1723,10 +1918,10 @@
       }
       /** Kalau browser ini belum pernah disambungkan manual, coba ambil default
        * dari /api/config (Environment Variables di Vercel: API_URL, API_TOKEN).
-       * Gagal/tidak ada -> diamkan saja, nanti jatuh ke dialog sambungan manual. */
+       * Jika gagal, pakai DEFAULT_GAS_URL yang sudah ditanam di kode. */
       async function ensureCfg() {
         let cfg = getCfg();
-        if (cfg.url) return cfg;
+        if (cfg.url) return cfg;          // sudah ada (dari localStorage atau default)
         try {
           const res = await fetch("/api/config", { cache: "no-store" });
           if (res.ok) {
@@ -1737,7 +1932,8 @@
             }
           }
         } catch (_) {}
-        return cfg;
+        // Fallback ke URL default bawaan
+        return { url: DEFAULT_GAS_URL, token: "" };
       }
       async function rawCall(url, fn, args, token) {
         const res = await fetch(url, {
@@ -3881,6 +4077,8 @@
         setJenis("Pengeluaran");
         // data sudah di-prefetch saat auth (S.data sudah terisi)
         render();
+        // Update info akun di halaman Pengaturan
+        if (typeof updateAkunUI === "function") updateAkunUI();
         const R = analyze();
         R.A.forEach((a) => S.seen.add(a.t));
         const w = R.A.filter((a) => a.lv === "danger" || a.lv === "warn");
@@ -3963,11 +4161,16 @@
     function showLogin() {
       resetRegister();
       showAuthPage("login");
+      // Reset tampilan loading → tampilkan form, sembunyikan panel lain
+      document.getElementById("loginForm").style.display = "";
+      document.getElementById("loginLoading").style.display = "none";
+      document.getElementById("forgotPinPanel").style.display = "none";
       // Pre-isi email terakhir
       const lastEmail = localStorage.getItem(KC_EMAIL_KEY) || "";
       document.getElementById("loginEmail").value = lastEmail;
       authErr("loginErr", "");
       resetPinState(loginPIN);
+      updateDots("loginPinDots", 0);
       checkBioAvailability();
     }
 
@@ -4054,7 +4257,7 @@
       if (regPIN2.value.length >= 6) return;
       regPIN2.value += k;
       updateDots("regConfDots", regPIN2.value.length);
-      if (regPIN2.value.length === 6) setTimeout(() => registerSubmit(), 280);
+      if (regPIN2.value.length === 6) setTimeout(() => registerSendOtp(), 280);
     }
     function regConfDel() {
       if (!regPIN2.value.length) return;
@@ -4064,17 +4267,20 @@
 
     function showRegStep(n) {
       regCurrentStep = n;
-      document.getElementById("regStep1").style.display = n === 1 ? "" : "none";
-      document.getElementById("regStep2").style.display = n === 2 ? "" : "none";
-      document.getElementById("regStep3").style.display = n === 3 ? "" : "none";
-      // Step indicator dots
-      ["rsd1","rsd2","rsd3"].forEach((id,i) => {
-        document.getElementById(id).style.background = i+1 <= n ? "#6366f1" : "rgba(255,255,255,0.2)";
-        document.getElementById(id).style.width = i+1 === n ? "20px" : "8px";
-        document.getElementById(id).style.borderRadius = "4px";
+      ["regStep1","regStep2","regStep3","regStep4"].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (i+1 === n) ? "" : "none";
+      });
+      // Step indicator dots (4 titik)
+      ["rsd1","rsd2","rsd3","rsd4"].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.background = i+1 <= n ? "#6366f1" : "rgba(255,255,255,0.2)";
+        el.style.width = i+1 === n ? "20px" : "8px";
+        el.style.borderRadius = "4px";
       });
       // Animasi slide
-      const steps = ["regStep1","regStep2","regStep3"];
+      const steps = ["regStep1","regStep2","regStep3","regStep4"];
       const el = document.getElementById(steps[n-1]);
       if (el) { el.classList.add("auth-slide-left"); setTimeout(() => el.classList.remove("auth-slide-left"), 400); }
     }
@@ -4097,10 +4303,16 @@
       updateDots("regPinDots", 0);
       updateDots("regConfDots", 0);
       authErr("regErr1",""); authErr("regPinErr",""); authErr("regConfErr","");
+      authErr("regOtpErr","");
       showRegStep(1);
     }
 
-    async function registerSubmit() {
+    /* ── OTP State untuk Register ── */
+    let _regPinHash = "";
+    let _regOtpTimer = null;
+
+    async function registerSendOtp() {
+      // Validasi PIN cocok dulu
       if (regPIN1.value !== regPIN2.value) {
         flashDotsError("regConfDots");
         authErr("regConfErr", "PIN tidak cocok, coba lagi");
@@ -4108,20 +4320,95 @@
         updateDots("regConfDots", 0);
         return;
       }
-      const nama = document.getElementById("regNama").value.trim();
+      // Simpan hash PIN untuk nanti dipakai saat registerUser
+      _regPinHash = await sha256(regPIN1.value);
+
       const email = document.getElementById("regEmail").value.trim();
-      const pinHash = await sha256(regPIN1.value);
-      const deviceId = getOrCreateDeviceId();
-      AUTH.deviceId = deviceId;
+      // Tampilkan step 4
+      showRegStep(4);
+      document.getElementById("regOtpEmailHint").textContent = email;
+      authErr("regOtpErr", "");
+      // Clear OTP boxes
+      document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => { b.value = ""; b.classList.remove("filled","error"); });
 
-      // Pindah ke page-login dulu (di sana ada panel loginLoading)
-      // sembunyikan form login, tampilkan loading
-      document.getElementById("page-register").classList.remove("active");
-      document.getElementById("page-login").classList.add("active");
-      document.getElementById("loginForm").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
+      // Kirim OTP
+      const btn = document.getElementById("regOtpBtn");
+      btn.disabled = true; btn.textContent = "Mengirim OTP...";
+      try {
+        const res = await rawAuthCall("sendOtpEmail", [email, "register"]);
+        if (!res || res.status === "error") {
+          authErr("regOtpErr", (res && res.message) || "Gagal mengirim OTP");
+          btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
+          return;
+        }
+        btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
+        // Focus kotak OTP pertama
+        const boxes = document.querySelectorAll("#regOtpBoxes .otp-box");
+        if (boxes[0]) boxes[0].focus();
+        // Countdown 60 detik untuk resend
+        startOtpCountdown("regResendSec", "regResendCountdown", "regResendBtn", 60);
+      } catch(e) {
+        authErr("regOtpErr", e.message || "Gagal mengirim OTP");
+        btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
+      }
+    }
 
-      showAuthLoading("register", pinHash);
+    async function regResendOtp() {
+      const email = document.getElementById("regEmail").value.trim();
+      document.getElementById("regResendBtn").style.display = "none";
+      document.getElementById("regResendCountdown").style.display = "";
+      document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => { b.value = ""; b.classList.remove("filled","error"); });
+      authErr("regOtpErr","");
+      try {
+        await rawAuthCall("sendOtpEmail", [email, "register"]);
+        const boxes = document.querySelectorAll("#regOtpBoxes .otp-box");
+        if (boxes[0]) boxes[0].focus();
+        startOtpCountdown("regResendSec", "regResendCountdown", "regResendBtn", 60);
+      } catch(e) {
+        authErr("regOtpErr", "Gagal mengirim ulang OTP");
+      }
+    }
+
+    async function regVerifyOtp() {
+      const email = document.getElementById("regEmail").value.trim();
+      const otp = Array.from(document.querySelectorAll("#regOtpBoxes .otp-box")).map(b => b.value).join("");
+      if (otp.length < 6) {
+        authErr("regOtpErr", "Masukkan 6 digit kode OTP");
+        document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
+        setTimeout(() => document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
+        return;
+      }
+      const btn = document.getElementById("regOtpBtn");
+      btn.disabled = true; btn.textContent = "Memverifikasi...";
+      authErr("regOtpErr","");
+      try {
+        // OTP verification + register in one go: verify OTP then register
+        const verRes = await rawAuthCall("verifyOtp", [email, otp]);
+        if (!verRes || verRes.status === "error") {
+          authErr("regOtpErr", (verRes && verRes.message) || "OTP salah");
+          document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
+          setTimeout(() => document.querySelectorAll("#regOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
+          btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
+          return;
+        }
+        // OTP valid → lanjut register
+        const deviceId = getOrCreateDeviceId();
+        AUTH.deviceId = deviceId;
+        // Pindah ke loading screen
+        document.getElementById("page-register").classList.remove("active");
+        document.getElementById("page-login").classList.add("active");
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("loginLoading").style.display = "";
+        showAuthLoading("register", _regPinHash);
+      } catch(e) {
+        authErr("regOtpErr", e.message || "Verifikasi gagal");
+        btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
+      }
+    }
+
+    async function registerSubmit() {
+      // Tidak lagi dipakai langsung — diganti regSendOtp + regVerifyOtp
+      // Tapi tetap ada sebagai fallback
     }
 
     /* ════════════════════════════════════════════════════════════
@@ -4156,19 +4443,28 @@
       const deviceId = AUTH.deviceId || getOrCreateDeviceId();
 
       /* ── STEP 1: Cek ID perangkat ── */
-      setStep("step1", "active");
       document.getElementById("step2Txt").textContent =
         type === "bio" ? "Memverifikasi sidik jari..." : "Memverifikasi identitas...";
-      document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
-      document.getElementById("loadingIcon").textContent = "🔍";
 
-      await sleep(700); // simulasi pengecekan device ID
-
-      setStep("step1", "done", "✓");
-
-      /* ── STEP 2: Verifikasi identitas / biometric ── */
-      setStep("step2", "active");
-      document.getElementById("step2").style.opacity = "1";
+      if (type === "bio") {
+        // Untuk biometric: step1 & step2 sudah berjalan di loginBiometric()
+        // Langsung tandai keduanya selesai, lanjut ke step3
+        setStep("step1", "done", "✓");
+        setStep("step2", "done", "✓");
+        document.getElementById("step2").style.opacity = "1";
+        document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
+        document.getElementById("loadingIcon").textContent = "🫆";
+      } else {
+        // Untuk PIN / register: jalankan device check step normal
+        setStep("step1", "active");
+        document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
+        document.getElementById("loadingIcon").textContent = "🔍";
+        await sleep(700);
+        setStep("step1", "done", "✓");
+        /* ── STEP 2: Verifikasi identitas ── */
+        setStep("step2", "active");
+        document.getElementById("step2").style.opacity = "1";
+      }
 
       let authResult;
       try {
@@ -4271,9 +4567,18 @@
       /* ── Masuk ke app ── */
       showAuthPage("app");
 
+      // Update nama user di header
+      const h1 = document.querySelector("header h1");
+      if (h1 && AUTH.nama) {
+        h1.innerHTML = `Keuangan Cerdas <span style="font-size:0.7rem;opacity:0.45;font-weight:400;"> · ${AUTH.nama}</span>`;
+      }
+
+      // Greeting toast
+      Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+
       // Tawarkan daftar sidik jari (hanya setelah login pin / register pertama kali)
       if (type !== "bio") {
-        await sleep(800);
+        await sleep(1200);
         offerBiometric();
       }
 
@@ -4335,19 +4640,34 @@
       authErr("loginErr", "");
       AUTH.deviceId = getOrCreateDeviceId();
 
-      // Tunjukkan loading dulu sebelum prompt biometric
+      // ── Tampilkan loading screen: step1 (device check) ──
       document.getElementById("loginForm").style.display = "none";
+      document.getElementById("forgotPinPanel").style.display = "none";
       document.getElementById("loginLoading").style.display = "";
+
+      // Reset semua step
+      ["step1","step2","step3"].forEach((s,i) => {
+        const el = document.getElementById(s);
+        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
+      });
+
+      document.getElementById("loadingTitle").textContent = "Login Sidik Jari";
+      document.getElementById("loadingSubtitle").textContent = "Memeriksa perangkat...";
+      document.getElementById("loadingIcon").textContent = "🔍";
+
+      setStep("step1", "active");
+      await sleep(500); // Singkat — hanya animasi transisi
       setStep("step1", "done", "✓");
+
+      // ── step2: prompt sidik jari ──
       setStep("step2", "active");
       document.getElementById("step2").style.opacity = "1";
-      document.getElementById("step2Txt").textContent = "Memverifikasi sidik jari...";
+      document.getElementById("step2Txt").textContent = "Tempelkan sidik jari...";
       document.getElementById("loadingIcon").textContent = "🫆";
       document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
-      document.getElementById("loadingSubtitle").textContent = "Tempelkan jari pada sensor...";
+      document.getElementById("loadingSubtitle").textContent = "Gunakan sidik jari atau wajah kamu";
 
       try {
-        // Decode credentialId dari base64url
         const credIdBytes = base64urlDecode(credId);
         const assertion = await navigator.credentials.get({
           publicKey: {
@@ -4362,6 +4682,12 @@
           }
         });
         if (!assertion) throw new Error("Verifikasi dibatalkan");
+
+        // ✓ Sidik jari OK — tandai step2 selesai lalu lanjut step3 via showAuthLoading
+        setStep("step2", "done", "✓");
+        document.getElementById("loadingSubtitle").textContent = "Sidik jari dikenali ✓";
+        await sleep(300);
+
         const credentialIdB64 = base64urlEncode(new Uint8Array(assertion.rawId));
         await showAuthLoading("bio", credentialIdB64);
       } catch(e) {
@@ -4369,7 +4695,13 @@
         await sleep(600);
         document.getElementById("loginLoading").style.display = "none";
         document.getElementById("loginForm").style.display = "";
-        authErr("loginErr", e.name === "NotAllowedError" ? "Verifikasi sidik jari dibatalkan" : (e.message || "Sidik jari gagal diverifikasi"));
+        if (e.name === "NotAllowedError") {
+          authErr("loginErr", "Verifikasi sidik jari dibatalkan");
+        } else if (e.name === "InvalidStateError") {
+          authErr("loginErr", "Sidik jari tidak cocok. Coba login dengan PIN.");
+        } else {
+          authErr("loginErr", e.message || "Sidik jari gagal diverifikasi");
+        }
       }
     }
 
@@ -4432,6 +4764,7 @@
         const cfg = getCfg();
         await rawCall(cfg.url, "registerBiometric", [AUTH.token, credentialIdB64, deviceId], cfg.token);
         localStorage.setItem(KC_CRED_KEY, credentialIdB64);
+        updateAkunUI();
 
         Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan! 🫆" });
       } catch(e) {
@@ -4439,6 +4772,66 @@
           Toast.fire({ icon: "info", title: "Sidik jari tidak bisa didaftarkan sekarang" });
         }
       }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       HAPUS BIOMETRIC
+    ════════════════════════════════════════════════════════════ */
+    async function hapusBiometric() {
+      const r = await Swal.fire({
+        title: "Hapus sidik jari?",
+        text: "Kamu harus login dengan PIN setelah ini.",
+        showCancelButton: true,
+        confirmButtonText: "Hapus",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#f43f5e",
+        customClass: { popup: "rounded-3xl" },
+      });
+      if (!r.isConfirmed) return;
+      localStorage.removeItem(KC_CRED_KEY);
+      updateAkunUI();
+      Toast.fire({ icon: "success", title: "Sidik jari dihapus dari perangkat ini" });
+    }
+
+    /* Ubah PIN dari halaman Pengaturan → arahkan ke forgot PIN flow */
+    async function ubahPin() {
+      const r = await Swal.fire({
+        title: "Ubah PIN?",
+        html: `<p style="color:#64748b;font-size:0.875rem;">Kode OTP akan dikirimkan ke email <strong>${AUTH.email || ""}</strong> untuk verifikasi.</p>`,
+        showCancelButton: true,
+        confirmButtonText: "Lanjutkan",
+        cancelButtonText: "Batal",
+        confirmButtonColor: "#6366f1",
+        customClass: { popup: "rounded-3xl" },
+      });
+      if (!r.isConfirmed) return;
+      // Arahkan ke login page dengan forgot PIN panel
+      showAuthPage("login");
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("loginLoading").style.display = "none";
+      document.getElementById("forgotPinPanel").style.display = "";
+      // Pre-fill email
+      document.getElementById("fpEmail").value = AUTH.email || "";
+      authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
+      fpPIN1.value = ""; fpPIN2.value = ""; _fpOtp = "";
+      showFpStep(1);
+      // Langsung kirim OTP
+      fpSendOtp();
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       UPDATE INFO AKUN DI HALAMAN PENGATURAN
+    ════════════════════════════════════════════════════════════ */
+    function updateAkunUI() {
+      const nama = document.getElementById("akunNama");
+      const email = document.getElementById("akunEmail");
+      const btnHapus = document.getElementById("btnHapusBio");
+      const btnDaftar = document.getElementById("btnDaftarBio");
+      if (nama) nama.textContent = AUTH.nama || "-";
+      if (email) email.textContent = AUTH.email || "-";
+      const hasBio = !!localStorage.getItem(KC_CRED_KEY);
+      if (btnHapus) btnHapus.classList.toggle("hidden", !hasBio);
+      if (btnDaftar) btnDaftar.classList.toggle("hidden", hasBio || !window.PublicKeyCredential);
     }
 
     /* ════════════════════════════════════════════════════════════
@@ -4476,6 +4869,262 @@
     }
 
     /* ════════════════════════════════════════════════════════════
+       OTP HELPERS
+    ════════════════════════════════════════════════════════════ */
+    const _otpTimers = {};
+
+    /** Countdown X detik, lalu tampilkan tombol resend */
+    function startOtpCountdown(secId, countdownId, resendBtnId, seconds) {
+      // Clear timer lama jika ada
+      if (_otpTimers[secId]) clearInterval(_otpTimers[secId]);
+      let rem = seconds;
+      const secEl = document.getElementById(secId);
+      const cdEl  = document.getElementById(countdownId);
+      const btnEl = document.getElementById(resendBtnId);
+      if (secEl) secEl.textContent = rem;
+      if (cdEl) cdEl.style.display = "";
+      if (btnEl) btnEl.style.display = "none";
+      _otpTimers[secId] = setInterval(() => {
+        rem--;
+        if (secEl) secEl.textContent = rem;
+        if (rem <= 0) {
+          clearInterval(_otpTimers[secId]);
+          if (cdEl) cdEl.style.display = "none";
+          if (btnEl) btnEl.style.display = "";
+        }
+      }, 1000);
+    }
+
+    /** Inisialisasi OTP box dengan auto-focus dan keyboard navigation */
+    function initOtpBoxes(containerId, onComplete) {
+      const boxes = document.querySelectorAll(`#${containerId} .otp-box`);
+      boxes.forEach((box, i) => {
+        box.addEventListener("input", e => {
+          const val = e.target.value.replace(/\D/g, "");
+          e.target.value = val.slice(0,1);
+          e.target.classList.toggle("filled", !!e.target.value);
+          if (val && i < boxes.length - 1) boxes[i+1].focus();
+          if (i === boxes.length - 1 && val) {
+            const otp = Array.from(boxes).map(b => b.value).join("");
+            if (otp.length === 6 && onComplete) setTimeout(() => onComplete(otp), 200);
+          }
+        });
+        box.addEventListener("keydown", e => {
+          if (e.key === "Backspace" && !box.value && i > 0) {
+            boxes[i-1].focus();
+            boxes[i-1].value = "";
+            boxes[i-1].classList.remove("filled");
+          }
+          if (e.key === "ArrowLeft" && i > 0) boxes[i-1].focus();
+          if (e.key === "ArrowRight" && i < boxes.length - 1) boxes[i+1].focus();
+        });
+        box.addEventListener("paste", e => {
+          e.preventDefault();
+          const text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"");
+          boxes.forEach((b, j) => {
+            b.value = text[j] || "";
+            b.classList.toggle("filled", !!b.value);
+          });
+          const filled = text.slice(0,6);
+          if (filled.length === 6 && onComplete) setTimeout(() => onComplete(filled), 200);
+          (boxes[Math.min(text.length, boxes.length-1)] || boxes[boxes.length-1]).focus();
+        });
+      });
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       LUPA PIN — FORGOT PIN FLOW
+    ════════════════════════════════════════════════════════════ */
+    const fpPIN1 = { value: "" };
+    const fpPIN2 = { value: "" };
+    let _fpOtp = "";
+
+    function showForgotPin() {
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("loginLoading").style.display = "none";
+      document.getElementById("forgotPinPanel").style.display = "";
+      authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
+      fpPIN1.value = ""; fpPIN2.value = "";
+      _fpOtp = "";
+      showFpStep(1);
+      // Pre-fill email jika ada
+      const lastEmail = localStorage.getItem(KC_EMAIL_KEY) || "";
+      document.getElementById("fpEmail").value = lastEmail;
+    }
+
+    function hideForgotPin() {
+      document.getElementById("forgotPinPanel").style.display = "none";
+      document.getElementById("loginForm").style.display = "";
+    }
+
+    function showFpStep(n) {
+      ["fpStep1","fpStep2","fpStep3","fpStep4"].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = (i+1 === n) ? "" : "none";
+      });
+      ["fpsd1","fpsd2","fpsd3","fpsd4"].forEach((id,i) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.style.background = i+1 <= n ? "#6366f1" : "rgba(255,255,255,0.2)";
+        el.style.width = i+1 === n ? "20px" : "8px";
+        el.style.borderRadius = "4px";
+      });
+    }
+
+    async function fpSendOtp(isResend) {
+      const email = document.getElementById("fpEmail").value.trim();
+      if (!isResend) {
+        if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+          return authErr("fpErr1","Format email tidak valid");
+        }
+        authErr("fpErr1","");
+      }
+      const btn = document.getElementById("fpSendBtn");
+      if (btn) { btn.disabled = true; btn.textContent = "Mengirim OTP..."; }
+
+      try {
+        const res = await rawAuthCall("sendOtpEmail", [email, "reset"]);
+        if (!res || res.status === "error") {
+          if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+          return authErr("fpErr1", (res && res.message) || "Gagal mengirim OTP");
+        }
+        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+
+        // Pindah ke step 2 (OTP input)
+        document.getElementById("fpEmailHint").textContent = email;
+        authErr("fpErr2","");
+        showFpStep(2);
+        // Clear dan init OTP boxes
+        buildFpOtpBoxes();
+        startOtpCountdown("fpResendSec","fpResendCountdown","fpResendBtn",60);
+      } catch(e) {
+        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+        authErr("fpErr1", e.message || "Gagal mengirim OTP");
+      }
+    }
+
+    function buildFpOtpBoxes() {
+      const cont = document.getElementById("fpOtpBoxes");
+      cont.innerHTML = "";
+      for (let i = 0; i < 6; i++) {
+        const inp = document.createElement("input");
+        inp.className = "otp-box";
+        inp.maxLength = 1;
+        inp.type = "text";
+        inp.inputMode = "numeric";
+        inp.pattern = "[0-9]";
+        cont.appendChild(inp);
+      }
+      initOtpBoxes("fpOtpBoxes", (otp) => { _fpOtp = otp; fpVerifyOtp(); });
+      cont.querySelector(".otp-box").focus();
+    }
+
+    async function fpVerifyOtp() {
+      const email = document.getElementById("fpEmail").value.trim();
+      const otp = _fpOtp || Array.from(document.querySelectorAll("#fpOtpBoxes .otp-box")).map(b => b.value).join("");
+      if (otp.length < 6) {
+        authErr("fpErr2","Masukkan 6 digit kode OTP");
+        document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
+        setTimeout(() => document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
+        return;
+      }
+      const btn = document.getElementById("fpVerifyBtn");
+      btn.disabled = true; btn.textContent = "Memverifikasi...";
+      authErr("fpErr2","");
+      try {
+        const res = await rawAuthCall("verifyOtp", [email, otp]);
+        if (!res || res.status === "error") {
+          authErr("fpErr2", (res && res.message) || "OTP salah");
+          document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
+          setTimeout(() => document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
+          btn.disabled = false; btn.textContent = "Verifikasi OTP";
+          _fpOtp = "";
+          return;
+        }
+        // OTP valid → simpan untuk dipakai di resetPin
+        _fpOtp = otp;
+        // Pindah ke step 3 (PIN baru)
+        fpPIN1.value = "";
+        updateDots("fpPinDots", 0);
+        authErr("fpErr3","");
+        showFpStep(3);
+      } catch(e) {
+        authErr("fpErr2", e.message || "Verifikasi gagal");
+        btn.disabled = false; btn.textContent = "Verifikasi OTP";
+      }
+    }
+
+    /* ── Forgot PIN PIN state ── */
+    function fpPinKey(k) {
+      if (fpPIN1.value.length >= 6) return;
+      fpPIN1.value += k;
+      updateDots("fpPinDots", fpPIN1.value.length);
+      if (fpPIN1.value.length === 6) setTimeout(() => {
+        updateDots("fpConfDots", 0);
+        fpPIN2.value = "";
+        authErr("fpErr4","");
+        showFpStep(4);
+      }, 280);
+    }
+    function fpPinDel() {
+      if (!fpPIN1.value.length) return;
+      fpPIN1.value = fpPIN1.value.slice(0,-1);
+      updateDots("fpPinDots", fpPIN1.value.length);
+    }
+    function fpConfKey(k) {
+      if (fpPIN2.value.length >= 6) return;
+      fpPIN2.value += k;
+      updateDots("fpConfDots", fpPIN2.value.length);
+      if (fpPIN2.value.length === 6) setTimeout(() => fpResetPin(), 280);
+    }
+    function fpConfDel() {
+      if (!fpPIN2.value.length) return;
+      fpPIN2.value = fpPIN2.value.slice(0,-1);
+      updateDots("fpConfDots", fpPIN2.value.length);
+    }
+
+    async function fpResetPin() {
+      if (fpPIN1.value !== fpPIN2.value) {
+        flashDotsError("fpConfDots");
+        authErr("fpErr4","PIN tidak cocok, coba lagi");
+        fpPIN2.value = "";
+        updateDots("fpConfDots", 0);
+        return;
+      }
+      const email = document.getElementById("fpEmail").value.trim();
+      const newPinHash = await sha256(fpPIN1.value);
+      authErr("fpErr4","");
+      // Disable UI sementara
+      const dots = document.querySelectorAll("#fpConfDots .pin-dot");
+      dots.forEach(d => d.style.opacity = "0.5");
+      try {
+        const res = await rawAuthCall("resetPin", [email, _fpOtp, newPinHash]);
+        if (!res || res.status === "error") {
+          dots.forEach(d => d.style.opacity = "");
+          flashDotsError("fpConfDots");
+          authErr("fpErr4", (res && res.message) || "Reset PIN gagal");
+          fpPIN2.value = ""; updateDots("fpConfDots", 0);
+          return;
+        }
+        // Sukses!
+        document.getElementById("forgotPinPanel").style.display = "none";
+        document.getElementById("loginForm").style.display = "";
+        await Swal.fire({
+          icon: "success",
+          title: "PIN berhasil direset! 🎉",
+          text: "Silakan login dengan PIN baru kamu.",
+          confirmButtonText: "Login sekarang",
+          confirmButtonColor: "#6366f1",
+          customClass: { popup: "rounded-3xl" },
+        });
+        showLogin();
+      } catch(e) {
+        dots.forEach(d => d.style.opacity = "");
+        authErr("fpErr4", e.message || "Reset PIN gagal");
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════════
        BASE64URL HELPERS (untuk WebAuthn)
     ════════════════════════════════════════════════════════════ */
     function base64urlEncode(buffer) {
@@ -4503,6 +5152,16 @@
 
       // Build keypad confirm PIN
       buildKeypad("regConfKeypad", "regConfDots", regConfKey, regConfDel);
+
+      // Build keypad forgot PIN (new PIN + confirm)
+      buildKeypad("fpPinKeypad", "fpPinDots", fpPinKey, fpPinDel);
+      buildKeypad("fpConfKeypad", "fpConfDots", fpConfKey, fpConfDel);
+
+      // Init OTP boxes untuk register (static boxes di HTML)
+      initOtpBoxes("regOtpBoxes", (otp) => {
+        // Auto-submit saat 6 digit terisi
+        regVerifyOtp();
+      });
 
       // Tambahkan tombol logout di header app
       const headerBtns = document.querySelector("header .flex.items-center.gap-2");
