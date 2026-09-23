@@ -14,8 +14,6 @@
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
-    <!-- Google Identity Services (GIS) untuk Google One Tap & Sign in with Google -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     
     <style type="text/tailwindcss">
       body {
@@ -706,75 +704,39 @@
       <div class="auth-blob auth-blob-2"></div>
       <div class="auth-blob auth-blob-3"></div>
 
-      <!-- State 1: Form Login / Masuk Utama (Google-First) -->
+      <!-- Panel 1: Login Form (Jika perangkat sudah terdaftar) -->
       <div id="loginForm" class="auth-card auth-fade-in">
         <!-- Logo & judul -->
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
           <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">💰</div>
           <div>
             <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Keuangan Cerdas</h1>
-            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Aplikasi Keuangan Pribadi Modern</p>
+            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Aplikasi Keuangan Pribadi</p>
           </div>
         </div>
 
-        <!-- Tombol & Akun Google Terhubung (Auto-Detect) -->
-        <div style="margin-bottom:18px;">
-          <!-- Kartu Akun Google yang Terdeteksi di Browser -->
-          <div id="detectedGoogleCard" onclick="startGoogleAuth(false)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:18px;padding:12px 14px;cursor:pointer;transition:all 0.2s ease;margin-bottom:10px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;">
-              <div style="display:flex;align-items:center;gap:12px;min-width:0;">
-                <div id="detectedAvatar" style="width:42px;height:42px;border-radius:50%;background:#4F46E5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.15rem;flex-shrink:0;box-shadow:0 2px 10px rgba(79,70,229,0.5);border:2px solid #818cf8;">J</div>
-                <div style="min-width:0;">
-                  <div style="display:flex;align-items:center;gap:6px;">
-                    <span id="detectedName" style="color:#fff;font-weight:700;font-size:0.92rem;">Jovandry Morgan</span>
-                    <span style="background:rgba(34,197,94,0.2);color:#4ade80;font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
-                      <span style="width:5px;height:5px;background:#4ade80;border-radius:50%;display:inline-block;"></span>Terdeteksi
-                    </span>
-                  </div>
-                  <div id="detectedEmail" style="color:#94a3b8;font-size:0.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jovandrymorganmereguju777@gmail.com</div>
-                </div>
-              </div>
-              <div style="color:#818cf8;font-weight:700;font-size:1.25rem;margin-left:8px;flex-shrink:0;">→</div>
-            </div>
-          </div>
-
-          <button class="g-btn" onclick="startGoogleAuth(false)" id="btnGoogleLogin" type="button">
-            <svg style="width:20px;height:20px;flex-shrink:0;" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-            <span id="btnGoogleText">Lanjutkan dengan Akun Google</span>
-          </button>
-          
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding:0 4px;">
-            <span style="font-size:0.72rem;color:rgba(255,255,255,0.4);">
-              Akun Google browser aktif
-            </span>
-            <button onclick="startGoogleAuth(true)" type="button" style="background:none;border:none;color:#818cf8;font-size:0.72rem;cursor:pointer;text-decoration:underline;">
-              Ganti akun
-            </button>
+        <!-- Badge Status Perangkat -->
+        <div id="deviceBadgeLogin" class="device-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac;margin-bottom:16px;">
+          <span style="font-size:1.3rem;flex-shrink:0;">📱</span>
+          <div style="min-width:0;">
+            <strong style="display:block;font-size:0.82rem;color:#86efac;">Perangkat Terdaftar</strong>
+            <span id="badgeDeviceDesc" style="font-size:0.75rem;color:rgba(255,255,255,0.7);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Perangkat dikenali di sistem</span>
           </div>
         </div>
-
-        <!-- Tombol biometric (muncul jika perangkat ini punya credential sidik jari) -->
-        <div id="bioSection" style="display:none;margin-bottom:8px;">
-          <button class="auth-btn auth-btn-bio" onclick="loginBiometric()" id="bioBtn" type="button">
-            <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;" id="bioIconWrap">
-              <span style="font-size:1.4rem;position:relative;z-index:2;">🫆</span>
-            </div>
-            <span id="bioBtnTxt">Masuk dengan Sidik Jari</span>
-          </button>
-        </div>
-
-        <div class="auth-divider">atau masuk dengan PIN</div>
 
         <!-- Email field -->
-        <div style="margin-bottom:12px;">
+        <div style="margin-bottom:14px;">
           <label class="auth-lbl">Email Akun</label>
           <input id="loginEmail" type="email" class="auth-inp" placeholder="email@gmail.com"
             autocomplete="email" oninput="authErr('loginErr','')" />
+        </div>
+
+        <!-- Tombol biometric jika ada -->
+        <div id="bioSection" style="display:none;margin-bottom:12px;">
+          <button class="auth-btn auth-btn-bio" onclick="loginBiometric()" id="bioBtn" type="button">
+            <span style="font-size:1.4rem;">🫆</span>
+            <span id="bioBtnTxt">Masuk dengan Sidik Jari</span>
+          </button>
         </div>
 
         <!-- PIN dots & label -->
@@ -797,8 +759,13 @@
           Masuk dengan PIN
         </button>
 
+        <!-- Pindah ke Daftar Baru -->
+        <p style="text-align:center;margin-top:14px;">
+          <button onclick="showRegister()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ Daftarkan Akun / Perangkat Baru</button>
+        </p>
+
         <!-- Lupa PIN -->
-        <p style="text-align:center;margin-top:10px;">
+        <p style="text-align:center;margin-top:8px;">
           <button onclick="showForgotPin()" type="button" style="color:rgba(255,255,255,0.4);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px;">Lupa PIN?</button>
         </p>
 
@@ -808,90 +775,75 @@
         </p>
       </div>
 
-      <!-- State 2: Setup PIN Baru (Saat Akun Google Baru Didaftarkan) -->
-      <div id="setupPinPanel" class="auth-card auth-fade-in" style="display:none;">
-        <div style="text-align:center;margin-bottom:16px;">
-          <img id="setupGooglePic" src="" alt="Avatar" style="width:60px;height:60px;border-radius:50%;margin:0 auto 10px;border:3px solid #6366f1;display:none;object-fit:cover;" />
-          <h2 id="setupGoogleName" style="color:#fff;font-size:1.15rem;font-weight:800;margin:0;">Pengguna Baru</h2>
-          <p id="setupGoogleEmail" style="color:#a5b4fc;font-size:0.8rem;margin-top:2px;">email@gmail.com</p>
-          <div style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);border-radius:12px;padding:8px 12px;margin-top:12px;">
-            <p style="color:#e0e7ff;font-size:0.78rem;margin:0;">🎉 Akun Google terhubung! Silakan buat <strong>PIN 6-digit</strong> untuk keamanan akun dan perangkat Anda.</p>
-          </div>
-        </div>
-
-        <!-- Step 1: Input PIN Baru -->
-        <div id="setupPinStep1">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.88rem;font-weight:600;">Buat PIN 6 Digit</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:2px;">PIN digunakan untuk login di perangkat ini atau perangkat lain</p>
-          </div>
-          <div class="pin-dots" id="setupPinDots1">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="setupKeypad1"></div>
-          <div id="setupPinErr1" class="auth-error"></div>
-        </div>
-
-        <!-- Step 2: Konfirmasi PIN Baru -->
-        <div id="setupPinStep2" style="display:none;">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.88rem;font-weight:600;">Konfirmasi PIN Anda</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.72rem;margin-top:2px;">Ketik ulang PIN 6 digit yang baru dibuat</p>
-          </div>
-          <div class="pin-dots" id="setupPinDots2">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="setupKeypad2"></div>
-          <div id="setupPinErr2" class="auth-error"></div>
-        </div>
-
-        <!-- Indikator Langkah -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:16px;">
-          <div id="spsd1" style="width:20px;height:8px;border-radius:4px;background:#6366f1;transition:all 0.3s;"></div>
-          <div id="spsd2" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-        </div>
-
-        <p style="text-align:center;margin-top:14px;">
-          <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Batal & Kembali</button>
-        </p>
-      </div>
-
-      <!-- State 3: Otorisasi Perangkat Baru (Device Challenge) -->
-      <div id="deviceChallengePanel" class="auth-card auth-fade-in" style="display:none;">
-        <div class="device-badge">
-          <span style="font-size:1.5rem;flex-shrink:0;">🛡️</span>
+      <!-- Panel 2: Register Form (Jika perangkat belum terdaftar) -->
+      <div id="registerPanel" class="auth-card auth-fade-in" style="display:none;">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">✨</div>
           <div>
-            <strong style="display:block;font-size:0.85rem;color:#fef3c7;">Perangkat Baru Terdeteksi!</strong>
-            Akses langsung dilarang demi keamanan akun Anda.
+            <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Daftar Akun</h1>
+            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Daftarkan email & perangkat Anda</p>
           </div>
         </div>
 
-        <div class="auth-user-badge">
-          <img id="challengeUserPic" src="" alt="Avatar" style="display:none;" />
-          <div style="min-width:0;">
-            <p id="challengeUserName" style="color:#fff;font-weight:700;font-size:0.9rem;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nama Pengguna</p>
-            <p id="challengeUserEmail" style="color:#a5b4fc;font-size:0.75rem;margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">email@gmail.com</p>
+        <div class="device-badge" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#c7d2fe;margin-bottom:16px;">
+          <span style="font-size:1.3rem;flex-shrink:0;">🛡️</span>
+          <div>
+            <strong style="display:block;font-size:0.82rem;color:#c7d2fe;">Pendaftaran Perangkat</strong>
+            <span style="font-size:0.75rem;color:rgba(255,255,255,0.7);">Perangkat ini akan otomatis terhubung ke akun Anda.</span>
           </div>
         </div>
 
-        <div style="text-align:center;margin-bottom:8px;">
-          <p style="color:rgba(255,255,255,0.85);font-size:0.88rem;font-weight:600;">Masukkan PIN Akun Anda</p>
-          <p style="color:rgba(255,255,255,0.45);font-size:0.75rem;margin-top:2px;">Jika PIN benar, perangkat ini akan otomatis terdaftar dan bisa digunakan.</p>
+        <!-- Input Email & Nama -->
+        <div style="margin-bottom:10px;">
+          <label class="auth-lbl">Email</label>
+          <input id="regEmail" type="email" class="auth-inp" placeholder="email@gmail.com" autocomplete="email" oninput="authErr('regErr','')" />
+        </div>
+        <div style="margin-bottom:14px;">
+          <label class="auth-lbl">Nama Lengkap</label>
+          <input id="regNama" type="text" class="auth-inp" placeholder="Nama Anda" autocomplete="name" oninput="authErr('regErr','')" />
         </div>
 
-        <div class="pin-dots" id="challengePinDots">
-          <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+        <!-- Step 1: Buat PIN -->
+        <div id="regPinStep1">
+          <div style="text-align:center;margin-bottom:6px;">
+            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Buat PIN 6 Digit</p>
+          </div>
+          <div class="pin-dots" id="regPinDots1">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+          </div>
+          <div class="keypad" id="regKeypad1"></div>
         </div>
 
-        <div class="keypad" id="challengeKeypad"></div>
+        <!-- Step 2: Konfirmasi PIN -->
+        <div id="regPinStep2" style="display:none;">
+          <div style="text-align:center;margin-bottom:6px;">
+            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Konfirmasi Ulang PIN 6 Digit</p>
+          </div>
+          <div class="pin-dots" id="regPinDots2">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+          </div>
+          <div class="keypad" id="regKeypad2"></div>
+        </div>
 
-        <div id="challengeErr" class="auth-error"></div>
+        <!-- Indikator Langkah PIN -->
+        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
+          <div id="regStepDot1" style="width:20px;height:8px;border-radius:4px;background:#6366f1;transition:all 0.3s;"></div>
+          <div id="regStepDot2" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
+        </div>
 
+        <!-- Error -->
+        <div id="regErr" class="auth-error"></div>
+
+        <!-- Pindah ke Login -->
         <p style="text-align:center;margin-top:16px;">
-          <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Batal & Kembali ke Login</button>
+          <button onclick="showLogin()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">← Sudah punya akun? Masuk di sini</button>
+        </p>
+
+        <!-- Link konfigurasi sheet -->
+        <p style="text-align:center;margin-top:8px;">
+          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
         </p>
       </div>
 
@@ -4197,11 +4149,11 @@
   <script>
     /* ── Konstanta storage ── */
     const KC_DEVICE_KEY   = "kc_deviceId";
-    const KC_SESSION_KEY  = "kc_session";       // sessionStorage (expires saat tab tutup)
-    const KC_USER_KEY     = "kc_user";          // localStorage
-    const KC_CRED_KEY     = "kc_bioCredId";     // localStorage (WebAuthn credentialId)
-    const KC_EMAIL_KEY    = "kc_lastEmail";     // localStorage
-    const KC_GOOGLE_CLIENT_ID_KEY = "kc_gClientId";
+    const KC_LOGGED_IN    = "kc_logged_in";
+    const KC_SESSION_KEY  = "kc_session";
+    const KC_USER_KEY     = "kc_user";
+    const KC_CRED_KEY     = "kc_bioCredId";
+    const KC_EMAIL_KEY    = "kc_lastEmail";
 
     /* ── State auth ── */
     const AUTH = {
@@ -4209,10 +4161,8 @@
       userId: null,
       nama: null,
       email: null,
-      picture: null,
       deviceId: null,
     };
-    let pendingGoogleUser = null; // Menyimpan data Google saat menunggu setup PIN / challenge PIN
 
     /* ── Utility ── */
     function authErr(id, msg) {
@@ -4220,15 +4170,6 @@
       if (!el) return;
       el.textContent = msg;
       el.classList.toggle("show", !!msg);
-    }
-
-    function escHtml(s) {
-      return String(s || "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
     }
 
     function getOrCreateDeviceId() {
@@ -4254,512 +4195,89 @@
       document.body.style.backgroundColor = (page === "app") ? "" : "#0f172a";
     }
 
-    function showLogin() {
+    async function checkDeviceState() {
+      const deviceId = getOrCreateDeviceId();
+      const cfg = getCfg();
+      if (!cfg.url) {
+        showLogin();
+        authErr("loginErr", "⚙️ Sambungkan ke Google Sheets terlebih dahulu");
+        return;
+      }
+      try {
+        const res = await rawAuthCall("checkDevice", [deviceId]);
+        if (res && res.isRegistered) {
+          showLogin(res.email, res.nama);
+        } else {
+          showRegister();
+        }
+      } catch (_) {
+        const savedEmail = localStorage.getItem(KC_EMAIL_KEY);
+        if (savedEmail) showLogin(savedEmail, localStorage.getItem(KC_USER_KEY));
+        else showRegister();
+      }
+    }
+
+    function showLogin(prefillEmail, prefillNama) {
       showAuthPage("login");
       document.getElementById("loginForm").style.display = "";
-      document.getElementById("setupPinPanel").style.display = "none";
-      document.getElementById("deviceChallengePanel").style.display = "none";
+      const reg = document.getElementById("registerPanel");
+      if (reg) reg.style.display = "none";
       document.getElementById("forgotPinPanel").style.display = "none";
       document.getElementById("loginLoading").style.display = "none";
 
-      const lastEmail = localStorage.getItem(KC_EMAIL_KEY) || "";
-      document.getElementById("loginEmail").value = lastEmail;
+      const email = prefillEmail || localStorage.getItem(KC_EMAIL_KEY) || "";
+      const nama = prefillNama || localStorage.getItem(KC_USER_KEY) || "";
+      document.getElementById("loginEmail").value = email;
+
+      const badgeDesc = document.getElementById("badgeDeviceDesc");
+      if (badgeDesc) {
+        badgeDesc.textContent = nama ? `Akun: ${nama} (${email})` : "Perangkat dikenali di sistem";
+      }
+
       authErr("loginErr", "");
       resetPinState(loginPIN);
       updateDots("loginPinDots", 0);
-      updateDetectedAccountUI();
       checkBioAvailability();
     }
 
-    /* ════════════════════════════════════════════════════════════
-       GOOGLE IDENTITY SERVICES (GIS) INTEGRATION
-    ════════════════════════════════════════════════════════════ */
-    function parseJwt(token) {
-      try {
-        const base64Url = token.split(".")[1];
-        const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-        const jsonPayload = decodeURIComponent(
-          atob(base64)
-            .split("")
-            .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-            .join("")
-        );
-        return JSON.parse(jsonPayload);
-      } catch (_) {
-        return null;
-      }
-    }
-
-    function hasValidGoogleClientId() {
-      const cid = (localStorage.getItem(KC_GOOGLE_CLIENT_ID_KEY) || "").trim();
-      return cid.length > 20 && !cid.toLowerCase().includes("dummy") && cid.endsWith(".apps.googleusercontent.com");
-    }
-
-    function initGoogleIdentity() {
-      const gBtnEl = document.getElementById("gSignInBtn");
-      // Hanya inisialisasi jika ada Client ID resmi dari Google Cloud Platform
-      if (!hasValidGoogleClientId()) {
-        if (gBtnEl) gBtnEl.innerHTML = "";
-        return;
-      }
-      if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
-        setTimeout(initGoogleIdentity, 600);
-        return;
-      }
-      const clientId = localStorage.getItem(KC_GOOGLE_CLIENT_ID_KEY);
-      try {
-        google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleGoogleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
-
-        if (gBtnEl) {
-          google.accounts.id.renderButton(gBtnEl, {
-            theme: "filled_blue",
-            size: "large",
-            shape: "pill",
-            text: "continue_with",
-            locale: "id",
-          });
-        }
-      } catch (e) {
-        console.log("GIS init note:", e.message);
-      }
-    }
-
-    async function handleGoogleCredentialResponse(response) {
-      if (!response || !response.credential) return;
-      const payload = parseJwt(response.credential);
-      if (!payload || !payload.email) {
-        Swal.fire("Error", "Gagal membaca kredensial akun Google", "error");
-        return;
-      }
-      await onGoogleAccountSelected({
-        email: payload.email,
-        nama: payload.name || payload.email.split("@")[0],
-        picture: payload.picture || "",
-        googleSub: payload.sub,
-      });
-    }
-
-    function getActiveGoogleAccount() {
-      let email = (localStorage.getItem(KC_EMAIL_KEY) || "").trim();
-      let nama = (localStorage.getItem(KC_USER_KEY) || "").trim();
-
-      // Akun Google browser aktif pengguna
-      if (!email) {
-        email = "jovandrymorganmereguju777@gmail.com";
-        nama = "Jovandry Morgan";
-        localStorage.setItem(KC_EMAIL_KEY, email);
-        localStorage.setItem(KC_USER_KEY, nama);
-      }
-      if (!nama) {
-        const rawPart = email.split("@")[0].replace(/[._-]/g, " ");
-        nama = rawPart.split(" ").filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Pengguna";
-      }
-      return { email, nama };
-    }
-
-    function updateDetectedAccountUI() {
-      const acct = getActiveGoogleAccount();
-      const elName = document.getElementById("detectedName");
-      const elEmail = document.getElementById("detectedEmail");
-      const elAvatar = document.getElementById("detectedAvatar");
-      const elBtnTxt = document.getElementById("btnGoogleText");
-      const elLoginEmail = document.getElementById("loginEmail");
-
-      if (elName) elName.textContent = acct.nama;
-      if (elEmail) elEmail.textContent = acct.email;
-      if (elAvatar) elAvatar.textContent = (acct.nama || acct.email || "J").charAt(0).toUpperCase();
-      if (elBtnTxt) elBtnTxt.textContent = `Lanjutkan sebagai ${acct.nama.split(" ")[0] || "Google"}`;
-      if (elLoginEmail && !elLoginEmail.value) elLoginEmail.value = acct.email;
-    }
-
-    async function startGoogleAuth(forceChange = false) {
-      const activeAcct = getActiveGoogleAccount();
-
-      // Jika user secara sengaja mengklik "Ganti akun":
-      if (forceChange) {
-        const { value: emailInput } = await Swal.fire({
-          title: "Ganti Akun Google",
-          html: `<div style="text-align:left;font-size:0.875rem;color:#64748b;margin-top:6px;">
-            <p style="margin-bottom:10px;line-height:1.4;">Masukkan alamat email Gmail yang ingin Anda gunakan di browser ini:</p>
-            <input id="swalGoogleEmail" class="inp" type="email" placeholder="nama@gmail.com" value="${escHtml(activeAcct.email)}" autocomplete="email" style="font-size:0.95rem;padding:10px 14px;">
-          </div>`,
-          showCancelButton: true,
-          confirmButtonText: "Pilih Akun Ini →",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#4F46E5",
-          customClass: { popup: "rounded-3xl" },
-          didOpen: () => {
-            const inp = document.getElementById("swalGoogleEmail");
-            if (inp) { inp.focus(); inp.select(); }
-          },
-          preConfirm: () => {
-            const em = document.getElementById("swalGoogleEmail").value.trim();
-            if (!em || !/^[^@]+@[^@]+\.[^@]+$/.test(em)) {
-              Swal.showValidationMessage("Format email Google (Gmail) tidak valid");
-              return false;
-            }
-            return em;
-          },
-        });
-        if (!emailInput) return;
-        const rawPart = emailInput.split("@")[0].replace(/[._-]/g, " ");
-        const nama = rawPart.split(" ").filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Pengguna";
-        localStorage.setItem(KC_EMAIL_KEY, emailInput);
-        localStorage.setItem(KC_USER_KEY, nama);
-        updateDetectedAccountUI();
-        await onGoogleAccountSelected({
-          email: emailInput,
-          nama: nama,
-          picture: "",
-          googleSub: "browser-" + Date.now(),
-        });
-        return;
-      }
-
-      // ── AKUN OTOMATIS: LANGSUNG PROSES TANPA INPUT APAPUN ──
-      await onGoogleAccountSelected({
-        email: activeAcct.email,
-        nama: activeAcct.nama,
-        picture: "",
-        googleSub: "browser-" + Date.now(),
-      });
-    }
-
-    async function onGoogleAccountSelected(payload) {
-      pendingGoogleUser = payload;
-      const deviceId = getOrCreateDeviceId();
-      AUTH.deviceId = deviceId;
-
+    function showRegister() {
+      showAuthPage("login");
       document.getElementById("loginForm").style.display = "none";
-      document.getElementById("setupPinPanel").style.display = "none";
-      document.getElementById("deviceChallengePanel").style.display = "none";
+      const reg = document.getElementById("registerPanel");
+      if (reg) reg.style.display = "";
       document.getElementById("forgotPinPanel").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
+      document.getElementById("loginLoading").style.display = "none";
 
-      setStep("step1", "active");
-      document.getElementById("loadingTitle").textContent = "Memeriksa Akun Google";
-      document.getElementById("loadingSubtitle").textContent = "Mendeteksi status akun & perangkat...";
-      document.getElementById("loadingIcon").textContent = "🔍";
+      document.getElementById("regEmail").value = localStorage.getItem(KC_EMAIL_KEY) || "";
+      document.getElementById("regNama").value = localStorage.getItem(KC_USER_KEY) || "";
+      authErr("regErr", "");
+      resetPinState(regPIN1);
+      resetPinState(regPIN2);
+      updateDots("regPinDots1", 0);
+      updateDots("regPinDots2", 0);
+      showRegStep(1);
+    }
 
-      try {
-        const res = await rawAuthCall("googleAuthCheck", [payload, deviceId]);
-        if (!res || res.status === "error") {
-          throw new Error((res && res.message) || "Gagal memeriksa akun");
-        }
-
-        setStep("step1", "done", "✓");
-
-        // KASUS 1: AKUN BARU -> Minta buat PIN 6-digit
-        if (res.isNewUser) {
-          await sleep(350);
-          document.getElementById("loginLoading").style.display = "none";
-          openSetupPinPanel(payload);
-          return;
-        }
-
-        // KASUS 2: PERANGKAT BARU / LAIN -> Dilarang langsung masuk, minta PIN untuk otorisasi
-        if (res.requiresPinChallenge || !res.isAuthorizedDevice) {
-          await sleep(350);
-          document.getElementById("loginLoading").style.display = "none";
-          openDeviceChallengePanel(res);
-          return;
-        }
-
-        // KASUS 3: PERANGKAT SUDAH TERDAFTAR (Authorized Device)
-        document.getElementById("loginEmail").value = res.email;
-        localStorage.setItem(KC_EMAIL_KEY, res.email);
-
-        if (res.hasBio && localStorage.getItem(KC_CRED_KEY)) {
-          await sleep(250);
-          loginBiometric();
-          return;
-        }
-
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        authErr("loginErr", "");
-        loginPIN.value = "";
-        updateDots("loginPinDots", 0);
-        Toast.fire({ icon: "info", title: `Halo ${res.nama}! Silakan masukkan PIN Anda.` });
-      } catch (e) {
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        authErr("loginErr", e.message || "Gagal memproses akun Google");
+    function showRegStep(step) {
+      const s1 = document.getElementById("regPinStep1");
+      const s2 = document.getElementById("regPinStep2");
+      if (s1) s1.style.display = step === 1 ? "" : "none";
+      if (s2) s2.style.display = step === 2 ? "" : "none";
+      const d1 = document.getElementById("regStepDot1");
+      const d2 = document.getElementById("regStepDot2");
+      if (d1) {
+        d1.style.background = step >= 1 ? "#6366f1" : "rgba(255,255,255,0.2)";
+        d1.style.width = step === 1 ? "20px" : "8px";
+      }
+      if (d2) {
+        d2.style.background = step >= 2 ? "#6366f1" : "rgba(255,255,255,0.2)";
+        d2.style.width = step === 2 ? "20px" : "8px";
       }
     }
 
     /* ════════════════════════════════════════════════════════════
-       PANEL: SETUP PIN AKUN BARU
-    ════════════════════════════════════════════════════════════ */
-    const setupPIN1 = { value: "" };
-    const setupPIN2 = { value: "" };
-    let setupStep = 1;
-
-    function openSetupPinPanel(googleData) {
-      document.getElementById("setupPinPanel").style.display = "";
-      document.getElementById("setupGoogleName").textContent = googleData.nama || "Pengguna";
-      document.getElementById("setupGoogleEmail").textContent = googleData.email || "";
-      const picEl = document.getElementById("setupGooglePic");
-      if (googleData.picture) {
-        picEl.src = googleData.picture;
-      } else {
-        const initial = (googleData.nama || googleData.email || "U").charAt(0).toUpperCase();
-        picEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="%234F46E5"/><text x="50%" y="54%" font-size="26" font-family="sans-serif" font-weight="bold" fill="white" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`;
-      }
-      picEl.style.display = "block";
-      setupPIN1.value = "";
-      setupPIN2.value = "";
-      updateDots("setupPinDots1", 0);
-      updateDots("setupPinDots2", 0);
-      authErr("setupPinErr1", "");
-      authErr("setupPinErr2", "");
-      showSetupStep(1);
-    }
-
-    function showSetupStep(n) {
-      setupStep = n;
-      document.getElementById("setupPinStep1").style.display = n === 1 ? "" : "none";
-      document.getElementById("setupPinStep2").style.display = n === 2 ? "" : "none";
-      document.getElementById("spsd1").style.background = n >= 1 ? "#6366f1" : "rgba(255,255,255,0.2)";
-      document.getElementById("spsd1").style.width = n === 1 ? "20px" : "8px";
-      document.getElementById("spsd2").style.background = n >= 2 ? "#6366f1" : "rgba(255,255,255,0.2)";
-      document.getElementById("spsd2").style.width = n === 2 ? "20px" : "8px";
-    }
-
-    function setupPinKey1(k) {
-      if (setupPIN1.value.length >= 6) return;
-      setupPIN1.value += k;
-      updateDots("setupPinDots1", setupPIN1.value.length);
-      if (setupPIN1.value.length === 6) {
-        setTimeout(() => showSetupStep(2), 220);
-      }
-    }
-    function setupPinDel1() {
-      if (!setupPIN1.value.length) return;
-      setupPIN1.value = setupPIN1.value.slice(0, -1);
-      updateDots("setupPinDots1", setupPIN1.value.length);
-    }
-
-    function setupPinKey2(k) {
-      if (setupPIN2.value.length >= 6) return;
-      setupPIN2.value += k;
-      updateDots("setupPinDots2", setupPIN2.value.length);
-      if (setupPIN2.value.length === 6) {
-        setTimeout(() => completeSetupNewUser(), 220);
-      }
-    }
-    function setupPinDel2() {
-      if (!setupPIN2.value.length) return;
-      setupPIN2.value = setupPIN2.value.slice(0, -1);
-      updateDots("setupPinDots2", setupPIN2.value.length);
-    }
-
-    async function completeSetupNewUser() {
-      if (setupPIN1.value !== setupPIN2.value) {
-        flashDotsError("setupPinDots2");
-        authErr("setupPinErr2", "PIN konfirmasi tidak cocok, coba lagi");
-        setupPIN2.value = "";
-        updateDots("setupPinDots2", 0);
-        return;
-      }
-      authErr("setupPinErr2", "");
-      const pinHash = await sha256(setupPIN1.value);
-      const deviceId = getOrCreateDeviceId();
-      AUTH.deviceId = deviceId;
-
-      document.getElementById("setupPinPanel").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
-
-      setStep("step1", "done", "✓");
-      setStep("step2", "active");
-      document.getElementById("step2").style.opacity = "1";
-      document.getElementById("step2Txt").textContent = "Mendaftarkan akun & perangkat...";
-      document.getElementById("loadingTitle").textContent = "Membuat Akun Baru";
-      document.getElementById("loadingIcon").textContent = "✨";
-
-      try {
-        const res = await rawAuthCall("googleRegisterWithPin", [pendingGoogleUser, pinHash, deviceId]);
-        if (!res || res.status === "error") {
-          throw new Error((res && res.message) || "Gagal membuat akun");
-        }
-
-        setStep("step2", "done", "✓");
-
-        AUTH.token = res.token;
-        AUTH.userId = res.userId;
-        AUTH.nama = res.nama;
-        AUTH.email = res.email;
-        AUTH.picture = res.picture || "";
-        AUTH.deviceId = deviceId;
-
-        sessionStorage.setItem(
-          KC_SESSION_KEY,
-          JSON.stringify({
-            token: AUTH.token,
-            userId: AUTH.userId,
-            nama: AUTH.nama,
-            email: AUTH.email,
-            picture: AUTH.picture,
-            expiresAt: res.expiresAt,
-          })
-        );
-        localStorage.setItem(KC_EMAIL_KEY, AUTH.email);
-
-        // Step 3: Muat data pribadi
-        setStep("step3", "active");
-        document.getElementById("step3").style.opacity = "1";
-        document.getElementById("loadingTitle").textContent = "Menyiapkan Dashboard";
-        document.getElementById("loadingIcon").textContent = "📊";
-
-        const ok = await refresh(true);
-        if (!ok) {
-          setStep("step3", "error", "✕");
-          await sleep(500);
-          document.getElementById("loginLoading").style.display = "none";
-          document.getElementById("setupPinPanel").style.display = "";
-          authErr("setupPinErr2", "Gagal memuat data Sheet. Periksa URL Google Sheets.");
-          return;
-        }
-
-        setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
-        await sleep(350);
-
-        showAuthPage("app");
-        updateHeaderUser(AUTH.nama, AUTH.picture);
-        Toast.fire({ icon: "success", title: `Selamat datang, ${AUTH.nama}! Akun Anda telah siap. 🎉` });
-
-        await sleep(800);
-        offerBiometric();
-
-        await initApp();
-      } catch (e) {
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("setupPinPanel").style.display = "";
-        authErr("setupPinErr2", e.message || "Gagal menyelesaikan pendaftaran");
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       PANEL: OTORISASI PERANGKAT BARU (DEVICE CHALLENGE)
-    ════════════════════════════════════════════════════════════ */
-    const challengePIN = { value: "" };
-
-    function openDeviceChallengePanel(userRes) {
-      document.getElementById("deviceChallengePanel").style.display = "";
-      document.getElementById("challengeUserName").textContent = userRes.nama || "Pengguna";
-      document.getElementById("challengeUserEmail").textContent = userRes.email || "";
-      const picEl = document.getElementById("challengeUserPic");
-      if (userRes.picture) {
-        picEl.src = userRes.picture;
-      } else {
-        const initial = (userRes.nama || userRes.email || "U").charAt(0).toUpperCase();
-        picEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="%234F46E5"/><text x="50%" y="54%" font-size="26" font-family="sans-serif" font-weight="bold" fill="white" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`;
-      }
-      picEl.style.display = "block";
-      challengePIN.value = "";
-      updateDots("challengePinDots", 0);
-      authErr("challengeErr", "");
-    }
-
-    function challengePinKey(k) {
-      if (challengePIN.value.length >= 6) return;
-      challengePIN.value += k;
-      updateDots("challengePinDots", challengePIN.value.length);
-      if (challengePIN.value.length === 6) {
-        setTimeout(() => submitDeviceChallenge(), 220);
-      }
-    }
-    function challengePinDel() {
-      if (!challengePIN.value.length) return;
-      challengePIN.value = challengePIN.value.slice(0, -1);
-      updateDots("challengePinDots", challengePIN.value.length);
-    }
-
-    async function submitDeviceChallenge() {
-      const email = pendingGoogleUser ? pendingGoogleUser.email : document.getElementById("loginEmail").value.trim();
-      const pinHash = await sha256(challengePIN.value);
-      const deviceId = getOrCreateDeviceId();
-
-      authErr("challengeErr", "");
-      const dots = document.querySelectorAll("#challengePinDots .pin-dot");
-      dots.forEach((d) => (d.style.opacity = "0.5"));
-
-      try {
-        const res = await rawAuthCall("verifyNewDeviceWithPin", [email, pinHash, deviceId]);
-        dots.forEach((d) => (d.style.opacity = ""));
-
-        if (!res || res.status === "error") {
-          flashDotsError("challengePinDots");
-          challengePIN.value = "";
-          updateDots("challengePinDots", 0);
-          authErr("challengeErr", (res && res.message) || "PIN salah! Akses dari perangkat ini ditolak.");
-          return;
-        }
-
-        // PIN BENAR -> Perangkat berhasil diotorisasi dan didaftarkan!
-        document.getElementById("deviceChallengePanel").style.display = "none";
-        document.getElementById("loginLoading").style.display = "";
-
-        setStep("step1", "done", "✓");
-        setStep("step2", "done", "✓");
-        document.getElementById("step2").style.opacity = "1";
-        setStep("step3", "active");
-        document.getElementById("step3").style.opacity = "1";
-        document.getElementById("loadingTitle").textContent = "Perangkat Berhasil Diotorisasi";
-        document.getElementById("loadingSubtitle").textContent = "Memuat data keuangan pribadi Anda...";
-        document.getElementById("loadingIcon").textContent = "🛡️";
-
-        AUTH.token = res.token;
-        AUTH.userId = res.userId;
-        AUTH.nama = res.nama;
-        AUTH.email = res.email;
-        AUTH.picture = res.picture || "";
-        AUTH.deviceId = deviceId;
-
-        sessionStorage.setItem(
-          KC_SESSION_KEY,
-          JSON.stringify({
-            token: AUTH.token,
-            userId: AUTH.userId,
-            nama: AUTH.nama,
-            email: AUTH.email,
-            picture: AUTH.picture,
-            expiresAt: res.expiresAt,
-          })
-        );
-        localStorage.setItem(KC_EMAIL_KEY, AUTH.email);
-
-        await refresh(true);
-
-        setStep("step3", "done", "✓");
-        await sleep(350);
-
-        showAuthPage("app");
-        updateHeaderUser(AUTH.nama, AUTH.picture);
-        Toast.fire({ icon: "success", title: "Perangkat ini telah terdaftar & terhubung! 🛡️" });
-
-        await sleep(800);
-        offerBiometric();
-
-        await initApp();
-      } catch (e) {
-        dots.forEach((d) => (d.style.opacity = ""));
-        flashDotsError("challengePinDots");
-        challengePIN.value = "";
-        updateDots("challengePinDots", 0);
-        authErr("challengeErr", e.message || "Verifikasi gagal");
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       KEYPAD PIN BUILDER
-    ════════════════════════════════════════════════════════════ */
+       KEYPAD PIN BUILDER & STATES
+     ════════════════════════════════════════════════════════════ */
     function buildKeypad(containerId, dotsId, onComplete, onDel) {
       const container = document.getElementById(containerId);
       if (!container) return;
@@ -4795,29 +4313,59 @@
       dots.forEach(d => { d.classList.add("error"); setTimeout(() => d.classList.remove("error"), 500); });
     }
 
-    /* ─── Login PIN state ─── */
-    const loginPIN = { value: "" };
-
     function resetPinState(state) { state.value = ""; }
 
-    function loginPinKey(k, done) {
+    /* Login PIN */
+    const loginPIN = { value: "" };
+    function loginPinKey(k) {
       if (loginPIN.value.length >= 6) return;
       loginPIN.value += k;
       updateDots("loginPinDots", loginPIN.value.length);
-      if (loginPIN.value.length === 6) {
-        // Auto-submit setelah PIN lengkap
-        setTimeout(() => loginWithPin(), 220);
-      }
+      if (loginPIN.value.length === 6) setTimeout(() => loginWithPin(), 200);
     }
     function loginPinDel() {
       if (!loginPIN.value.length) return;
-      loginPIN.value = loginPIN.value.slice(0,-1);
+      loginPIN.value = loginPIN.value.slice(0, -1);
       updateDots("loginPinDots", loginPIN.value.length);
+    }
+
+    /* Register PIN step 1 */
+    const regPIN1 = { value: "" };
+    function regPinKey1(k) {
+      if (regPIN1.value.length >= 6) return;
+      regPIN1.value += k;
+      updateDots("regPinDots1", regPIN1.value.length);
+      if (regPIN1.value.length === 6) {
+        setTimeout(() => {
+          showRegStep(2);
+        }, 220);
+      }
+    }
+    function regPinDel1() {
+      if (!regPIN1.value.length) return;
+      regPIN1.value = regPIN1.value.slice(0, -1);
+      updateDots("regPinDots1", regPIN1.value.length);
+    }
+
+    /* Register PIN step 2 */
+    const regPIN2 = { value: "" };
+    function regPinKey2(k) {
+      if (regPIN2.value.length >= 6) return;
+      regPIN2.value += k;
+      updateDots("regPinDots2", regPIN2.value.length);
+      if (regPIN2.value.length === 6) {
+        setTimeout(() => submitRegister(), 220);
+      }
+    }
+    function regPinDel2() {
+      if (!regPIN2.value.length) return;
+      regPIN2.value = regPIN2.value.slice(0, -1);
+      updateDots("regPinDots2", regPIN2.value.length);
     }
 
     /* ════════════════════════════════════════════════════════════
        AUTH LOADING & STEPS UI
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     function setStep(stepId, state, iconContent) {
       const el = document.getElementById(stepId);
       if (!el) return;
@@ -4833,173 +4381,196 @@
       }
     }
 
-    async function showAuthLoading(type, extra) {
-      // Ganti tampilan: sembunyikan form, tampilkan loading
-      document.getElementById("loginForm").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
-
-      // Reset steps
-      ["step1","step2","step3"].forEach((s,i) => {
-        const el = document.getElementById(s);
-        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
-      });
-
-      const deviceId = AUTH.deviceId || getOrCreateDeviceId();
-
-      /* ── STEP 1: Cek ID perangkat ── */
-      document.getElementById("step2Txt").textContent =
-        type === "bio" ? "Memverifikasi sidik jari..." : "Memverifikasi identitas...";
-
-      if (type === "bio") {
-        // Untuk biometric: step1 & step2 sudah berjalan di loginBiometric()
-        // Langsung tandai keduanya selesai, lanjut ke step3
-        setStep("step1", "done", "✓");
-        setStep("step2", "done", "✓");
-        document.getElementById("step2").style.opacity = "1";
-        document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
-        document.getElementById("loadingIcon").textContent = "🫆";
-      } else {
-        // Untuk PIN / register: jalankan device check step normal
-        setStep("step1", "active");
-        document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
-        document.getElementById("loadingIcon").textContent = "🔍";
-        await sleep(700);
-        setStep("step1", "done", "✓");
-        /* ── STEP 2: Verifikasi identitas ── */
-        setStep("step2", "active");
-        document.getElementById("step2").style.opacity = "1";
-      }
-
-      let authResult;
-      try {
-        if (type === "pin") {
-          const email = document.getElementById("loginEmail").value.trim();
-          // extra = pinHash
-          authResult = await rawAuthCall("loginWithPin", [email, extra, deviceId]);
-        } else if (type === "bio") {
-          // extra = credentialId
-          document.getElementById("loadingIcon").textContent = "🫆";
-          document.getElementById("loadingSubtitle").textContent = "Tempelkan jari pada sensor...";
-          authResult = await rawAuthCall("loginWithBiometric", [extra, deviceId]);
-        }
-      } catch(e) {
-        // Error auth → kembali ke form
-        setStep("step2", "error", "✕");
-        await sleep(600);
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        resetPinState(loginPIN);
-        updateDots("loginPinDots", 0);
-        authErr("loginErr", e.message || "Login gagal, coba lagi");
-        flashDotsError("loginPinDots");
-        return;
-      }
-
-      if (!authResult || authResult.status === "error") {
-        setStep("step2", "error", "✕");
-        await sleep(600);
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        resetPinState(loginPIN);
-        updateDots("loginPinDots", 0);
-        authErr("loginErr", (authResult && authResult.message) || "Login gagal");
-        flashDotsError("loginPinDots");
-        return;
-      }
-
-      setStep("step2", "done", "✓");
-
-      // Simpan auth data
-      AUTH.token   = authResult.token;
-      AUTH.userId  = authResult.userId;
-      AUTH.nama    = authResult.nama;
-      AUTH.email   = authResult.email;
-      AUTH.deviceId = deviceId;
-      sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
-        token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
-        email: AUTH.email, expiresAt: authResult.expiresAt
-      }));
-      localStorage.setItem(KC_EMAIL_KEY, AUTH.email);
-
-      document.getElementById("loadingIcon").textContent = "📊";
-      document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
-      document.getElementById("loadingSubtitle").textContent = "Hampir selesai...";
-
-      /* ── STEP 3: Muat data ── */
-      setStep("step3", "active");
-      document.getElementById("step3").style.opacity = "1";
-
-      // Pastikan config sheet tersedia
-      if (!(await ensureCfg()).url) {
-        await openSambungan(true);
-      }
-
-      const ok = await refresh(true);
-      if (!ok) {
-        setStep("step3", "error", "✕");
-        await sleep(600);
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        authErr("loginErr", "Gagal memuat data Sheet. Periksa sambungan.");
-        return;
-      }
-
-      setStep("step3", "done", "✓");
-      document.getElementById("loadingIcon").textContent = "✅";
-      await sleep(500);
-
-      /* ── Masuk ke app ── */
-      showAuthPage("app");
-
-      // Update nama user di header
-      const h1 = document.querySelector("header h1");
-      if (h1 && AUTH.nama) {
-        h1.innerHTML = `Keuangan Cerdas <span style="font-size:0.7rem;opacity:0.45;font-weight:400;"> · ${AUTH.nama}</span>`;
-      }
-
-      // Greeting toast
-      Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
-
-      // Tawarkan daftar sidik jari (hanya setelah login pin / register pertama kali)
-      if (type !== "bio") {
-        await sleep(1200);
-        offerBiometric();
-      }
-
-      await initApp();
-    }
-
     /* ════════════════════════════════════════════════════════════
        LOGIN DENGAN PIN
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     async function loginWithPin() {
       const email = document.getElementById("loginEmail").value.trim();
-      if (!email) { authErr("loginErr", "Masukkan email kamu"); return; }
+      if (!email) { authErr("loginErr", "Masukkan email akun kamu"); return; }
       if (loginPIN.value.length < 6) {
         authErr("loginErr", "Masukkan PIN 6 digit");
         flashDotsError("loginPinDots");
         return;
       }
       authErr("loginErr", "");
-      AUTH.deviceId = getOrCreateDeviceId();
+      const deviceId = getOrCreateDeviceId();
       const pinHash = await sha256(loginPIN.value);
-      await showAuthLoading("pin", pinHash);
+
+      document.getElementById("loginForm").style.display = "none";
+      document.getElementById("loginLoading").style.display = "";
+      document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
+      document.getElementById("loadingSubtitle").textContent = "Memeriksa PIN akun...";
+      document.getElementById("loadingIcon").textContent = "🔍";
+
+      ["step1","step2","step3"].forEach((s,i) => {
+        const el = document.getElementById(s);
+        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
+      });
+      setStep("step1", "active");
+
+      try {
+        const res = await rawAuthCall("loginWithPin", [email, pinHash, deviceId]);
+        if (!res || res.status === "error") {
+          throw new Error((res && res.message) || "PIN salah atau email belum terdaftar");
+        }
+
+        setStep("step1", "done", "✓");
+        setStep("step2", "active");
+        document.getElementById("step2").style.opacity = "1";
+
+        // Simpan status login permanen: REFRESH TIDAK PERLU LOGIN ULANG!
+        localStorage.setItem(KC_LOGGED_IN, "true");
+        localStorage.setItem(KC_EMAIL_KEY, res.email);
+        localStorage.setItem(KC_USER_KEY, res.nama);
+        if (res.userId) localStorage.setItem("kc_userId", res.userId);
+
+        AUTH.token    = res.token;
+        AUTH.userId   = res.userId;
+        AUTH.nama     = res.nama;
+        AUTH.email    = res.email;
+        AUTH.deviceId = deviceId;
+
+        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
+          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
+          email: AUTH.email, expiresAt: res.expiresAt
+        }));
+
+        setStep("step2", "done", "✓");
+        setStep("step3", "active");
+        document.getElementById("step3").style.opacity = "1";
+        document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
+
+        await refresh(true);
+
+        setStep("step3", "done", "✓");
+        document.getElementById("loadingIcon").textContent = "✅";
+        await sleep(350);
+
+        showAuthPage("app");
+        updateHeaderUser(AUTH.nama);
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+
+        offerBiometric();
+        await initApp();
+      } catch (e) {
+        document.getElementById("loginLoading").style.display = "none";
+        document.getElementById("loginForm").style.display = "";
+        resetPinState(loginPIN);
+        updateDots("loginPinDots", 0);
+        authErr("loginErr", e.message || "Login gagal, silakan coba lagi");
+        flashDotsError("loginPinDots");
+      }
+    }
+
+    /* ════════════════════════════════════════════════════════════
+       DAFTAR AKUN & DAFTARKAN PERANGKAT
+     ════════════════════════════════════════════════════════════ */
+    async function submitRegister() {
+      const email = document.getElementById("regEmail").value.trim().toLowerCase();
+      const nama  = document.getElementById("regNama").value.trim();
+      if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
+        authErr("regErr", "Masukkan format email yang valid");
+        return;
+      }
+      if (!nama) {
+        authErr("regErr", "Masukkan nama lengkap Anda");
+        return;
+      }
+      if (regPIN1.value.length < 6) {
+        authErr("regErr", "Buat PIN 6 digit terlebih dahulu");
+        return;
+      }
+      if (regPIN1.value !== regPIN2.value) {
+        flashDotsError("regPinDots2");
+        authErr("regErr", "PIN konfirmasi tidak cocok, silakan ulangi");
+        regPIN2.value = "";
+        updateDots("regPinDots2", 0);
+        return;
+      }
+
+      authErr("regErr", "");
+      const deviceId = getOrCreateDeviceId();
+      const pinHash = await sha256(regPIN1.value);
+
+      const reg = document.getElementById("registerPanel");
+      if (reg) reg.style.display = "none";
+      document.getElementById("loginLoading").style.display = "";
+      document.getElementById("loadingTitle").textContent = "Mendaftarkan Akun & Perangkat";
+      document.getElementById("loadingSubtitle").textContent = "Menyimpan data akun Anda...";
+      document.getElementById("loadingIcon").textContent = "✨";
+
+      ["step1","step2","step3"].forEach((s,i) => {
+        const el = document.getElementById(s);
+        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
+      });
+      setStep("step1", "active");
+
+      try {
+        const res = await rawAuthCall("registerUser", [email, nama, pinHash, deviceId]);
+        if (!res || res.status === "error") {
+          throw new Error((res && res.message) || "Gagal mendaftarkan akun");
+        }
+
+        setStep("step1", "done", "✓");
+        setStep("step2", "active");
+        document.getElementById("step2").style.opacity = "1";
+
+        // Simpan status login permanen: REFRESH TIDAK PERLU LOGIN ULANG!
+        localStorage.setItem(KC_LOGGED_IN, "true");
+        localStorage.setItem(KC_EMAIL_KEY, res.email);
+        localStorage.setItem(KC_USER_KEY, res.nama);
+        if (res.userId) localStorage.setItem("kc_userId", res.userId);
+
+        AUTH.token    = res.token;
+        AUTH.userId   = res.userId;
+        AUTH.nama     = res.nama;
+        AUTH.email    = res.email;
+        AUTH.deviceId = deviceId;
+
+        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
+          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
+          email: AUTH.email, expiresAt: res.expiresAt
+        }));
+
+        setStep("step2", "done", "✓");
+        setStep("step3", "active");
+        document.getElementById("step3").style.opacity = "1";
+        document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
+
+        await refresh(true);
+
+        setStep("step3", "done", "✓");
+        document.getElementById("loadingIcon").textContent = "✅";
+        await sleep(350);
+
+        showAuthPage("app");
+        updateHeaderUser(AUTH.nama);
+        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar! 🎉`, timer: 2500 });
+
+        offerBiometric();
+        await initApp();
+      } catch (e) {
+        document.getElementById("loginLoading").style.display = "none";
+        const regPanel = document.getElementById("registerPanel");
+        if (regPanel) regPanel.style.display = "";
+        authErr("regErr", e.message || "Gagal mendaftarkan akun");
+      }
     }
 
     /* ════════════════════════════════════════════════════════════
        LOGIN DENGAN BIOMETRIC (WebAuthn)
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     async function checkBioAvailability() {
       const credId = localStorage.getItem(KC_CRED_KEY);
       const deviceId = getOrCreateDeviceId();
       const bioSection = document.getElementById("bioSection");
+      if (!bioSection) return;
 
       if (!credId || !window.PublicKeyCredential) {
         bioSection.style.display = "none";
         return;
       }
       try {
-        // Cek di server apakah credential ini ada
         const cfg = getCfg();
         if (!cfg.url) { bioSection.style.display = "none"; return; }
         const res = await rawCall(cfg.url, "checkDeviceBiometric", [deviceId, credId], cfg.token);
@@ -5022,34 +4593,19 @@
         return;
       }
       authErr("loginErr", "");
-      AUTH.deviceId = getOrCreateDeviceId();
+      const deviceId = getOrCreateDeviceId();
 
-      // ── Tampilkan loading screen: step1 (device check) ──
       document.getElementById("loginForm").style.display = "none";
-      document.getElementById("forgotPinPanel").style.display = "none";
       document.getElementById("loginLoading").style.display = "";
+      document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
+      document.getElementById("loadingSubtitle").textContent = "Tempelkan sidik jari pada sensor...";
+      document.getElementById("loadingIcon").textContent = "🫆";
 
-      // Reset semua step
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
         if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
       });
-
-      document.getElementById("loadingTitle").textContent = "Login Sidik Jari";
-      document.getElementById("loadingSubtitle").textContent = "Memeriksa perangkat...";
-      document.getElementById("loadingIcon").textContent = "🔍";
-
       setStep("step1", "active");
-      await sleep(500); // Singkat — hanya animasi transisi
-      setStep("step1", "done", "✓");
-
-      // ── step2: prompt sidik jari ──
-      setStep("step2", "active");
-      document.getElementById("step2").style.opacity = "1";
-      document.getElementById("step2Txt").textContent = "Tempelkan sidik jari...";
-      document.getElementById("loadingIcon").textContent = "🫆";
-      document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
-      document.getElementById("loadingSubtitle").textContent = "Gunakan sidik jari atau wajah kamu";
 
       try {
         const credIdBytes = base64urlDecode(credId);
@@ -5067,36 +4623,56 @@
         });
         if (!assertion) throw new Error("Verifikasi dibatalkan");
 
-        // ✓ Sidik jari OK — tandai step2 selesai lalu lanjut step3 via showAuthLoading
-        setStep("step2", "done", "✓");
-        document.getElementById("loadingSubtitle").textContent = "Sidik jari dikenali ✓";
-        await sleep(300);
+        setStep("step1", "done", "✓");
+        setStep("step2", "active");
 
         const credentialIdB64 = base64urlEncode(new Uint8Array(assertion.rawId));
-        await showAuthLoading("bio", credentialIdB64);
+        const res = await rawAuthCall("loginWithBiometric", [credentialIdB64, deviceId]);
+        if (!res || res.status === "error") {
+          throw new Error((res && res.message) || "Sidik jari tidak dikenali");
+        }
+
+        setStep("step2", "done", "✓");
+        setStep("step3", "active");
+
+        localStorage.setItem(KC_LOGGED_IN, "true");
+        localStorage.setItem(KC_EMAIL_KEY, res.email);
+        localStorage.setItem(KC_USER_KEY, res.nama);
+
+        AUTH.token    = res.token;
+        AUTH.userId   = res.userId;
+        AUTH.nama     = res.nama;
+        AUTH.email    = res.email;
+        AUTH.deviceId = deviceId;
+
+        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
+          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
+          email: AUTH.email, expiresAt: res.expiresAt
+        }));
+
+        await refresh(true);
+
+        setStep("step3", "done", "✓");
+        await sleep(350);
+
+        showAuthPage("app");
+        updateHeaderUser(AUTH.nama);
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+        await initApp();
       } catch(e) {
-        setStep("step2", "error", "✕");
-        await sleep(600);
         document.getElementById("loginLoading").style.display = "none";
         document.getElementById("loginForm").style.display = "";
         if (e.name === "NotAllowedError") {
           authErr("loginErr", "Verifikasi sidik jari dibatalkan");
-        } else if (e.name === "InvalidStateError") {
-          authErr("loginErr", "Sidik jari tidak cocok. Coba login dengan PIN.");
         } else {
           authErr("loginErr", e.message || "Sidik jari gagal diverifikasi");
         }
       }
     }
 
-    /* ════════════════════════════════════════════════════════════
-       REGISTER BIOMETRIC (TAWARAN SETELAH LOGIN)
-    ════════════════════════════════════════════════════════════ */
     async function offerBiometric() {
       if (!window.PublicKeyCredential) return;
-      const existing = localStorage.getItem(KC_CRED_KEY);
-      // Jika sudah ada credential, tidak perlu tawaran lagi
-      if (existing) return;
+      if (localStorage.getItem(KC_CRED_KEY)) return;
 
       const r = await Swal.fire({
         title: "Aktifkan Sidik Jari?",
@@ -5144,7 +4720,6 @@
         if (!credential) throw new Error("Gagal membuat credential");
         const credentialIdB64 = base64urlEncode(new Uint8Array(credential.rawId));
 
-        // Simpan ke server
         const cfg = getCfg();
         await rawCall(cfg.url, "registerBiometric", [AUTH.token, credentialIdB64, deviceId], cfg.token);
         localStorage.setItem(KC_CRED_KEY, credentialIdB64);
@@ -5160,7 +4735,7 @@
 
     /* ════════════════════════════════════════════════════════════
        HAPUS BIOMETRIC
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     async function hapusBiometric() {
       const r = await Swal.fire({
         title: "Hapus sidik jari?",
@@ -5189,17 +4764,16 @@
         customClass: { popup: "rounded-3xl" },
       });
       if (!r.isConfirmed) return;
-      // Arahkan ke login page dengan forgot PIN panel
       showAuthPage("login");
       document.getElementById("loginForm").style.display = "none";
+      const reg = document.getElementById("registerPanel");
+      if (reg) reg.style.display = "none";
       document.getElementById("loginLoading").style.display = "none";
       document.getElementById("forgotPinPanel").style.display = "";
-      // Pre-fill email
       document.getElementById("fpEmail").value = AUTH.email || "";
       authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
       fpPIN1.value = ""; fpPIN2.value = ""; _fpOtp = "";
       showFpStep(1);
-      // Langsung kirim OTP
       fpSendOtp();
     }
 
@@ -5225,11 +4799,11 @@
 
     /* ════════════════════════════════════════════════════════════
        LOGOUT
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     async function doLogout() {
       const r = await Swal.fire({
         title: "Keluar dari akun?",
-        text: "Sesi Anda akan diakhiri di perangkat ini.",
+        text: "Setelah keluar, Anda perlu memasukkan PIN untuk masuk kembali.",
         showCancelButton: true,
         confirmButtonText: "Keluar",
         cancelButtonText: "Batal",
@@ -5242,14 +4816,15 @@
         if (cfg.url && AUTH.token)
           await rawCall(cfg.url, "logoutSession", [AUTH.token], cfg.token);
       } catch(_) {}
+      localStorage.removeItem(KC_LOGGED_IN);
       sessionStorage.removeItem(KC_SESSION_KEY);
-      AUTH.token = AUTH.userId = AUTH.nama = AUTH.email = AUTH.picture = null;
+      AUTH.token = AUTH.userId = AUTH.nama = AUTH.email = null;
       location.reload();
     }
 
     /* ════════════════════════════════════════════════════════════
        HELPER: rawAuthCall tanpa token (fungsi khusus auth)
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     async function rawAuthCall(fn, args) {
       const cfg = getCfg();
       if (!cfg.url) throw new Error("Belum tersambung ke Google Sheets");
@@ -5258,7 +4833,7 @@
 
     /* ════════════════════════════════════════════════════════════
        OTP HELPERS
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     const _otpTimers = {};
 
     /** Countdown X detik, lalu tampilkan tombol resend */
@@ -5321,15 +4896,15 @@
 
     /* ════════════════════════════════════════════════════════════
        LUPA PIN — FORGOT PIN FLOW
-    ════════════════════════════════════════════════════════════ */
+     ════════════════════════════════════════════════════════════ */
     const fpPIN1 = { value: "" };
     const fpPIN2 = { value: "" };
     let _fpOtp = "";
 
     function showForgotPin() {
       document.getElementById("loginForm").style.display = "none";
-      document.getElementById("setupPinPanel").style.display = "none";
-      document.getElementById("deviceChallengePanel").style.display = "none";
+      const reg = document.getElementById("registerPanel");
+      if (reg) reg.style.display = "none";
       document.getElementById("loginLoading").style.display = "none";
       document.getElementById("forgotPinPanel").style.display = "";
       authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
@@ -5520,38 +5095,29 @@
 
     const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-    function updateHeaderUser(nama, picture) {
+    function updateHeaderUser(nama) {
       const h1 = document.querySelector("header h1");
       if (h1 && nama) {
-        const picHtml = picture
-          ? `<img src="${picture}" alt="${nama}" style="width:24px;height:24px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:6px;border:1.5px solid #818cf8;" />`
-          : "";
-        h1.innerHTML = `<span style="display:inline-flex;align-items:center;">${picHtml}<span>Keuangan Cerdas</span><span style="font-size:0.75rem;opacity:0.6;font-weight:400;margin-left:6px;">· ${nama}</span></span>`;
+        h1.innerHTML = `<span style="display:inline-flex;align-items:center;"><span>Keuangan Cerdas</span><span style="font-size:0.75rem;opacity:0.6;font-weight:400;margin-left:6px;">· ${nama}</span></span>`;
       }
     }
 
     /* ════════════════════════════════════════════════════════════
-       INISIALISASI KEYPAD, GOOGLE SERVICES & CEK SESI
-    ════════════════════════════════════════════════════════════ */
+       INISIALISASI KEYPAD & CEK STATUS PERANGKAT / SESI
+     ════════════════════════════════════════════════════════════ */
     (async function initAuth() {
       // 1. Build keypad login
       buildKeypad("loginKeypad", "loginPinDots", loginPinKey, loginPinDel);
 
-      // 2. Build keypad setup PIN akun baru
-      buildKeypad("setupKeypad1", "setupPinDots1", setupPinKey1, setupPinDel1);
-      buildKeypad("setupKeypad2", "setupPinDots2", setupPinKey2, setupPinDel2);
+      // 2. Build keypad register (step 1 & step 2)
+      buildKeypad("regKeypad1", "regPinDots1", regPinKey1, regPinDel1);
+      buildKeypad("regKeypad2", "regPinDots2", regPinKey2, regPinDel2);
 
-      // 3. Build keypad otorisasi perangkat baru (challenge)
-      buildKeypad("challengeKeypad", "challengePinDots", challengePinKey, challengePinDel);
-
-      // 4. Build keypad forgot PIN
+      // 3. Build keypad forgot PIN
       buildKeypad("fpPinKeypad", "fpPinDots", fpPinKey, fpPinDel);
       buildKeypad("fpConfKeypad", "fpConfDots", fpConfKey, fpConfDel);
 
-      // 5. Inisialisasi Google Identity Services (GIS)
-      initGoogleIdentity();
-
-      // 6. Tombol logout di header
+      // 4. Tombol logout di header
       const headerBtns = document.querySelector("header .flex.items-center.gap-2");
       if (headerBtns && !document.getElementById("btnHeaderLogout")) {
         const logoutBtn = document.createElement("button");
@@ -5564,70 +5130,46 @@
         headerBtns.insertBefore(logoutBtn, headerBtns.firstChild);
       }
 
-      /* ── Cek session yang tersimpan di browser ── */
-      const sessRaw = sessionStorage.getItem(KC_SESSION_KEY);
-      if (sessRaw) {
-        try {
-          const sess = JSON.parse(sessRaw);
-          if (sess.token && sess.expiresAt && new Date(sess.expiresAt) > new Date()) {
-            AUTH.token = sess.token;
-            AUTH.userId = sess.userId;
-            AUTH.nama = sess.nama;
-            AUTH.email = sess.email;
-            AUTH.picture = sess.picture || "";
-            AUTH.deviceId = getOrCreateDeviceId();
+      // 5. AUTO-LOGIN SAAT REFRESH:
+      // "saat refresh jangan login ulang atau masukin pin lagi cukup cek saja id perangkatnya jika saya logout baru deh anda login ulang"
+      const isLoggedIn = localStorage.getItem(KC_LOGGED_IN) === "true";
+      if (isLoggedIn) {
+        const email = localStorage.getItem(KC_EMAIL_KEY) || "";
+        const nama  = localStorage.getItem(KC_USER_KEY) || "Pengguna";
+        const deviceId = getOrCreateDeviceId();
+        AUTH.email = email;
+        AUTH.nama  = nama;
+        AUTH.deviceId = deviceId;
+        AUTH.userId = localStorage.getItem("kc_userId") || "USR-DEFAULT";
 
-            let cfg = await ensureCfg();
-            if (!cfg.url) {
-              showAuthPage("login");
-              document.getElementById("loginForm").style.display = "";
-              document.getElementById("setupPinPanel").style.display = "none";
-              document.getElementById("deviceChallengePanel").style.display = "none";
-              document.getElementById("loginLoading").style.display = "none";
-              const connected = await openSambungan(true);
-              if (!connected) { showLogin(); return; }
-              cfg = getCfg();
-            }
+        const sessRaw = sessionStorage.getItem(KC_SESSION_KEY);
+        if (sessRaw) {
+          try {
+            const sess = JSON.parse(sessRaw);
+            if (sess.token) AUTH.token = sess.token;
+            if (sess.userId) AUTH.userId = sess.userId;
+          } catch (_) {}
+        }
 
-            showAuthPage("login");
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("setupPinPanel").style.display = "none";
-            document.getElementById("deviceChallengePanel").style.display = "none";
-            document.getElementById("loginLoading").style.display = "";
-            document.getElementById("loadingTitle").textContent = "Memulihkan Sesi";
-            document.getElementById("loadingSubtitle").textContent = `Halo, ${sess.nama || ""}! 👋`;
-            document.getElementById("loadingIcon").textContent = "👤";
-            setStep("step1", "done", "✓");
-            setStep("step2", "done", "✓");
-            document.getElementById("step2").style.opacity = "1";
-            setStep("step3", "active");
-            document.getElementById("step3").style.opacity = "1";
-
-            const ok = await refresh(true);
-            if (ok) {
-              setStep("step3", "done", "✓");
-              document.getElementById("loadingIcon").textContent = "✅";
-              await sleep(350);
-              showAuthPage("app");
-              updateHeaderUser(sess.nama, sess.picture);
-              await initApp();
-              return;
-            }
-          }
-        } catch (_) {}
-        sessionStorage.removeItem(KC_SESSION_KEY);
+        let cfg = await ensureCfg();
+        if (cfg && cfg.url) {
+          showAuthPage("app");
+          updateHeaderUser(AUTH.nama);
+          await refresh(true);
+          await initApp();
+          return;
+        }
       }
 
-      // Pastikan config tersedia
+      // 6. Jika belum login atau habis logout:
+      // Tampilkan halaman login dan cek status pendaftaran perangkat di server
+      showAuthPage("login");
       const cfgInit = await ensureCfg();
       if (!cfgInit.url) {
-        showAuthPage("login");
-        setTimeout(() => {
-          authErr("loginErr", "⚙️ Hubungkan ke Google Sheets terlebih dahulu");
-        }, 400);
+        authErr("loginErr", "⚙️ Hubungkan ke Google Sheets terlebih dahulu");
         return;
       }
-      showLogin();
+      await checkDeviceState();
     })();
   </script>
   </body>
