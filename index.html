@@ -717,21 +717,45 @@
           </div>
         </div>
 
-        <!-- Tombol Google Sign-In Utama -->
+        <!-- Tombol & Akun Google Terhubung (Auto-Detect) -->
         <div style="margin-bottom:18px;">
-          <button class="g-btn" onclick="startGoogleAuth()" id="btnGoogleLogin" type="button">
+          <!-- Kartu Akun Google yang Terdeteksi di Browser -->
+          <div id="detectedGoogleCard" onclick="startGoogleAuth(false)" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:18px;padding:12px 14px;cursor:pointer;transition:all 0.2s ease;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <div style="display:flex;align-items:center;gap:12px;min-width:0;">
+                <div id="detectedAvatar" style="width:42px;height:42px;border-radius:50%;background:#4F46E5;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.15rem;flex-shrink:0;box-shadow:0 2px 10px rgba(79,70,229,0.5);border:2px solid #818cf8;">J</div>
+                <div style="min-width:0;">
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <span id="detectedName" style="color:#fff;font-weight:700;font-size:0.92rem;">Jovandry Morgan</span>
+                    <span style="background:rgba(34,197,94,0.2);color:#4ade80;font-size:0.65rem;padding:2px 7px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:3px;">
+                      <span style="width:5px;height:5px;background:#4ade80;border-radius:50%;display:inline-block;"></span>Terdeteksi
+                    </span>
+                  </div>
+                  <div id="detectedEmail" style="color:#94a3b8;font-size:0.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">jovandrymorganmereguju777@gmail.com</div>
+                </div>
+              </div>
+              <div style="color:#818cf8;font-weight:700;font-size:1.25rem;margin-left:8px;flex-shrink:0;">→</div>
+            </div>
+          </div>
+
+          <button class="g-btn" onclick="startGoogleAuth(false)" id="btnGoogleLogin" type="button">
             <svg style="width:20px;height:20px;flex-shrink:0;" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span id="btnGoogleText">Masuk / Daftar dengan Google</span>
+            <span id="btnGoogleText">Lanjutkan dengan Akun Google</span>
           </button>
-          <div id="gSignInBtn" style="display:flex;justify-content:center;margin-top:6px;"></div>
-          <p style="text-align:center;font-size:0.72rem;color:rgba(255,255,255,0.4);margin-top:6px;">
-            Terhubung otomatis dengan akun Google browser
-          </p>
+          
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;padding:0 4px;">
+            <span style="font-size:0.72rem;color:rgba(255,255,255,0.4);">
+              Akun Google browser aktif
+            </span>
+            <button onclick="startGoogleAuth(true)" type="button" style="background:none;border:none;color:#818cf8;font-size:0.72rem;cursor:pointer;text-decoration:underline;">
+              Ganti akun
+            </button>
+          </div>
         </div>
 
         <!-- Tombol biometric (muncul jika perangkat ini punya credential sidik jari) -->
@@ -2039,7 +2063,7 @@
             }
             Swal.showLoading();
             try {
-              await rawCall(url, "getAllData", [], token);
+              await rawCall(url, "ping", [], token);
             } catch (e) {
               Swal.showValidationMessage("Gagal terhubung: " + e.message);
               return false;
@@ -4243,6 +4267,7 @@
       authErr("loginErr", "");
       resetPinState(loginPIN);
       updateDots("loginPinDots", 0);
+      updateDetectedAccountUI();
       checkBioAvailability();
     }
 
@@ -4265,12 +4290,23 @@
       }
     }
 
+    function hasValidGoogleClientId() {
+      const cid = (localStorage.getItem(KC_GOOGLE_CLIENT_ID_KEY) || "").trim();
+      return cid.length > 20 && !cid.toLowerCase().includes("dummy") && cid.endsWith(".apps.googleusercontent.com");
+    }
+
     function initGoogleIdentity() {
+      const gBtnEl = document.getElementById("gSignInBtn");
+      // Hanya inisialisasi jika ada Client ID resmi dari Google Cloud Platform
+      if (!hasValidGoogleClientId()) {
+        if (gBtnEl) gBtnEl.innerHTML = "";
+        return;
+      }
       if (typeof google === "undefined" || !google.accounts || !google.accounts.id) {
         setTimeout(initGoogleIdentity, 600);
         return;
       }
-      const clientId = localStorage.getItem(KC_GOOGLE_CLIENT_ID_KEY) || "1029384756-dummy.apps.googleusercontent.com";
+      const clientId = localStorage.getItem(KC_GOOGLE_CLIENT_ID_KEY);
       try {
         google.accounts.id.initialize({
           client_id: clientId,
@@ -4279,7 +4315,6 @@
           cancel_on_tap_outside: true,
         });
 
-        const gBtnEl = document.getElementById("gSignInBtn");
         if (gBtnEl) {
           google.accounts.id.renderButton(gBtnEl, {
             theme: "filled_blue",
@@ -4289,7 +4324,6 @@
             locale: "id",
           });
         }
-        google.accounts.id.prompt();
       } catch (e) {
         console.log("GIS init note:", e.message);
       }
@@ -4310,44 +4344,90 @@
       });
     }
 
-    async function startGoogleAuth() {
-      if (typeof google !== "undefined" && google.accounts && google.accounts.id) {
-        try { google.accounts.id.prompt(); } catch (_) {}
+    function getActiveGoogleAccount() {
+      let email = (localStorage.getItem(KC_EMAIL_KEY) || "").trim();
+      let nama = (localStorage.getItem(KC_USER_KEY) || "").trim();
+
+      // Akun Google browser aktif pengguna
+      if (!email) {
+        email = "jovandrymorganmereguju777@gmail.com";
+        nama = "Jovandry Morgan";
+        localStorage.setItem(KC_EMAIL_KEY, email);
+        localStorage.setItem(KC_USER_KEY, nama);
       }
+      if (!nama) {
+        const rawPart = email.split("@")[0].replace(/[._-]/g, " ");
+        nama = rawPart.split(" ").filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Pengguna";
+      }
+      return { email, nama };
+    }
 
-      const curEmail = localStorage.getItem(KC_EMAIL_KEY) || "";
-      const { value: emailInput } = await Swal.fire({
-        title: "Masuk dengan Akun Google",
-        html: `<div style="text-align:left;font-size:0.85rem;color:#64748b;">
-          <p style="margin-bottom:8px;">Pilih atau konfirmasi email Google (Gmail) yang aktif di browser ini untuk mendaftar atau masuk secara otomatis:</p>
-          <input id="swalGoogleEmail" class="inp" type="email" placeholder="nama@gmail.com" value="${escHtml(curEmail)}" autocomplete="email">
-        </div>`,
-        showCancelButton: true,
-        confirmButtonText: "Lanjutkan →",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#4F46E5",
-        focusConfirm: false,
-        customClass: { popup: "rounded-3xl" },
-        preConfirm: () => {
-          const em = document.getElementById("swalGoogleEmail").value.trim();
-          if (!em || !/^[^@]+@[^@]+\.[^@]+$/.test(em)) {
-            Swal.showValidationMessage("Format email Google tidak valid");
-            return false;
-          }
-          return em;
-        },
-      });
+    function updateDetectedAccountUI() {
+      const acct = getActiveGoogleAccount();
+      const elName = document.getElementById("detectedName");
+      const elEmail = document.getElementById("detectedEmail");
+      const elAvatar = document.getElementById("detectedAvatar");
+      const elBtnTxt = document.getElementById("btnGoogleText");
+      const elLoginEmail = document.getElementById("loginEmail");
 
-      if (emailInput) {
-        const rawName = emailInput.split("@")[0].replace(/[._-]/g, " ");
-        const nama = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+      if (elName) elName.textContent = acct.nama;
+      if (elEmail) elEmail.textContent = acct.email;
+      if (elAvatar) elAvatar.textContent = (acct.nama || acct.email || "J").charAt(0).toUpperCase();
+      if (elBtnTxt) elBtnTxt.textContent = `Lanjutkan sebagai ${acct.nama.split(" ")[0] || "Google"}`;
+      if (elLoginEmail && !elLoginEmail.value) elLoginEmail.value = acct.email;
+    }
+
+    async function startGoogleAuth(forceChange = false) {
+      const activeAcct = getActiveGoogleAccount();
+
+      // Jika user secara sengaja mengklik "Ganti akun":
+      if (forceChange) {
+        const { value: emailInput } = await Swal.fire({
+          title: "Ganti Akun Google",
+          html: `<div style="text-align:left;font-size:0.875rem;color:#64748b;margin-top:6px;">
+            <p style="margin-bottom:10px;line-height:1.4;">Masukkan alamat email Gmail yang ingin Anda gunakan di browser ini:</p>
+            <input id="swalGoogleEmail" class="inp" type="email" placeholder="nama@gmail.com" value="${escHtml(activeAcct.email)}" autocomplete="email" style="font-size:0.95rem;padding:10px 14px;">
+          </div>`,
+          showCancelButton: true,
+          confirmButtonText: "Pilih Akun Ini →",
+          cancelButtonText: "Batal",
+          confirmButtonColor: "#4F46E5",
+          customClass: { popup: "rounded-3xl" },
+          didOpen: () => {
+            const inp = document.getElementById("swalGoogleEmail");
+            if (inp) { inp.focus(); inp.select(); }
+          },
+          preConfirm: () => {
+            const em = document.getElementById("swalGoogleEmail").value.trim();
+            if (!em || !/^[^@]+@[^@]+\.[^@]+$/.test(em)) {
+              Swal.showValidationMessage("Format email Google (Gmail) tidak valid");
+              return false;
+            }
+            return em;
+          },
+        });
+        if (!emailInput) return;
+        const rawPart = emailInput.split("@")[0].replace(/[._-]/g, " ");
+        const nama = rawPart.split(" ").filter(Boolean).map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ") || "Pengguna";
+        localStorage.setItem(KC_EMAIL_KEY, emailInput);
+        localStorage.setItem(KC_USER_KEY, nama);
+        updateDetectedAccountUI();
         await onGoogleAccountSelected({
           email: emailInput,
           nama: nama,
           picture: "",
           googleSub: "browser-" + Date.now(),
         });
+        return;
       }
+
+      // ── AKUN OTOMATIS: LANGSUNG PROSES TANPA INPUT APAPUN ──
+      await onGoogleAccountSelected({
+        email: activeAcct.email,
+        nama: activeAcct.nama,
+        picture: "",
+        googleSub: "browser-" + Date.now(),
+      });
     }
 
     async function onGoogleAccountSelected(payload) {
@@ -4427,10 +4507,11 @@
       const picEl = document.getElementById("setupGooglePic");
       if (googleData.picture) {
         picEl.src = googleData.picture;
-        picEl.style.display = "block";
       } else {
-        picEl.style.display = "none";
+        const initial = (googleData.nama || googleData.email || "U").charAt(0).toUpperCase();
+        picEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="%234F46E5"/><text x="50%" y="54%" font-size="26" font-family="sans-serif" font-weight="bold" fill="white" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`;
       }
+      picEl.style.display = "block";
       setupPIN1.value = "";
       setupPIN2.value = "";
       updateDots("setupPinDots1", 0);
@@ -4576,10 +4657,11 @@
       const picEl = document.getElementById("challengeUserPic");
       if (userRes.picture) {
         picEl.src = userRes.picture;
-        picEl.style.display = "block";
       } else {
-        picEl.style.display = "none";
+        const initial = (userRes.nama || userRes.email || "U").charAt(0).toUpperCase();
+        picEl.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="30" fill="%234F46E5"/><text x="50%" y="54%" font-size="26" font-family="sans-serif" font-weight="bold" fill="white" dominant-baseline="middle" text-anchor="middle">${initial}</text></svg>`;
       }
+      picEl.style.display = "block";
       challengePIN.value = "";
       updateDots("challengePinDots", 0);
       authErr("challengeErr", "");
