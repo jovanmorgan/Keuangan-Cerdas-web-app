@@ -6,15 +6,12 @@
 //   API_URL   = URL Web App Apps Script kamu (diakhiri /exec)
 //   API_TOKEN = (opsional) token yang sama dengan APP_TOKEN di Script Properties
 //
-// CATATAN: nilai ini tetap terlihat oleh siapa pun yang membuka situs (lewat
-// tab Network browser) — ini bukan cara menyembunyikan token dari pengguna
-// situs, hanya supaya tidak perlu ditulis di kode/GitHub dan tidak perlu
-// diisi manual di tiap browser. Keamanan sesungguhnya tetap dari APP_TOKEN
-// di sisi Apps Script.
+const DEFAULT_URL = "https://script.google.com/macros/s/AKfycbyyGt0wZTShzENEV_ePptnSd1N3pNhdxjzV7CR-2Uu0q7Pe7ObUTN6Wa-YRESnaSnjh/exec";
+
 module.exports = (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   res.status(200).json({
-    url: process.env.API_URL || "",
+    url: process.env.API_URL || DEFAULT_URL,
     token: process.env.API_TOKEN || "",
   });
 };
