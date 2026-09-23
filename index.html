@@ -4198,6 +4198,15 @@
       el.classList.toggle("show", !!msg);
     }
 
+    function escHtml(s) {
+      return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
     function getOrCreateDeviceId() {
       let id = localStorage.getItem(KC_DEVICE_KEY);
       if (!id) {
@@ -4311,7 +4320,7 @@
         title: "Masuk dengan Akun Google",
         html: `<div style="text-align:left;font-size:0.85rem;color:#64748b;">
           <p style="margin-bottom:8px;">Pilih atau konfirmasi email Google (Gmail) yang aktif di browser ini untuk mendaftar atau masuk secara otomatis:</p>
-          <input id="swalGoogleEmail" class="inp" type="email" placeholder="nama@gmail.com" value="${esc(curEmail)}" autocomplete="email">
+          <input id="swalGoogleEmail" class="inp" type="email" placeholder="nama@gmail.com" value="${escHtml(curEmail)}" autocomplete="email">
         </div>`,
         showCancelButton: true,
         confirmButtonText: "Lanjutkan →",
@@ -4526,7 +4535,15 @@
         document.getElementById("loadingTitle").textContent = "Menyiapkan Dashboard";
         document.getElementById("loadingIcon").textContent = "📊";
 
-        await refresh(true);
+        const ok = await refresh(true);
+        if (!ok) {
+          setStep("step3", "error", "✕");
+          await sleep(500);
+          document.getElementById("loginLoading").style.display = "none";
+          document.getElementById("setupPinPanel").style.display = "";
+          authErr("setupPinErr2", "Gagal memuat data Sheet. Periksa URL Google Sheets.");
+          return;
+        }
 
         setStep("step3", "done", "✓");
         document.getElementById("loadingIcon").textContent = "✅";
@@ -4715,17 +4732,6 @@
       loginPIN.value = loginPIN.value.slice(0,-1);
       updateDots("loginPinDots", loginPIN.value.length);
     }
-        showAuthLoading("register", _regPinHash);
-      } catch(e) {
-        authErr("regOtpErr", e.message || "Verifikasi gagal");
-        btn.disabled = false; btn.textContent = "Verifikasi & Buat Akun";
-      }
-    }
-
-    async function registerSubmit() {
-      // Tidak lagi dipakai langsung — diganti regSendOtp + regVerifyOtp
-      // Tapi tetap ada sebagai fallback
-    }
 
     /* ════════════════════════════════════════════════════════════
        AUTH LOADING & STEPS UI
@@ -4784,12 +4790,7 @@
 
       let authResult;
       try {
-        if (type === "register") {
-          // extra = pinHash
-          const nama = document.getElementById("regNama").value.trim();
-          const email = document.getElementById("regEmail").value.trim();
-          authResult = await rawAuthCall("registerUser", [email, nama, extra, deviceId]);
-        } else if (type === "pin") {
+        if (type === "pin") {
           const email = document.getElementById("loginEmail").value.trim();
           // extra = pinHash
           authResult = await rawAuthCall("loginWithPin", [email, extra, deviceId]);
@@ -4804,19 +4805,11 @@
         setStep("step2", "error", "✕");
         await sleep(600);
         document.getElementById("loginLoading").style.display = "none";
-        if (type === "register") {
-          // Kembali ke register
-          document.getElementById("page-login").classList.remove("active");
-          document.getElementById("page-register").classList.add("active");
-          regCurrentStep = 1; showRegStep(1);
-          authErr("regErr1", e.message || "Gagal mendaftar, coba lagi");
-        } else {
-          document.getElementById("loginForm").style.display = "";
-          resetPinState(loginPIN);
-          updateDots("loginPinDots", 0);
-          authErr("loginErr", e.message || "Login gagal, coba lagi");
-          flashDotsError("loginPinDots");
-        }
+        document.getElementById("loginForm").style.display = "";
+        resetPinState(loginPIN);
+        updateDots("loginPinDots", 0);
+        authErr("loginErr", e.message || "Login gagal, coba lagi");
+        flashDotsError("loginPinDots");
         return;
       }
 
@@ -4824,18 +4817,11 @@
         setStep("step2", "error", "✕");
         await sleep(600);
         document.getElementById("loginLoading").style.display = "none";
-        if (type === "register") {
-          document.getElementById("page-login").classList.remove("active");
-          document.getElementById("page-register").classList.add("active");
-          regCurrentStep = 1; showRegStep(1);
-          authErr("regErr1", (authResult && authResult.message) || "Gagal mendaftar");
-        } else {
-          document.getElementById("loginForm").style.display = "";
-          resetPinState(loginPIN);
-          updateDots("loginPinDots", 0);
-          authErr("loginErr", (authResult && authResult.message) || "Login gagal");
-          flashDotsError("loginPinDots");
-        }
+        document.getElementById("loginForm").style.display = "";
+        resetPinState(loginPIN);
+        updateDots("loginPinDots", 0);
+        authErr("loginErr", (authResult && authResult.message) || "Login gagal");
+        flashDotsError("loginPinDots");
         return;
       }
 
