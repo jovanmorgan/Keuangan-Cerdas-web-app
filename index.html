@@ -582,6 +582,23 @@
         object-fit: cover;
         border: 2px solid #6366f1;
       }
+
+      /* Sheet Loading Overlay Animation */
+      @keyframes floatSlow {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-8px) rotate(1deg); }
+      }
+      .animate-float-slow {
+        animation: floatSlow 3.5s ease-in-out infinite;
+      }
+      @keyframes shimmerGlow {
+        0% { filter: drop-shadow(0 0 6px rgba(99,102,241,0.5)); }
+        50% { filter: drop-shadow(0 0 18px rgba(168,85,247,0.85)); }
+        100% { filter: drop-shadow(0 0 6px rgba(99,102,241,0.5)); }
+      }
+      .shimmer-glow {
+        animation: shimmerGlow 2.5s ease-in-out infinite;
+      }
     </style>
     <style>
       #printArea {
@@ -952,6 +969,75 @@
     </div>
 
     <!-- ═══════════════════════════════════════════════════════════════
+         COOL SHEET LOADING OVERLAY (Tampil saat refresh / memuat sheet)
+    ════════════════════════════════════════════════════════════════ -->
+    <div id="sheetLoadingOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg, #090d16 0%, #0f172a 50%, #090d16 100%);flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s ease;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);">
+      <!-- Floating glowing gradient ambient blobs -->
+      <div class="auth-blob auth-blob-1" style="background:#6366f1;opacity:0.25;top:-60px;right:-60px;"></div>
+      <div class="auth-blob auth-blob-2" style="background:#8b5cf6;opacity:0.22;bottom:-50px;left:-50px;"></div>
+      <div class="auth-blob auth-blob-3" style="background:#06b6d4;opacity:0.2;top:40%;left:45%;"></div>
+
+      <div class="animate-float-slow" style="position:relative;z-index:10;width:92%;max-width:390px;padding:36px 30px;border-radius:28px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;text-align:center;">
+        <!-- Animated 3D Floating Icon with Glowing Pulse Rings -->
+        <div style="position:relative;width:88px;height:88px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;">
+          <div style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
+          <div style="position:absolute;inset:-4px;border-radius:26px;border:1.5px dashed rgba(129,140,248,0.5);animation:spin 12s linear infinite;"></div>
+          <div class="shimmer-glow" style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(79,70,229,0.5);border:2px solid rgba(255,255,255,0.25);">
+            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);">💰</span>
+          </div>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <h2 style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg, #ffffff 30%, #c7d2fe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px 0;">
+          Keuangan Cerdas
+        </h2>
+        <p id="sheetLoadingSubtitle" style="font-size:0.82rem;color:#94a3b8;font-weight:500;margin:0 0 20px 0;min-height:20px;transition:all 0.3s;">
+          Menyinkronkan data Google Sheets...
+        </p>
+
+        <!-- Progress Track -->
+        <div style="width:100%;height:7px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;position:relative;margin-bottom:20px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
+          <div id="sheetLoadingBar" style="height:100%;width:35%;border-radius:999px;background:linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);box-shadow:0 0 14px rgba(99,102,241,0.8);transition:width 0.4s ease-out;"></div>
+        </div>
+
+        <!-- Loading Steps Badges -->
+        <div style="width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:0.78rem;">
+          <div id="stepCloud" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all 0.3s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">☁️</span>
+              <span style="color:#e2e8f0;font-weight:600;">Sambungan Spreadsheet</span>
+            </div>
+            <span id="stepCloudStatus" style="font-weight:700;color:#818cf8;display:flex;align-items:center;gap:5px;">
+              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memeriksa
+            </span>
+          </div>
+
+          <div id="stepData" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">📊</span>
+              <span style="color:#e2e8f0;font-weight:600;">Data Transaksi & Anggaran</span>
+            </div>
+            <span id="stepDataStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
+          </div>
+
+          <div id="stepDash" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:1rem;">✨</span>
+              <span style="color:#e2e8f0;font-weight:600;">Menyiapkan Dashboard</span>
+            </div>
+            <span id="stepDashStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
+          </div>
+        </div>
+
+        <!-- Security footer badge -->
+        <div style="margin-top:22px;display:flex;align-items:center;gap:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-weight:500;">
+          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;"></span>
+          <span>Perangkat terverifikasi &amp; data terenkripsi</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════
          APP UTAMA (dibungkus, hanya tampil setelah login)
     ════════════════════════════════════════════════════════════════ -->
     <div id="page-app">
@@ -963,7 +1049,9 @@
           <h1 class="text-lg font-extrabold tracking-tight">Keuangan Cerdas</h1>
           <p
             id="sync"
-            class="text-[11px] text-slate-400 flex items-center gap-1.5"
+            onclick="triggerManualSync()"
+            class="text-[11px] text-slate-400 flex items-center gap-1.5 cursor-pointer hover:text-indigo-300 transition"
+            title="Klik untuk menyinkronkan data Google Sheets"
           >
             <span id="dot" class="w-2 h-2 rounded-full bg-slate-500"></span
             ><span id="syncTxt">Menghubungkan...</span>
@@ -5103,6 +5191,81 @@
     }
 
     /* ════════════════════════════════════════════════════════════
+       SHEET LOADING CONTROLLER (Animasi keren saat memuat sheet)
+     ════════════════════════════════════════════════════════════ */
+    function showSheetLoader(subtitle = "Menyinkronkan data Google Sheets...") {
+      const el = document.getElementById("sheetLoadingOverlay");
+      if (!el) return;
+      const sub = document.getElementById("sheetLoadingSubtitle");
+      if (sub) sub.textContent = subtitle;
+      el.style.display = "flex";
+      el.style.opacity = "1";
+      el.style.transform = "scale(1)";
+      el.style.pointerEvents = "auto";
+      setSheetLoaderStep(1);
+    }
+
+    function setSheetLoaderStep(step) {
+      const bar = document.getElementById("sheetLoadingBar");
+      const c1 = document.getElementById("stepCloud");
+      const c1s = document.getElementById("stepCloudStatus");
+      const c2 = document.getElementById("stepData");
+      const c2s = document.getElementById("stepDataStatus");
+      const c3 = document.getElementById("stepDash");
+      const c3s = document.getElementById("stepDashStatus");
+      const sub = document.getElementById("sheetLoadingSubtitle");
+
+      if (step === 1) {
+        if (bar) bar.style.width = "30%";
+        if (c1) { c1.style.opacity = "1"; c1.style.borderColor = "rgba(99,102,241,0.4)"; }
+        if (c1s) c1s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Terhubung</span>';
+        if (c2) c2.style.opacity = "0.45";
+        if (c3) c3.style.opacity = "0.45";
+      } else if (step === 2) {
+        if (bar) bar.style.width = "75%";
+        if (sub) sub.textContent = "Mengunduh transaksi & kalkulasi saldo...";
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
+        if (c2) { c2.style.opacity = "1"; c2.style.borderColor = "rgba(99,102,241,0.4)"; }
+        if (c2s) c2s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memuat...</span>';
+        if (c3) c3.style.opacity = "0.45";
+      } else if (step === 3) {
+        if (bar) bar.style.width = "100%";
+        if (sub) sub.textContent = "Dashboard siap! Membuka aplikasi...";
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
+        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;">✓ Selesai</span>';
+        if (c3) { c3.style.opacity = "1"; c3.style.borderColor = "rgba(74,222,128,0.4)"; }
+        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;">✓ Siap</span>';
+      }
+    }
+
+    async function hideSheetLoader() {
+      const el = document.getElementById("sheetLoadingOverlay");
+      if (!el) return;
+      setSheetLoaderStep(3);
+      await sleep(400);
+      el.style.opacity = "0";
+      el.style.transform = "scale(1.03)";
+      el.style.pointerEvents = "none";
+      setTimeout(() => {
+        el.style.display = "none";
+        el.style.opacity = "1";
+        el.style.transform = "none";
+      }, 500);
+    }
+
+    async function triggerManualSync() {
+      showSheetLoader("Menyinkronkan data Google Sheets...");
+      setSheetLoaderStep(1);
+      await sleep(200);
+      setSheetLoaderStep(2);
+      await refresh(true);
+      setSheetLoaderStep(3);
+      await sleep(350);
+      await hideSheetLoader();
+      Toast.fire({ icon: "success", title: "Data Spreadsheet tersinkronisasi! ✓", timer: 2000 });
+    }
+
+    /* ════════════════════════════════════════════════════════════
        INISIALISASI KEYPAD & CEK STATUS PERANGKAT / SESI
      ════════════════════════════════════════════════════════════ */
     (async function initAuth() {
@@ -5130,8 +5293,8 @@
         headerBtns.insertBefore(logoutBtn, headerBtns.firstChild);
       }
 
-      // 5. AUTO-LOGIN SAAT REFRESH:
-      // "saat refresh jangan login ulang atau masukin pin lagi cukup cek saja id perangkatnya jika saya logout baru deh anda login ulang"
+      // 5. AUTO-LOGIN SAAT REFRESH DENGAN LOADING KEREN:
+      // "saat sudah loading dan di refrest ada loading kerennya saat memuat sheet"
       const isLoggedIn = localStorage.getItem(KC_LOGGED_IN) === "true";
       if (isLoggedIn) {
         const email = localStorage.getItem(KC_EMAIL_KEY) || "";
@@ -5155,8 +5318,18 @@
         if (cfg && cfg.url) {
           showAuthPage("app");
           updateHeaderUser(AUTH.nama);
+
+          // TAMPILKAN ANIMASI LOADING KEREN SAAT MEMUAT SHEET
+          showSheetLoader("Menyinkronkan data Google Sheets...");
+          setSheetLoaderStep(1);
+          await sleep(250);
+
+          setSheetLoaderStep(2);
           await refresh(true);
+
+          setSheetLoaderStep(3);
           await initApp();
+          await hideSheetLoader();
           return;
         }
       }
