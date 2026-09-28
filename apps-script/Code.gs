@@ -1,5704 +1,1272 @@
-<!doctype html>
-<html lang="id">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
-    <title>Keuangan Cerdas</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-    
-    <style type="text/tailwindcss">
-      body {
-        font-family: "Plus Jakarta Sans", system-ui, sans-serif;
-      }
-      .card {
-        @apply bg-white rounded-3xl shadow-lg shadow-slate-200/70 p-5;
-      }
-      .inp {
-        @apply w-full p-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white;
-      }
-      .lbl {
-        @apply block text-xs font-semibold text-slate-500 mb-1;
-      }
-      .btn {
-        @apply px-4 py-2.5 rounded-2xl text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 active:scale-95 transition;
-      }
-      .chip {
-        @apply px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500;
-      }
-      .chip.on {
-        @apply bg-indigo-600 text-white;
-      }
-      .act {
-        @apply px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition whitespace-nowrap;
-      }
-      .act.pri {
-        @apply bg-indigo-50 text-indigo-600 hover:bg-indigo-100;
-      }
-      .act.del {
-        @apply bg-rose-50 text-rose-600 hover:bg-rose-100;
-      }
-    </style>
-    <style>
-      /* ── Pengaman overflow: card/grid/flex tidak boleh lebih lebar dari kontainernya ── */
-      .card {
-        min-width: 0;
-        overflow-wrap: break-word;
-      }
-      .grid > *,
-      .flex > * {
-        min-width: 0;
-      }
-      main,
-      body {
-        overflow-x: hidden;
-      }
-
-      /* ── Scrollbar tipis & rapi (desktop + area overflow-x tabel) ── */
-      * {
-        scrollbar-width: thin;
-        scrollbar-color: #c7d2fe transparent;
-      }
-      *::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-      }
-      *::-webkit-scrollbar-track {
-        background: transparent;
-      }
-      *::-webkit-scrollbar-thumb {
-        background: #c7d2fe;
-        border-radius: 999px;
-      }
-      *::-webkit-scrollbar-thumb:hover {
-        background: #a5b4fc;
-      }
-
-      /* ── Input jumlah data: sembunyikan spinner bawaan browser (dipakai tombol +/- sendiri) ── */
-      .no-spinner::-webkit-outer-spin-button,
-      .no-spinner::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-      .no-spinner {
-        -moz-appearance: textfield;
-      }
-
-      /* ── Pembatas elegan pada modal: memisahkan area mengambang (header/footer) dari area input ──
-         Garis gradasi tipis + glow lembut, cukup untuk menegaskan batas tanpa terlihat mencolok. */
-      .modal-divider {
-        height: 2px;
-        border-radius: 999px;
-        background: linear-gradient(
-          90deg,
-          rgba(99, 102, 241, 0) 0%,
-          rgba(99, 102, 241, 0.55) 18%,
-          rgba(129, 140, 248, 0.85) 50%,
-          rgba(99, 102, 241, 0.55) 82%,
-          rgba(99, 102, 241, 0) 100%
-        );
-        box-shadow: 0 1px 6px 0 rgba(99, 102, 241, 0.35);
-      }
-
-      /* ── Animasi pop-up "Catat dengan suara" ── */
-      .voice-ring {
-        position: absolute;
-        inset: 0;
-        margin: auto;
-        width: 100%;
-        height: 100%;
-        border-radius: 9999px;
-        border: 2px solid rgba(99, 102, 241, 0.45);
-        animation: voiceRingPulse 1.8s ease-out infinite;
-      }
-      @keyframes voiceRingPulse {
-        0% {
-          transform: scale(0.45);
-          opacity: 0.9;
-        }
-        100% {
-          transform: scale(1);
-          opacity: 0;
-        }
-      }
-      .voice-bar {
-        width: 4px;
-        height: 8px;
-        border-radius: 999px;
-        background: linear-gradient(180deg, #6366f1, #8b5cf6);
-        animation: voiceBarBeat 1s ease-in-out infinite;
-      }
-      .voice-bar:nth-child(1) {
-        animation-delay: 0s;
-      }
-      .voice-bar:nth-child(2) {
-        animation-delay: 0.12s;
-      }
-      .voice-bar:nth-child(3) {
-        animation-delay: 0.24s;
-      }
-      .voice-bar:nth-child(4) {
-        animation-delay: 0.36s;
-      }
-      .voice-bar:nth-child(5) {
-        animation-delay: 0.48s;
-      }
-      @keyframes voiceBarBeat {
-        0%,
-        100% {
-          height: 8px;
-          opacity: 0.6;
-        }
-        50% {
-          height: 28px;
-          opacity: 1;
-        }
-      }
-      .voice-bar.idle {
-        animation: none;
-        height: 4px;
-        opacity: 0.35;
-      }
-    </style>
-    <style>
-      /* ─── AUTH PAGES ─────────────────────────────────────────────── */
-      #page-login, #page-register {
-        display: none;
-        min-height: 100vh;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-        position: relative;
-        overflow: hidden;
-      }
-      #page-login.active, #page-register.active {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-      #page-app { display: none; }
-      #page-app.active { display: block; }
-
-      /* Animated background blobs */
-      .auth-blob {
-        position: absolute;
-        border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.15;
-        animation: blobFloat 8s ease-in-out infinite;
-        pointer-events: none;
-      }
-      .auth-blob-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; right: -100px; animation-delay: 0s; }
-      .auth-blob-2 { width: 300px; height: 300px; background: #8b5cf6; bottom: -80px; left: -80px; animation-delay: -3s; }
-      .auth-blob-3 { width: 200px; height: 200px; background: #06b6d4; top: 50%; left: 50%; transform: translate(-50%,-50%); animation-delay: -5s; }
-      @keyframes blobFloat {
-        0%, 100% { transform: translate(0,0) scale(1); }
-        33% { transform: translate(20px,-20px) scale(1.05); }
-        66% { transform: translate(-15px,15px) scale(0.95); }
-      }
-
-      /* Auth card */
-      .auth-card {
-        background: rgba(255,255,255,0.07);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255,255,255,0.12);
-        border-radius: 28px;
-        padding: 36px 32px;
-        width: 100%;
-        max-width: 420px;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
-        position: relative;
-        z-index: 10;
-      }
-      @media (max-width: 480px) {
-        .auth-card { padding: 28px 20px; border-radius: 24px; margin: 16px; }
-      }
-
-      /* Auth input */
-      .auth-inp {
-        width: 100%;
-        padding: 13px 16px;
-        border-radius: 14px;
-        border: 1.5px solid rgba(255,255,255,0.12);
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        font-size: 0.9rem;
-        font-family: inherit;
-        outline: none;
-        transition: all 0.2s;
-        box-sizing: border-box;
-      }
-      .auth-inp::placeholder { color: rgba(255,255,255,0.35); }
-      .auth-inp:focus {
-        border-color: rgba(99,102,241,0.8);
-        background: rgba(99,102,241,0.08);
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.18);
-      }
-      .auth-inp.error { border-color: rgba(244,63,94,0.8); }
-      .auth-lbl {
-        display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: rgba(255,255,255,0.55);
-        margin-bottom: 6px;
-        letter-spacing: 0.04em;
-        text-transform: uppercase;
-      }
-
-      /* PIN Keypad */
-      .pin-dots {
-        display: flex;
-        gap: 12px;
-        justify-content: center;
-        margin: 16px 0;
-      }
-      .pin-dot {
-        width: 14px;
-        height: 14px;
-        border-radius: 50%;
-        border: 2px solid rgba(255,255,255,0.3);
-        background: transparent;
-        transition: all 0.2s;
-      }
-      .pin-dot.filled {
-        background: #6366f1;
-        border-color: #6366f1;
-        box-shadow: 0 0 12px rgba(99,102,241,0.5);
-        transform: scale(1.15);
-      }
-      .pin-dot.error {
-        border-color: #f43f5e;
-        background: #f43f5e;
-        animation: pinShake 0.3s ease;
-      }
-      @keyframes pinShake {
-        0%,100% { transform: translateX(0); }
-        25% { transform: translateX(-6px); }
-        75% { transform: translateX(6px); }
-      }
-      .keypad {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 10px;
-        margin-top: 8px;
-      }
-      .keypad-btn {
-        aspect-ratio: 1;
-        border-radius: 18px;
-        border: 1.5px solid rgba(255,255,255,0.1);
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        font-size: 1.3rem;
-        font-weight: 700;
-        font-family: inherit;
-        cursor: pointer;
-        transition: all 0.12s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        user-select: none;
-        -webkit-user-select: none;
-      }
-      .keypad-btn:active, .keypad-btn.pressed {
-        background: rgba(99,102,241,0.3);
-        border-color: rgba(99,102,241,0.6);
-        transform: scale(0.92);
-      }
-      .keypad-btn.del { font-size: 1.1rem; color: rgba(255,255,255,0.5); }
-      .keypad-btn.empty { pointer-events: none; border-color: transparent; background: transparent; }
-
-      /* Auth button */
-      .auth-btn {
-        width: 100%;
-        padding: 14px;
-        border-radius: 16px;
-        border: none;
-        font-size: 0.95rem;
-        font-weight: 700;
-        font-family: inherit;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-      }
-      .auth-btn-primary {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: #fff;
-        box-shadow: 0 8px 24px rgba(99,102,241,0.35);
-      }
-      .auth-btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 12px 32px rgba(99,102,241,0.45); }
-      .auth-btn-primary:active { transform: scale(0.97); }
-      .auth-btn-secondary {
-        background: rgba(255,255,255,0.06);
-        color: rgba(255,255,255,0.8);
-        border: 1.5px solid rgba(255,255,255,0.12);
-      }
-      .auth-btn-secondary:hover { background: rgba(255,255,255,0.1); }
-      .auth-btn-bio {
-        background: linear-gradient(135deg, #0f172a, #1e293b);
-        color: #fff;
-        border: 1.5px solid rgba(99,102,241,0.4);
-      }
-      .auth-btn-bio:hover { border-color: rgba(99,102,241,0.7); background: rgba(99,102,241,0.12); }
-      .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-
-      /* Loading steps */
-      .auth-step {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 0;
-        color: rgba(255,255,255,0.5);
-        font-size: 0.875rem;
-        transition: all 0.3s;
-      }
-      .auth-step.done { color: rgba(255,255,255,0.9); }
-      .auth-step.active { color: #a5b4fc; }
-      .auth-step.error { color: #f87171; }
-      .step-icon {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.75rem;
-        flex-shrink: 0;
-        border: 2px solid rgba(255,255,255,0.15);
-        background: transparent;
-      }
-      .auth-step.done .step-icon { background: #10b981; border-color: #10b981; color: #fff; }
-      .auth-step.active .step-icon { border-color: #6366f1; animation: stepPulse 1.2s ease-in-out infinite; }
-      .auth-step.error .step-icon { background: #f43f5e; border-color: #f43f5e; color: #fff; }
-      @keyframes stepPulse {
-        0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); }
-        50% { box-shadow: 0 0 0 6px rgba(99,102,241,0); }
-      }
-      .step-spinner {
-        width: 14px; height: 14px;
-        border: 2px solid rgba(99,102,241,0.3);
-        border-top-color: #6366f1;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
-
-      /* Auth logo */
-      .auth-logo {
-        width: 56px; height: 56px;
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.75rem;
-        margin-bottom: 6px;
-        box-shadow: 0 8px 24px rgba(99,102,241,0.4);
-      }
-
-      /* Fade-slide animation */
-      .auth-fade-in {
-        animation: authFadeIn 0.5s ease-out;
-      }
-      @keyframes authFadeIn {
-        from { opacity: 0; transform: translateY(24px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .auth-slide-left {
-        animation: slideLeft 0.35s ease-out;
-      }
-      @keyframes slideLeft {
-        from { opacity: 0; transform: translateX(30px); }
-        to { opacity: 1; transform: translateX(0); }
-      }
-      .auth-slide-right {
-        animation: slideRight 0.35s ease-out;
-      }
-      @keyframes slideRight {
-        from { opacity: 0; transform: translateX(-30px); }
-        to { opacity: 1; transform: translateX(0); }
-      }
-
-      /* Biometric ring animation */
-      .bio-ring {
-        position: absolute;
-        inset: -8px;
-        border-radius: 50%;
-        border: 2px solid rgba(99,102,241,0.4);
-        animation: bioRing 2s ease-out infinite;
-      }
-      .bio-ring:nth-child(2) { inset: -16px; animation-delay: 0.5s; }
-      .bio-ring:nth-child(3) { inset: -24px; animation-delay: 1s; }
-      @keyframes bioRing {
-        0% { opacity: 0.8; transform: scale(0.9); }
-        100% { opacity: 0; transform: scale(1.2); }
-      }
-
-      /* divider */
-      .auth-divider {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin: 16px 0;
-        color: rgba(255,255,255,0.25);
-        font-size: 0.75rem;
-      }
-      .auth-divider::before, .auth-divider::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: rgba(255,255,255,0.1);
-      }
-
-      /* Error message */
-      .auth-error {
-        background: rgba(244,63,94,0.1);
-        border: 1px solid rgba(244,63,94,0.25);
-        border-radius: 12px;
-        padding: 10px 14px;
-        color: #fca5a5;
-        font-size: 0.82rem;
-        display: none;
-        margin-top: 10px;
-      }
-      .auth-error.show { display: block; }
-
-      /* Success flash */
-      .auth-success-flash {
-        animation: successFlash 0.4s ease-out;
-      }
-      @keyframes successFlash {
-        0% { background: rgba(16,185,129,0.0); }
-        50% { background: rgba(16,185,129,0.15); }
-        100% { background: rgba(255,255,255,0.07); }
-      }
-
-      /* OTP Input Boxes */
-      .otp-box {
-        width: 44px;
-        height: 54px;
-        border-radius: 14px;
-        border: 2px solid rgba(255,255,255,0.15);
-        background: rgba(255,255,255,0.06);
-        color: #fff;
-        font-size: 1.4rem;
-        font-weight: 800;
-        text-align: center;
-        font-family: inherit;
-        outline: none;
-        transition: all 0.2s;
-        caret-color: #6366f1;
-      }
-      .otp-box:focus {
-        border-color: #6366f1;
-        background: rgba(99,102,241,0.1);
-        box-shadow: 0 0 0 3px rgba(99,102,241,0.2);
-        transform: scale(1.08);
-      }
-      .otp-box.filled {
-        border-color: rgba(99,102,241,0.6);
-        background: rgba(99,102,241,0.08);
-      }
-      .otp-box.error {
-        border-color: #f43f5e;
-        animation: pinShake 0.3s ease;
-      }
-      @media (max-width: 400px) {
-        .otp-box { width: 38px; height: 48px; font-size: 1.2rem; border-radius: 10px; }
-      }
-
-      /* Lupa PIN / Forgot PIN panel */
-      #forgotPinPanel, #loginLoading, #setupPinPanel, #deviceChallengePanel {
-        max-height: 92vh;
-        overflow-y: auto;
-      }
-
-      /* Google Sign-In Button */
-      .g-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        width: 100%;
-        padding: 13px 20px;
-        border-radius: 16px;
-        border: 1px solid rgba(255,255,255,0.18);
-        background: #ffffff;
-        color: #1e293b;
-        font-size: 0.92rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      }
-      .g-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(255,255,255,0.15), 0 4px 12px rgba(0,0,0,0.2);
-        background: #f8fafc;
-      }
-      .g-btn:active {
-        transform: scale(0.98);
-      }
-
-      /* Device Warning Badge */
-      .device-badge {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 14px;
-        border-radius: 16px;
-        background: rgba(245, 158, 11, 0.12);
-        border: 1px solid rgba(245, 158, 11, 0.35);
-        color: #fef3c7;
-        font-size: 0.8rem;
-        line-height: 1.45;
-        margin-bottom: 16px;
-      }
-
-      /* Profile User Badge */
-      .auth-user-badge {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 10px 14px;
-        border-radius: 16px;
-        background: rgba(255,255,255,0.06);
-        border: 1px solid rgba(255,255,255,0.12);
-        margin-bottom: 16px;
-      }
-      .auth-user-badge img {
-        width: 42px;
-        height: 42px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #6366f1;
-      }
-
-      /* Sheet Loading Overlay Animation */
-      @keyframes floatSlow {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        50% { transform: translateY(-8px) rotate(1deg); }
-      }
-      .animate-float-slow {
-        animation: floatSlow 3.5s ease-in-out infinite;
-      }
-      @keyframes shimmerGlow {
-        0% { filter: drop-shadow(0 0 6px rgba(99,102,241,0.5)); }
-        50% { filter: drop-shadow(0 0 18px rgba(168,85,247,0.85)); }
-        100% { filter: drop-shadow(0 0 6px rgba(99,102,241,0.5)); }
-      }
-      .shimmer-glow {
-        animation: shimmerGlow 2.5s ease-in-out infinite;
-      }
-    </style>
-    <style>
-      #printArea {
-        display: none;
-      }
-      @media print {
-        body {
-          background: #fff !important;
-          padding: 0 !important;
-        }
-        body > *:not(#page-app),
-        #page-app > *:not(#printArea) {
-          display: none !important;
-        }
-        #page-app { display: block !important; }
-        #printArea {
-          display: block !important;
-        }
-        @page {
-          size: A4;
-          margin: 14mm;
-        }
-      }
-      .pr {
-        font-family: "Plus Jakarta Sans", Arial, sans-serif;
-        color: #0f172a;
-        font-size: 11px;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-      }
-      .pr h1 {
-        font-size: 20px;
-        margin: 0 0 2px;
-      }
-      .pr h2 {
-        font-size: 13px;
-        margin: 18px 0 6px;
-        color: #4f46e5;
-      }
-      .pr table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      .pr th,
-      .pr td {
-        padding: 5px 6px;
-        border-bottom: 1px solid #e2e8f0;
-        text-align: left;
-      }
-      .pr th {
-        background: #eef2ff;
-        font-weight: 700;
-      }
-      .pr .r {
-        text-align: right;
-      }
-      .pr .m {
-        color: #64748b;
-        margin: 0;
-      }
-      .pr .sum {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 8px;
-        margin-top: 12px;
-      }
-      .pr .sum div {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 8px;
-      }
-      .pr .sum span {
-        display: block;
-        color: #64748b;
-      }
-      .pr .sum b {
-        font-size: 14px;
-      }
-      .pr tr {
-        break-inside: avoid;
-      }
-      .pr thead {
-        display: table-header-group;
-      }
-      .pr .g2 {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-      .pr figure {
-        margin: 0;
-        break-inside: avoid;
-      }
-      .pr figure b {
-        display: block;
-        margin-bottom: 3px;
-      }
-      .pr img {
-        width: 100%;
-      }
-      .pr ul {
-        margin: 4px 0 4px 16px;
-        padding: 0;
-      }
-      .pr li {
-        margin: 3px 0;
-      }
-    </style>
-  </head>
-  <body class="bg-slate-100 text-slate-800 min-h-screen pb-32 md:pb-10">
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         HALAMAN REGISTER
-    ════════════════════════════════════════════════════════════════ -->
-    <!-- ═══════════════════════════════════════════════════════════════
-         HALAMAN AUTENTIKASI UTAMA (GOOGLE, PIN, BIOMETRIK & PERANGKAT)
-    ════════════════════════════════════════════════════════════════ -->
-    <div id="page-login" class="active">
-      <div class="auth-blob auth-blob-1"></div>
-      <div class="auth-blob auth-blob-2"></div>
-      <div class="auth-blob auth-blob-3"></div>
-
-      <!-- Panel 1: Login Form (Jika perangkat sudah terdaftar) -->
-      <div id="loginForm" class="auth-card auth-fade-in">
-        <!-- Logo & judul -->
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">💰</div>
-          <div>
-            <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Keuangan Cerdas</h1>
-            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Aplikasi Keuangan Pribadi</p>
-          </div>
-        </div>
-
-        <!-- Badge Status Perangkat -->
-        <div id="deviceBadgeLogin" class="device-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">📱</span>
-          <div style="min-width:0;">
-            <strong style="display:block;font-size:0.82rem;color:#86efac;">Perangkat Terdaftar</strong>
-            <span id="badgeDeviceDesc" style="font-size:0.75rem;color:rgba(255,255,255,0.7);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Perangkat dikenali di sistem</span>
-          </div>
-        </div>
-
-        <!-- Email field -->
-        <div style="margin-bottom:14px;">
-          <label class="auth-lbl">Email Akun</label>
-          <input id="loginEmail" type="email" class="auth-inp" placeholder="email@gmail.com"
-            autocomplete="email" oninput="authErr('loginErr','')" />
-        </div>
-
-        <!-- Tombol biometric jika ada -->
-        <div id="bioSection" style="display:none;margin-bottom:12px;">
-          <button class="auth-btn auth-btn-bio" onclick="loginBiometric()" id="bioBtn" type="button">
-            <span style="font-size:1.4rem;">🫆</span>
-            <span id="bioBtnTxt">Masuk dengan Sidik Jari</span>
-          </button>
-        </div>
-
-        <!-- PIN dots & label -->
-        <div style="margin-bottom:6px;">
-          <label class="auth-lbl">PIN 6 Digit</label>
-          <div class="pin-dots" id="loginPinDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-        </div>
-
-        <!-- Keypad PIN -->
-        <div class="keypad" id="loginKeypad"></div>
-
-        <!-- Error -->
-        <div id="loginErr" class="auth-error"></div>
-
-        <!-- Tombol masuk PIN -->
-        <button class="auth-btn auth-btn-primary" onclick="loginWithPin()" style="margin-top:14px;" id="loginBtn" type="button">
-          Masuk dengan PIN
-        </button>
-
-        <!-- Pindah ke Daftar Baru -->
-        <p style="text-align:center;margin-top:14px;">
-          <button onclick="showRegister()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ Daftarkan Akun / Perangkat Baru</button>
-        </p>
-
-        <!-- Lupa PIN -->
-        <p style="text-align:center;margin-top:8px;">
-          <button onclick="showForgotPin()" type="button" style="color:rgba(255,255,255,0.4);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px;">Lupa PIN?</button>
-        </p>
-
-        <!-- Link konfigurasi sheet -->
-        <p style="text-align:center;margin-top:10px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
-        </p>
-      </div>
-
-      <!-- Panel 2: Register Form (Jika perangkat belum terdaftar) -->
-      <div id="registerPanel" class="auth-card auth-fade-in" style="display:none;">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">✨</div>
-          <div>
-            <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Daftar Akun</h1>
-            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Daftarkan email & perangkat Anda</p>
-          </div>
-        </div>
-
-        <div class="device-badge" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#c7d2fe;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">🛡️</span>
-          <div>
-            <strong style="display:block;font-size:0.82rem;color:#c7d2fe;">Pendaftaran Perangkat</strong>
-            <span style="font-size:0.75rem;color:rgba(255,255,255,0.7);">Perangkat ini akan otomatis terhubung ke akun Anda.</span>
-          </div>
-        </div>
-
-        <!-- Input Email & Nama -->
-        <div style="margin-bottom:10px;">
-          <label class="auth-lbl">Email</label>
-          <input id="regEmail" type="email" class="auth-inp" placeholder="email@gmail.com" autocomplete="email" oninput="authErr('regErr','')" />
-        </div>
-        <div style="margin-bottom:14px;">
-          <label class="auth-lbl">Nama Lengkap</label>
-          <input id="regNama" type="text" class="auth-inp" placeholder="Nama Anda" autocomplete="name" oninput="authErr('regErr','')" />
-        </div>
-
-        <!-- Step 1: Buat PIN -->
-        <div id="regPinStep1">
-          <div style="text-align:center;margin-bottom:6px;">
-            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Buat PIN 6 Digit</p>
-          </div>
-          <div class="pin-dots" id="regPinDots1">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="regKeypad1"></div>
-        </div>
-
-        <!-- Step 2: Konfirmasi PIN -->
-        <div id="regPinStep2" style="display:none;">
-          <div style="text-align:center;margin-bottom:6px;">
-            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Konfirmasi Ulang PIN 6 Digit</p>
-          </div>
-          <div class="pin-dots" id="regPinDots2">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="regKeypad2"></div>
-        </div>
-
-        <!-- Indikator Langkah PIN -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
-          <div id="regStepDot1" style="width:20px;height:8px;border-radius:4px;background:#6366f1;transition:all 0.3s;"></div>
-          <div id="regStepDot2" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-        </div>
-
-        <!-- Error -->
-        <div id="regErr" class="auth-error"></div>
-
-        <!-- Pindah ke Login -->
-        <p style="text-align:center;margin-top:16px;">
-          <button onclick="showLogin()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">← Sudah punya akun? Masuk di sini</button>
-        </p>
-
-        <!-- Link konfigurasi sheet -->
-        <p style="text-align:center;margin-top:8px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
-        </p>
-      </div>
-
-      <!-- State 4: Panel Lupa PIN -->
-      <div id="forgotPinPanel" class="auth-card auth-fade-in" style="display:none;">
-        <!-- Step FP1: Masukkan email -->
-        <div id="fpStep1">
-          <div style="text-align:center;margin-bottom:20px;">
-            <div style="font-size:2rem;margin-bottom:6px;">🔑</div>
-            <h2 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0;">Lupa PIN?</h2>
-            <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:6px;">Masukkan email akun kamu. Kami akan kirimkan kode OTP untuk reset PIN.</p>
-          </div>
-          <div style="margin-bottom:14px;">
-            <label class="auth-lbl">Email Akun</label>
-            <input id="fpEmail" type="email" class="auth-inp" placeholder="email@gmail.com" autocomplete="email" />
-          </div>
-          <div id="fpErr1" class="auth-error"></div>
-          <button class="auth-btn auth-btn-primary" onclick="fpSendOtp()" style="margin-top:6px;" id="fpSendBtn" type="button">
-            Kirim Kode OTP →
-          </button>
-          <p style="text-align:center;margin-top:14px;">
-            <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Kembali ke login</button>
-          </p>
-        </div>
-
-        <!-- Step FP2: Masukkan OTP -->
-        <div id="fpStep2" style="display:none;">
-          <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:2rem;margin-bottom:6px;">📧</div>
-            <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;font-weight:700;">Masukkan Kode OTP</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Cek inbox / spam email <strong id="fpEmailHint" style="color:#a5b4fc;"></strong></p>
-          </div>
-          <div id="fpOtpBoxes" style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;"></div>
-          <div id="fpErr2" class="auth-error"></div>
-          <button class="auth-btn auth-btn-primary" onclick="fpVerifyOtp()" style="margin-top:8px;" id="fpVerifyBtn" type="button">
-            Verifikasi OTP
-          </button>
-          <p style="text-align:center;margin-top:12px;font-size:0.78rem;color:rgba(255,255,255,0.4);">
-            <button id="fpResendBtn" onclick="fpSendOtp(true)" type="button" style="color:#a5b4fc;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;display:none;">Kirim ulang OTP</button>
-            <span id="fpResendCountdown">Kirim ulang dalam <span id="fpResendSec">60</span>s</span>
-          </p>
-        </div>
-
-        <!-- Step FP3: Buat PIN baru -->
-        <div id="fpStep3" style="display:none;">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Buat PIN Baru</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Masukkan PIN 6 digit yang baru</p>
-          </div>
-          <div class="pin-dots" id="fpPinDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="fpPinKeypad"></div>
-          <div id="fpErr3" class="auth-error"></div>
-        </div>
-
-        <!-- Step FP4: Konfirmasi PIN baru -->
-        <div id="fpStep4" style="display:none;">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Konfirmasi PIN Baru</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Ulangi PIN yang baru kamu buat</p>
-          </div>
-          <div class="pin-dots" id="fpConfDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="fpConfKeypad"></div>
-          <div id="fpErr4" class="auth-error"></div>
-        </div>
-
-        <!-- Step indicator (4 titik) -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
-          <div id="fpsd1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;transition:all 0.3s;"></div>
-          <div id="fpsd2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-          <div id="fpsd3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-          <div id="fpsd4" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-        </div>
-      </div>
-
-      <!-- State 5: Loading (Pengecekan device → Verifikasi identitas → Memuat data) -->
-      <div id="loginLoading" class="auth-card" style="display:none;">
-        <div style="text-align:center;margin-bottom:24px;">
-          <div style="position:relative;width:72px;height:72px;margin:0 auto 16px;">
-            <div style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;animation:spin 1s linear infinite;"></div>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon">💰</div>
-          </div>
-          <h2 style="font-size:1.1rem;font-weight:800;color:#fff;" id="loadingTitle">Memverifikasi identitas</h2>
-          <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-top:4px;" id="loadingSubtitle">Mohon tunggu sebentar...</p>
-        </div>
-        <div id="authSteps" style="padding:0 8px;">
-          <div class="auth-step" id="step1">
-            <div class="step-icon"><div class="step-spinner"></div></div>
-            <span>Memeriksa ID perangkat...</span>
-          </div>
-          <div class="auth-step" id="step2" style="opacity:0.4;">
-            <div class="step-icon">2</div>
-            <span id="step2Txt">Memverifikasi identitas...</span>
-          </div>
-          <div class="auth-step" id="step3" style="opacity:0.4;">
-            <div class="step-icon">3</div>
-            <span>Memuat data keuangan pribadi...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         COOL SHEET LOADING OVERLAY (Tampil saat refresh / memuat sheet)
-    ════════════════════════════════════════════════════════════════ -->
-    <div id="sheetLoadingOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg, #090d16 0%, #0f172a 50%, #090d16 100%);flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s ease;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);">
-      <!-- Floating glowing gradient ambient blobs -->
-      <div class="auth-blob auth-blob-1" style="background:#6366f1;opacity:0.25;top:-60px;right:-60px;"></div>
-      <div class="auth-blob auth-blob-2" style="background:#8b5cf6;opacity:0.22;bottom:-50px;left:-50px;"></div>
-      <div class="auth-blob auth-blob-3" style="background:#06b6d4;opacity:0.2;top:40%;left:45%;"></div>
-
-      <div class="animate-float-slow" style="position:relative;z-index:10;width:92%;max-width:390px;padding:36px 30px;border-radius:28px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;text-align:center;">
-        <!-- Animated 3D Floating Icon with Glowing Pulse Rings -->
-        <div style="position:relative;width:88px;height:88px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;">
-          <div style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-          <div style="position:absolute;inset:-4px;border-radius:26px;border:1.5px dashed rgba(129,140,248,0.5);animation:spin 12s linear infinite;"></div>
-          <div class="shimmer-glow" style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(79,70,229,0.5);border:2px solid rgba(255,255,255,0.25);">
-            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);">💰</span>
-          </div>
-        </div>
-
-        <!-- Title & Subtitle -->
-        <h2 style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg, #ffffff 30%, #c7d2fe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px 0;">
-          Keuangan Cerdas
-        </h2>
-        <p id="sheetLoadingSubtitle" style="font-size:0.82rem;color:#94a3b8;font-weight:500;margin:0 0 20px 0;min-height:20px;transition:all 0.3s;">
-          Menyinkronkan data Google Sheets...
-        </p>
-
-        <!-- Progress Track -->
-        <div style="width:100%;height:7px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;position:relative;margin-bottom:20px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
-          <div id="sheetLoadingBar" style="height:100%;width:35%;border-radius:999px;background:linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);box-shadow:0 0 14px rgba(99,102,241,0.8);transition:width 0.4s ease-out;"></div>
-        </div>
-
-        <!-- Loading Steps Badges -->
-        <div style="width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:0.78rem;">
-          <div id="stepCloud" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">☁️</span>
-              <span style="color:#e2e8f0;font-weight:600;">Sambungan Spreadsheet</span>
-            </div>
-            <span id="stepCloudStatus" style="font-weight:700;color:#818cf8;display:flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memeriksa
-            </span>
-          </div>
-
-          <div id="stepData" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">📊</span>
-              <span style="color:#e2e8f0;font-weight:600;">Data Transaksi & Anggaran</span>
-            </div>
-            <span id="stepDataStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
-          </div>
-
-          <div id="stepDash" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">✨</span>
-              <span style="color:#e2e8f0;font-weight:600;">Menyiapkan Dashboard</span>
-            </div>
-            <span id="stepDashStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
-          </div>
-        </div>
-
-        <!-- Security footer badge -->
-        <div style="margin-top:22px;display:flex;align-items:center;gap:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-weight:500;">
-          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;"></span>
-          <span>Perangkat terverifikasi &amp; data terenkripsi</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         APP UTAMA (dibungkus, hanya tampil setelah login)
-    ════════════════════════════════════════════════════════════════ -->
-    <div id="page-app">
-    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg">
-      <div
-        class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3"
-      >
-        <div>
-          <h1 class="text-lg font-extrabold tracking-tight">Keuangan Cerdas</h1>
-          <p
-            id="sync"
-            onclick="triggerManualSync()"
-            class="text-[11px] text-slate-400 flex items-center gap-1.5 cursor-pointer hover:text-indigo-300 transition"
-            title="Klik untuk menyinkronkan data Google Sheets"
-          >
-            <span id="dot" class="w-2 h-2 rounded-full bg-slate-500"></span
-            ><span id="syncTxt">Menghubungkan...</span>
-          </p>
-        </div>
-        <nav id="navTop" class="hidden md:flex gap-1"></nav>
-        <div class="flex items-center gap-2">
-          <button
-            onclick="openSambungan(false)"
-            class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
-            aria-label="Pengaturan sambungan Google Sheets"
-            title="Sambungan Google Sheets"
-          >
-            ⚙️
-          </button>
-          <button onclick="openForm()" class="hidden md:block btn">
-            + Tambah transaksi
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 mt-5">
-      <!-- DASHBOARD -->
-      <section id="v-Dashboard" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-extrabold">Ringkasan keuangan</h2>
-            <p id="periode" class="text-xs text-slate-500"></p>
-          </div>
-          <select
-            onchange="setRange(this.value)"
-            class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
-          ></select>
-        </div>
-        <div id="kpi" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
-        <div id="notif" class="space-y-2"></div>
-        <div id="mini" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
-        <div class="grid lg:grid-cols-2 gap-4 items-start">
-          <div class="card">
-            <h3 class="font-bold text-sm mb-3">
-              Tren harian: pemasukan vs pengeluaran
-            </h3>
-            <div class="h-64"><canvas id="cTren"></canvas></div>
-          </div>
-          <div class="space-y-4 lg:row-span-2">
-            <div class="card">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <h3 class="font-bold text-sm">Pengeluaran per kategori</h3>
-                <button id="katToggle_Pengeluaran" onclick="toggleKat('Pengeluaran')" class="hidden text-xs font-bold text-indigo-600 whitespace-nowrap"></button>
-              </div>
-              <div class="h-64"><canvas id="cKat"></canvas></div>
-              <div id="katList_Pengeluaran" class="hidden mt-4 space-y-2"></div>
-            </div>
-            <div class="card">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <h3 class="font-bold text-sm">Pemasukan per kategori</h3>
-                <button id="katToggle_Pemasukan" onclick="toggleKat('Pemasukan')" class="hidden text-xs font-bold text-indigo-600 whitespace-nowrap"></button>
-              </div>
-              <div class="h-64"><canvas id="cKatIn"></canvas></div>
-              <div id="katList_Pemasukan" class="hidden mt-4 space-y-2"></div>
-            </div>
-          </div>
-          <div class="card">
-            <h3 class="font-bold text-sm mb-3">Arus kas 6 bulan terakhir</h3>
-            <div class="h-64"><canvas id="cBulan"></canvas></div>
-          </div>
-          <div class="card lg:col-span-2">
-            <h3 class="font-bold text-sm mb-3">Pertumbuhan saldo</h3>
-            <div class="h-64"><canvas id="cSaldo"></canvas></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TRANSAKSI -->
-      <section id="v-Transaksi" class="hidden space-y-4">
-        <div class="card space-y-3">
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="text-lg font-extrabold">
-              Transaksi
-              <span id="cnt" class="text-slate-400 font-medium text-sm"></span>
-            </h2>
-            <div class="flex gap-2">
-              <button id="btnSelMode" onclick="toggleSelMode()" class="act">
-                ☑️ Pilih
-              </button>
-              <button onclick="printReport()" class="btn !py-2">
-                🖨️ Cetak PDF
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <select
-              onchange="setRange(this.value)"
-              class="rangeSel inp sm:!w-56 font-semibold"
-            ></select>
-            <input
-              id="q"
-              oninput="
-                S.q = this.value.toLowerCase();
-                renderList();
-              "
-              placeholder="Cari nama, kategori, catatan..."
-              class="inp sm:flex-1"
-            />
-          </div>
-          <div id="chips" class="flex gap-2"></div>
-          <p id="lsum" class="text-xs text-slate-500"></p>
-          <div class="overflow-x-auto -mx-2">
-            <table class="w-full text-sm">
-              <thead>
-                <tr
-                  class="text-left text-xs text-slate-400 border-b border-slate-100"
-                >
-                  <th id="thSel" class="p-2 w-8 hidden">
-                    <input
-                      type="checkbox"
-                      id="chkAll"
-                      onchange="selAllToggle(this.checked)"
-                      class="w-4 h-4 rounded accent-indigo-600"
-                      aria-label="Pilih semua"
-                    />
-                  </th>
-                  <th class="p-2 font-semibold hidden md:table-cell">
-                    Tanggal
-                  </th>
-                  <th class="p-2 font-semibold">Transaksi</th>
-                  <th class="p-2 font-semibold hidden md:table-cell">
-                    Kategori
-                  </th>
-                  <th class="p-2 font-semibold hidden lg:table-cell">
-                    Catatan
-                  </th>
-                  <th class="p-2 font-semibold text-right">Nominal</th>
-                  <th class="p-2"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody" class="divide-y divide-slate-50"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- LAPORAN -->
-      <section id="v-Laporan" class="hidden space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-xl font-extrabold">Laporan keuangan</h2>
-          <div class="flex gap-2">
-            <select
-              onchange="setRange(this.value)"
-              class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
-            ></select>
-            <button onclick="printReport()" class="btn !py-2">
-              🖨️ Cetak / Simpan PDF
-            </button>
-          </div>
-        </div>
-        <div id="lKpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card">
-            <h3 class="font-extrabold mb-3">Rekap bulanan</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr
-                    class="text-left text-xs text-slate-400 border-b border-slate-100"
-                  >
-                    <th class="p-2 font-semibold">Bulan</th>
-                    <th class="p-2 font-semibold text-right">Masuk</th>
-                    <th class="p-2 font-semibold text-right">Keluar</th>
-                    <th class="p-2 font-semibold text-right">Selisih</th>
-                  </tr>
-                </thead>
-                <tbody id="tRekap" class="divide-y divide-slate-50"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pengeluaran terbesar</h3>
-              <div id="lKat" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pengeluaran terkecil</h3>
-              <div id="lKatMin" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pemasukan terbesar</h3>
-              <div id="lKatInMax" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pemasukan terkecil</h3>
-              <div id="lKatInMin" class="space-y-3"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PINTAR -->
-      <section id="v-Pintar" class="hidden space-y-4">
-        <div>
-          <h2 class="text-xl font-extrabold">Asisten keuangan pintar</h2>
-          <p class="text-xs text-slate-500">
-            Dianalisis otomatis dari data bulan berjalan
-          </p>
-        </div>
-        <div class="grid lg:grid-cols-3 gap-4">
-          <div class="card text-center">
-            <h3 class="font-bold text-sm">Skor kesehatan keuangan</h3>
-            <div class="relative h-32 mt-3">
-              <canvas id="cSkor"></canvas>
-              <div class="absolute inset-x-0 bottom-0">
-                <p
-                  id="skorNum"
-                  class="text-3xl font-extrabold leading-none"
-                ></p>
-                <p id="skorLbl" class="text-xs font-bold"></p>
-              </div>
-            </div>
-            <div id="skorParts" class="space-y-2 mt-4 text-left"></div>
-          </div>
-          <div class="card lg:col-span-2">
-            <h3 class="font-bold mb-3">Peringatan</h3>
-            <div id="pAlerts" class="space-y-2"></div>
-          </div>
-        </div>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card">
-            <h3 class="font-bold mb-3">Saran untuk Anda</h3>
-            <ul id="pTips" class="space-y-2.5 text-sm"></ul>
-          </div>
-          <div class="card">
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="font-bold">Target tabungan</h3>
-              <button onclick="formTarget()" class="btn !py-1.5 !px-3 !text-xs">
-                + Tambah target
-              </button>
-            </div>
-            <div id="pTarget" class="space-y-3"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="flex justify-between items-center mb-3">
-            <h3 class="font-bold">Anggaran bulan ini</h3>
-            <button onclick="formAnggaran()" class="btn !py-1.5 !px-3 !text-xs">
-              + Tambah anggaran
-            </button>
-          </div>
-          <div id="pBudget" class="grid sm:grid-cols-2 gap-3"></div>
-        </div>
-      </section>
-
-      <!-- PENGATURAN -->
-      <section id="v-Pengaturan" class="hidden space-y-4">
-        <h2 class="text-xl font-extrabold">Pengaturan</h2>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card space-y-3">
-            <h3 class="font-bold">Peringatan dan target</h3>
-            <div id="setForm" class="space-y-3"></div>
-            <button onclick="saveSet()" class="btn w-full">
-              Simpan pengaturan
-            </button>
-          </div>
-          <div class="space-y-4">
-            <div class="card">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold">Anggaran per kategori</h3>
-                <button onclick="formAnggaran()" class="chip on">
-                  + Tambah
-                </button>
-              </div>
-              <div id="setBudget" class="space-y-2"></div>
-            </div>
-            <div class="card">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold">Kategori</h3>
-                <button onclick="formKategori()" class="chip on">
-                  + Tambah
-                </button>
-              </div>
-              <div id="setKat" class="flex flex-wrap gap-2"></div>
-            </div>
-            <div class="card space-y-3">
-              <h3 class="font-bold">Sinkronisasi data</h3>
-              <p class="text-xs text-slate-400">
-                Data disinkronkan dengan Google Sheets setiap 8 detik, termasuk
-                perubahan yang Anda ketik langsung di sheet.
-              </p>
-              <button
-                onclick="
-                  refresh(true).then((ok) =>
-                    Toast.fire({
-                      icon: ok ? 'success' : 'error',
-                      title: ok ? 'Data disegarkan' : 'Gagal menyegarkan data',
-                    }),
-                  )
-                "
-                class="btn !bg-slate-200 !text-slate-700 hover:!bg-slate-300"
-              >
-                Segarkan data
-              </button>
-            </div>
-            <div class="card space-y-3">
-              <h3 class="font-bold">Akun</h3>
-              <div id="akunInfo" class="text-sm text-slate-600 space-y-1">
-                <p>👤 <span id="akunNama" class="font-semibold">-</span></p>
-                <p class="text-slate-400 text-xs" id="akunEmail">-</p>
-              </div>
-              <div class="flex flex-col gap-2">
-                <button
-                  onclick="ubahPin()"
-                  class="btn !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 !shadow-none"
-                >
-                  🔑 Ubah PIN
-                </button>
-                <button
-                  onclick="doLogout()"
-                  class="btn !bg-rose-50 !text-rose-600 hover:!bg-rose-100 !shadow-none"
-                >
-                  🚪 Keluar dari akun
-                </button>
-                <button
-                  id="btnHapusBio"
-                  onclick="hapusBiometric()"
-                  class="btn !bg-slate-100 !text-slate-600 hover:!bg-slate-200 !shadow-none hidden"
-                >
-                  🫆 Hapus sidik jari tersimpan
-                </button>
-                <button
-                  onclick="offerBiometric()"
-                  id="btnDaftarBio"
-                  class="btn !bg-indigo-50 !text-indigo-600 hover:!bg-indigo-100 !shadow-none"
-                >
-                  🫆 Daftarkan sidik jari
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- Mobile: satu FAB gabungan (tekan untuk membuka pilihan Tambah / Suara) -->
-    <div
-      id="fabMobile"
-      class="md:hidden fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3"
-    >
-      <button
-        id="fabAdd"
-        onclick="closeFabMenu(); openForm()"
-        class="w-12 h-12 rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
-        aria-label="Tambah transaksi"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-5 h-5 block m-auto"
-        >
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
-      <button
-        id="fabVoice"
-        onclick="closeFabMenu(); openVoice()"
-        class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-lg shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
-        aria-label="Catat dengan suara"
-      >
-        🎙️
-      </button>
-      <button
-        id="fabMain"
-        onclick="toggleFabMenu()"
-        class="w-14 h-14 rounded-full bg-indigo-600 text-white opacity-60 shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center"
-        aria-label="Buka menu tambah transaksi"
-      >
-        <svg
-          id="fabMainIcon"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-6 h-6 block m-auto transition-transform duration-200"
-        >
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
-    </div>
-    <!-- Desktop: tombol mengambang catat transaksi dengan suara (mobile pakai FAB gabungan di atas) -->
-    <button
-      onclick="openVoice()"
-      class="hidden md:flex fixed right-6 bottom-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition items-center justify-center"
-      aria-label="Catat dengan suara"
-      title="Catat dengan suara"
-    >
-      🎙️
-    </button>
-    <nav
-      id="navBottom"
-      class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-white/90 backdrop-blur-xl border border-slate-100 rounded-3xl shadow-[0_10px_36px_rgba(15,23,42,0.16)] flex justify-around items-center px-1.5 py-1.5"
-      style="padding-bottom: max(0.375rem, env(safe-area-inset-bottom))"
-    ></nav>
-
-    <!-- Tombol & panel list mengambang (hanya tampak saat form tambah dengan jumlah data > 1) -->
-    <button
-      id="btnListFloat"
-      onclick="toggleListPanel()"
-      class="hidden fixed right-4 bottom-20 z-[60] w-12 h-12 rounded-full bg-slate-900 text-white shadow-xl active:scale-90 transition flex items-center justify-center"
-      aria-label="Daftar data"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="w-5 h-5 block m-auto"
-      >
-        <line x1="8" y1="6" x2="21" y2="6"></line>
-        <line x1="8" y1="12" x2="21" y2="12"></line>
-        <line x1="8" y1="18" x2="21" y2="18"></line>
-        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-      </svg>
-    </button>
-    <div
-      id="listPanel"
-      class="hidden fixed right-4 bottom-36 z-[60] w-52 max-h-72 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 space-y-1"
-    ></div>
-
-    <!-- Bar aksi mengambang: muncul saat mode "Pilih" aktif dan ada data tercentang -->
-    <div
-      id="selBar"
-      class="hidden fixed inset-x-3 bottom-24 md:inset-x-auto md:right-6 md:left-auto md:w-80 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center justify-between gap-3"
-    >
-      <span id="selCount" class="text-sm font-semibold"></span>
-      <div class="flex gap-2">
-        <button
-          onclick="bulkEdit()"
-          class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition"
-        >
-          ✏️ Edit
-        </button>
-        <button
-          onclick="bulkDelete()"
-          class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold transition"
-        >
-          🗑️ Hapus
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal form transaksi -->
-    <div
-      id="modal"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeForm();"
-    >
-      <div
-        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl relative"
-      >
-        <!-- Floating Header Container (Flush to top, Jumlah data langsung menempel di bawah judul) -->
-        <div class="shrink-0 bg-slate-50/95 backdrop-blur-md px-5 pt-4 pb-2.5 z-20 relative">
-          <div class="flex justify-between items-center">
-            <h3 id="mTitle" class="font-extrabold text-lg text-slate-800"></h3>
-            <button
-              onclick="closeForm()"
-              class="w-8 h-8 rounded-full bg-slate-200/60 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition"
-              aria-label="Tutup"
-            >
-              ×
-            </button>
-          </div>
-
-          <!-- Jumlah data: dempet tepat di bawah judul, hanya muncul saat menambah transaksi baru (bukan edit) -->
-          <div id="jumlahWrap" class="hidden pt-2.5">
-            <label class="lbl text-slate-600 font-semibold"
-              >Jumlah data yang ingin ditambahkan</label
-            >
-            <div class="flex items-stretch gap-2 mt-1">
-              <button
-                type="button"
-                onclick="stepJumlah(-1)"
-                class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
-                aria-label="Kurangi jumlah"
-              >
-                <span class="block translate-y-[-1px]">&minus;</span>
-              </button>
-              <input
-                id="fJumlah"
-                type="number"
-                min="1"
-                max="50"
-                step="1"
-                inputmode="numeric"
-                value="1"
-                class="inp no-spinner font-extrabold text-center text-lg !bg-white border-indigo-100"
-                oninput="onJumlahChange(this.value)"
-              />
-              <button
-                type="button"
-                onclick="stepJumlah(1)"
-                class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
-                aria-label="Tambah jumlah"
-              >
-                <span class="block translate-y-[-1px]">+</span>
-              </button>
-            </div>
-            <p class="text-[11px] text-slate-400 mt-1">
-              Ubah angka ini untuk menambah beberapa transaksi sekaligus (maks.
-              50).
-            </p>
-          </div>
-
-          <!-- Pembatas elegan: memisahkan area mengambang (judul + jumlah data) dari area input di bawahnya -->
-          <div class="modal-divider mt-3.5 -mx-5"></div>
-        </div>
-
-        <!-- Scrollable Form Body -->
-        <div class="flex-1 overflow-y-auto p-5 pt-4 space-y-3">
-          <!-- Mode edit: 1 transaksi -->
-          <div id="editWrap" class="hidden space-y-3">
-            <div class="grid grid-cols-2 gap-2" id="segJenis"></div>
-            <div>
-              <label class="lbl">Nama transaksi</label
-              ><input
-                id="fNama"
-                class="inp"
-                placeholder="Contoh: Makan siang"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="lbl">Nominal (Rp)</label
-                ><input
-                  id="fNom"
-                  type="number"
-                  inputmode="numeric"
-                  class="inp"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label class="lbl">Kategori</label
-                ><input
-                  id="fKat"
-                  list="dlKat"
-                  class="inp"
-                  placeholder="Makanan"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="lbl">Tanggal & waktu</label
-              ><input id="fTgl" type="datetime-local" class="inp" />
-            </div>
-            <div>
-              <label class="lbl">Catatan (opsional)</label
-              ><input id="fKet" class="inp" placeholder="Catatan tambahan" />
-            </div>
-          </div>
-
-          <!-- Mode tambah: bisa banyak transaksi sekaligus -->
-          <div id="multiWrap" class="hidden space-y-3"></div>
-          <datalist id="dlKat"></datalist>
-        </div>
-
-        <!-- Floating Footer Container (dempet ke paling bawah, tanpa celah tambahan) -->
-        <div
-          class="shrink-0 bg-slate-50/95 backdrop-blur-md px-4 pt-3 z-20 relative"
-          style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
-        >
-          <div class="modal-divider absolute top-0 left-4 right-4"></div>
-          <button
-            onclick="saveForm()"
-            class="btn w-full !py-3.5 font-bold text-base shadow-md shadow-indigo-600/20"
-          >
-            Simpan transaksi
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal target tabungan (tambah / edit) -->
-    <div
-      id="mTarget"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeTarget();"
-    >
-      <div
-        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[92vh] overflow-y-auto space-y-3"
-      >
-        <div class="flex justify-between items-center">
-          <h3 id="tgTitle" class="font-extrabold text-lg"></h3>
-          <button
-            onclick="closeTarget()"
-            class="text-slate-400 text-2xl leading-none"
-            aria-label="Tutup"
-          >
-            ×
-          </button>
-        </div>
-        <div>
-          <label class="lbl" for="tgN">Nama target</label
-          ><input
-            id="tgN"
-            class="inp"
-            maxlength="60"
-            placeholder="Contoh: Dana darurat"
-          />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="lbl" for="tgT">Target (Rp)</label
-            ><input
-              id="tgT"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              class="inp"
-              placeholder="10000000"
-              oninput="previewTarget()"
-            />
-          </div>
-          <div>
-            <label class="lbl" for="tgC">Sudah terkumpul (Rp)</label
-            ><input
-              id="tgC"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              class="inp"
-              placeholder="0"
-              oninput="previewTarget()"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="lbl" for="tgD">Tenggat (opsional)</label
-          ><input id="tgD" type="date" class="inp" />
-        </div>
-        <div>
-          <div
-            class="flex justify-between text-xs font-semibold text-slate-500 mb-1"
-          >
-            <span>Progres</span><span id="tgPct">0%</span>
-          </div>
-          <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              id="tgBar"
-              class="h-full rounded-full transition-all duration-500"
-              style="width: 0%; background: #4f46e5"
-            ></div>
-          </div>
-        </div>
-        <div class="flex gap-2 pt-1">
-          <button
-            id="tgDel"
-            onclick="hapusDariForm()"
-            class="hidden px-4 py-3 rounded-2xl text-sm font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 transition"
-          >
-            Hapus
-          </button>
-          <button onclick="saveTarget()" class="btn flex-1 !py-3">
-            Simpan target
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal setoran ke target -->
-    <div
-      id="mSetor"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeSetor();"
-    >
-      <div
-        class="bg-white w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-5 space-y-3"
-      >
-        <div class="flex justify-between items-center">
-          <h3 id="sgTitle" class="font-extrabold text-lg truncate"></h3>
-          <button
-            onclick="closeSetor()"
-            class="text-slate-400 text-2xl leading-none"
-            aria-label="Tutup"
-          >
-            ×
-          </button>
-        </div>
-        <p id="sgInfo" class="text-xs text-slate-500"></p>
-        <div>
-          <label class="lbl" for="sgJml">Jumlah setoran (Rp)</label
-          ><input
-            id="sgJml"
-            type="number"
-            inputmode="numeric"
-            min="0"
-            class="inp"
-            placeholder="0"
-          />
-        </div>
-        <button onclick="isiSisa()" class="act pri">Isi sisa target</button>
-        <button onclick="saveSetor()" class="btn w-full !py-3">
-          Simpan setoran
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal catat transaksi dengan suara -->
-    <div
-      id="mVoice"
-      class="hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-      onclick="if (event.target === this) closeVoice();"
-    >
-      <div
-        class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative overflow-y-auto max-h-[92vh]"
-      >
-        <button
-          onclick="closeVoice()"
-          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition z-10"
-          aria-label="Tutup"
-        >
-          ×
-        </button>
-
-        <!-- State: mendengarkan -->
-        <div id="voiceListen" class="flex flex-col items-center text-center pt-2">
-          <h3 class="font-extrabold text-lg text-slate-800 mb-1">
-            Catat dengan Suara
-          </h3>
-          <p class="text-xs text-slate-400 mb-5">
-            Bicara natural saja, contoh: "makan siang 25 ribu karena lapar"
-          </p>
-          <p class="text-[11px] text-indigo-500 font-semibold -mt-3 mb-4 bg-indigo-50 rounded-xl px-3 py-2">
-            💡 Bisa lebih dari 1 transaksi: sebut "lalu" di antaranya. Contoh: "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
-          </p>
-
-          <div class="relative w-32 h-32 flex items-center justify-center mb-5">
-            <span class="voice-ring"></span>
-            <span class="voice-ring" style="animation-delay: 0.6s"></span>
-            <span class="voice-ring" style="animation-delay: 1.2s"></span>
-            <div
-              id="voiceMicWrap"
-              class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40"
-            >
-              🎙️
-            </div>
-          </div>
-
-          <div id="voiceBars" class="flex items-end justify-center gap-1 h-8 mb-4">
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-          </div>
-
-          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">
-            Menyiapkan mikrofon...
-          </p>
-          <div
-            class="w-full min-h-[3rem] rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-700"
-          >
-            <span id="voiceTranscript" class="italic text-slate-400"
-              >Silakan bicara...</span
-            >
-          </div>
-          <button
-            onclick="voiceStop()"
-            class="btn !py-3 mt-4 w-full"
-          >
-            ✓ Selesai
-          </button>
-        </div>
-
-        <!-- State: hasil / konfirmasi (bisa banyak transaksi) -->
-        <div id="voiceReview" class="hidden space-y-3">
-          <h3 class="font-extrabold text-lg text-slate-800 text-center mb-1 pr-6">
-            Periksa hasilnya
-          </h3>
-          <p class="text-xs text-slate-400 text-center bg-slate-50 rounded-xl px-3 py-2">
-            Terdengar: "<span id="voiceRawText"></span>"
-          </p>
-          <p id="voiceCount" class="text-xs font-bold text-indigo-600 text-center"></p>
-          <div id="voiceItems" class="space-y-3"></div>
-          <div class="flex gap-2 pt-1">
-            <button
-              onclick="voiceRetry()"
-              class="px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition shrink-0"
-            >
-              🎙️ Ulangi
-            </button>
-            <button
-              onclick="voiceMore()"
-              class="flex-1 px-4 py-3 rounded-2xl text-sm font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:scale-95 transition"
-            >
-              ➕ Tambah data lagi
-            </button>
-          </div>
-          <button id="voiceSaveBtn" onclick="voiceSave()" class="btn w-full !py-3">
-            Simpan transaksi
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Loading -->
-    <div
-      id="loader"
-      class="hidden fixed inset-0 z-[1000] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center"
-    >
-      <div
-        class="bg-white rounded-3xl px-8 py-6 flex flex-col items-center gap-3 shadow-2xl"
-      >
-        <div
-          class="w-10 h-10 rounded-full border-4 border-indigo-100 border-t-indigo-600 animate-spin"
-        ></div>
-        <p id="loaderTxt" class="text-sm font-semibold text-slate-600">
-          Memproses...
-        </p>
-      </div>
-    </div>
-
-    <div id="printArea"></div>
-
-    <script>
-      const S = {
-        data: { trx: [], kategori: [], anggaran: [], target: [], settings: {} },
-        seen: new Set(),
-        tab: "Dashboard",
-        range: "month",
-        q: "",
-        jenis: "all",
-        jf: "Pengeluaran",
-        edit: null,
-        tEdit: null,
-        sId: null,
-        busy: 0,
-        hash: "",
-        selMode: false,
-        sel: new Set(),
+/**
+ * KEUANGAN CERDAS - Backend (Google Apps Script, container-bound ke Spreadsheet)
+ * Versi Terbaru: Google Identity Auth, Multi-User Data Isolation, Device Security & WebAuthn
+ */
+
+const SH_TRX = "Transaksi",
+  SH_KAT = "Kategori",
+  SH_SET = "Pengaturan",
+  SH_ANG = "Anggaran",
+  SH_TGT = "Target",
+  SH_USERS = "Users",
+  SH_SESSIONS = "UserSessions",
+  SH_OTP = "OtpStore";
+
+const DEF_SET_ = {
+  MIN_SALDO_WARNING: 50000,
+  TARGET_TABUNGAN: 20,
+  BUDGET_TOTAL: 0,
+  ALERT_BUDGET_PCT: 80,
+  LONJAKAN_PCT: 30,
+  BATAS_TRX_BESAR: 500000,
+  HARI_TANPA_CATAT: 3,
+  DANA_DARURAT_BULAN: 3,
+  ALERT_POPUP: 1,
+};
+
+const DEFAULT_CATEGORIES = [
+  { nama: "Gaji", tipe: "Pemasukan" },
+  { nama: "Bonus", tipe: "Pemasukan" },
+  { nama: "Investasi", tipe: "Pemasukan" },
+  { nama: "Pemasukan Lain", tipe: "Pemasukan" },
+  { nama: "Makanan & Minuman", tipe: "Pengeluaran" },
+  { nama: "Transportasi", tipe: "Pengeluaran" },
+  { nama: "Belanja", tipe: "Pengeluaran" },
+  { nama: "Tagihan & Utilitas", tipe: "Pengeluaran" },
+  { nama: "Hiburan", tipe: "Pengeluaran" },
+  { nama: "Kesehatan", tipe: "Pengeluaran" },
+  { nama: "Pendidikan", tipe: "Pengeluaran" },
+  { nama: "Lainnya", tipe: "Pengeluaran" },
+];
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.fn) {
+    let args = [];
+    try {
+      args = p.args ? JSON.parse(p.args) : [];
+    } catch (_) {
+      args = [];
+    }
+    return handleApi_(p.fn, args, p.token, p.userToken);
+  }
+  setupDatabase();
+  return HtmlService.createHtmlOutputFromFile("index")
+    .setTitle("Keuangan Cerdas")
+    .addMetaTag("viewport", "width=device-width, initial-scale=1")
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function doPost(e) {
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    return handleApi_(body.fn, body.args, body.token, body.userToken);
+  } catch (err) {
+    return jsonOutput_(err_("Permintaan tidak valid: " + err.message));
+  }
+}
+
+/**
+ * Whitelist fungsi API publik
+ */
+const API_FUNCTIONS_ = {
+  // Data user functions (memerlukan activeUserId)
+  getAllData: getAllData,
+  simpanDataTransaksi: simpanDataTransaksi,
+  simpanBanyakTransaksi: simpanBanyakTransaksi,
+  hapusTransaksi: hapusTransaksi,
+  hapusTransaksiBanyak: hapusTransaksiBanyak,
+  editTransaksiBanyak: editTransaksiBanyak,
+  simpanKategori: simpanKategori,
+  hapusKategori: hapusKategori,
+  simpanPengaturan: simpanPengaturan,
+  simpanAnggaran: simpanAnggaran,
+  hapusAnggaran: hapusAnggaran,
+  simpanTarget: simpanTarget,
+  hapusTarget: hapusTarget,
+  setorTarget: setorTarget,
+  analisisSuaraPintar: analisisSuaraPintar,
+  prefetchData: prefetchData,
+
+  // Google & Auth functions
+  googleAuthCheck: googleAuthCheck,
+  googleRegisterWithPin: googleRegisterWithPin,
+  verifyNewDeviceWithPin: verifyNewDeviceWithPin,
+  registerUser: registerUser,
+  loginWithPin: loginWithPin,
+  loginWithBiometric: loginWithBiometric,
+  checkDeviceBiometric: checkDeviceBiometric,
+  registerBiometric: registerBiometric,
+  validateSession: validateSession,
+  logoutSession: logoutSession,
+  sendOtpEmail: sendOtpEmail,
+  verifyOtp: verifyOtp,
+  resetPin: resetPin,
+  ping: ping,
+  getActiveGoogleUser: getActiveGoogleUser,
+  checkDevice: checkDevice,
+};
+
+function checkDevice(deviceId) {
+  setupDatabase();
+  deviceId = String(deviceId || "").trim();
+  if (!deviceId) return { status: "success", isRegistered: false };
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", isRegistered: false };
+  const data = s.getRange(2, 1, last - 1, 10).getValues();
+  for (let i = 0; i < data.length; i++) {
+    let devices = [];
+    try {
+      devices = JSON.parse(data[i][4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (devices.includes(deviceId)) {
+      return {
+        status: "success",
+        isRegistered: true,
+        email: String(data[i][2]),
+        nama: String(data[i][1]),
       };
-      const TABS = [
-        ["Dashboard", "🏠"],
-        ["Transaksi", "🧾"],
-        ["Laporan", "📈"],
-        ["Pintar", "💡"],
-        ["Pengaturan", "⚙️"],
-      ];
-      const PAL = [
-        "#4F46E5",
-        "#F43F5E",
-        "#10B981",
-        "#F59E0B",
-        "#06B6D4",
-        "#8B5CF6",
-        "#EC4899",
-        "#84CC16",
-      ];
-      /* Palet diperluas agar semua kategori punya warna sendiri saat ditampilkan lengkap */
-      const PALX = PAL.concat([
-        "#0EA5E9", "#F97316", "#14B8A6", "#A855F7", "#EAB308", "#64748B",
-        "#22C55E", "#E11D48", "#3B82F6", "#D946EF", "#78716C", "#0891B2",
+    }
+  }
+  return { status: "success", isRegistered: false };
+}
+
+function ping() {
+  return { status: "success", message: "pong", timestamp: new Date().toISOString() };
+}
+
+function getActiveGoogleUser() {
+  var email = "";
+  try {
+    email = Session.getActiveUser().getEmail();
+  } catch (_) {}
+  return {
+    status: "success",
+    email: email || "",
+    isAvailable: !!email
+  };
+}
+
+function checkToken_(token) {
+  const required = PropertiesService.getScriptProperties().getProperty("APP_TOKEN");
+  if (!required) return true;
+  return String(token || "") === String(required);
+}
+
+function jsonOutput_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
+    ContentService.MimeType.JSON,
+  );
+}
+
+/**
+ * Dispatcher API utama
+ */
+function handleApi_(fn, args, token, userToken) {
+  if (!checkToken_(token)) return jsonOutput_(err_("Token server tidak valid"));
+  if (!fn || !API_FUNCTIONS_.hasOwnProperty(fn))
+    return jsonOutput_(err_("Fungsi tidak dikenali: " + fn));
+
+  try {
+    setupDatabase();
+    let argList = Array.isArray(args) ? args.slice() : [];
+    const result = API_FUNCTIONS_[fn].apply(null, argList);
+    return jsonOutput_(result === undefined ? ok_("") : result);
+  } catch (err) {
+    return jsonOutput_(err_("Gagal memproses permintaan: " + err.message));
+  }
+}
+
+/* ---------- Helper Database ---------- */
+function getSheet_(name) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let s = ss.getSheetByName(name);
+  if (!s) {
+    setupDatabase();
+    s = ss.getSheetByName(name);
+  }
+  return s;
+}
+
+const ok_ = (m) => ({ status: "success", message: m });
+const err_ = (m) => ({ status: "error", message: m });
+
+function tx_(fn) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    const r = fn();
+    SpreadsheetApp.flush();
+    return r;
+  } catch (e) {
+    return err_("Gagal: " + e.message);
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (_) {}
+  }
+}
+
+function fmtTanggal_(v) {
+  return v instanceof Date
+    ? Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss")
+    : String(v || "");
+}
+
+/**
+ * Setup Database dengan skema Multi-User (kolom UserId)
+ * Mendukung migrasi otomatis jika sheet sudah ada sebelumnya.
+ */
+function setupDatabase() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheets = {
+    [SH_TRX]: ["Id", "Tanggal", "Nama", "Jenis", "Kategori", "Nominal", "Keterangan", "UserId"],
+    [SH_KAT]: ["Id", "Nama", "Tipe", "UserId"],
+    [SH_SET]: ["UserId", "Key", "Value"],
+    [SH_ANG]: ["Kategori", "Batas", "UserId"],
+    [SH_TGT]: ["Id", "Nama", "Target", "Terkumpul", "Tenggat", "UserId"],
+    [SH_USERS]: ["UserId", "Nama", "Email", "PinHash", "DeviceIds", "BiometricCreds", "Picture", "CreatedAt", "LastLogin", "GoogleSub"],
+    [SH_SESSIONS]: ["Token", "UserId", "DeviceId", "CreatedAt", "ExpiresAt", "IsValid"],
+    [SH_OTP]: ["Email", "Otp", "ExpiresAt", "Used"]
+  };
+
+  for (const [name, headers] of Object.entries(sheets)) {
+    let s = ss.getSheetByName(name);
+    if (!s) {
+      s = ss.insertSheet(name);
+      s.getRange(1, 1, 1, headers.length).setValues([headers]);
+      s.setFrozenRows(1);
+    } else {
+      // Auto-migration: Cek jika kolom UserId belum ada di sheet data
+      const lastCol = s.getLastColumn();
+      if (lastCol > 0) {
+        const curHeaders = s.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
+        if (headers.includes("UserId") && !curHeaders.includes("UserId")) {
+          s.getRange(1, lastCol + 1).setValue("UserId");
+        }
+      }
+    }
+  }
+
+  // Isi kategori default sistem jika Kategori masih kosong
+  const katSheet = ss.getSheetByName(SH_KAT);
+  if (katSheet && katSheet.getLastRow() < 2) {
+    const defaultRows = DEFAULT_CATEGORIES.map((c, i) => [i + 1, c.nama, c.tipe, "SYSTEM"]);
+    katSheet.getRange(2, 1, defaultRows.length, 4).setValues(defaultRows);
+  }
+}
+
+/* ============================================================
+ * OPERASI DATA MULTI-USER (ISOLASI BERDASARKAN activeUserId)
+ * ============================================================ */
+
+function getSettings_(activeUserId) {
+  const o = Object.assign({}, DEF_SET_);
+  const s = getSheet_(SH_SET);
+  const last = s.getLastRow();
+  if (last < 2) return o;
+  const data = s.getRange(2, 1, last - 1, 3).getValues();
+  data.forEach((r) => {
+    if (String(r[0]) === String(activeUserId) && r[1] in DEF_SET_ && r[2] !== "" && !isNaN(r[2])) {
+      o[r[1]] = Number(r[2]);
+    }
+  });
+  return o;
+}
+
+/**
+ * Baca semua data keuangan milik activeUserId
+ */
+function getAllData() {
+  // 1. Transaksi (semua data)
+  const sTrx = getSheet_(SH_TRX);
+  const lastTrx = sTrx.getLastRow();
+  let trx = [];
+  if (lastTrx > 1) {
+    const rows = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
+    trx = rows.map((r) => ({
+      id: String(r[0]),
+      tanggal: fmtTanggal_(r[1]),
+      nama: String(r[2] || "-"),
+      jenis: r[3] === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+      kategori: String(r[4] || "Umum"),
+      nominal: Number(r[5]) || 0,
+      keterangan: String(r[6] || ""),
+    }));
+    trx.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  }
+
+  // 2. Kategori (semua kategori)
+  const sKat = getSheet_(SH_KAT);
+  const lastKat = sKat.getLastRow();
+  let kategori = [];
+  if (lastKat > 1) {
+    const rows = sKat.getRange(2, 1, lastKat - 1, 4).getValues();
+    kategori = rows
+      .map((r) => ({ id: r[0], nama: String(r[1]), tipe: String(r[2]) }))
+      .filter((k) => k.nama);
+  }
+
+  // 3. Anggaran (semua anggaran)
+  const sAng = getSheet_(SH_ANG);
+  const lastAng = sAng.getLastRow();
+  let anggaran = [];
+  if (lastAng > 1) {
+    const rows = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
+    anggaran = rows.map((r) => ({
+      kategori: String(r[0]),
+      batas: Number(r[1]) || 0,
+    }));
+  }
+
+  // 4. Target (semua target)
+  const sTgt = getSheet_(SH_TGT);
+  const lastTgt = sTgt.getLastRow();
+  let target = [];
+  if (lastTgt > 1) {
+    const rows = sTgt.getRange(2, 1, lastTgt - 1, 6).getValues();
+    target = rows.map((r) => ({
+      id: String(r[0]),
+      nama: String(r[1]),
+      target: Number(r[2]) || 0,
+      terkumpul: Number(r[3]) || 0,
+      tenggat: fmtTanggal_(r[4]).slice(0, 10),
+    }));
+  }
+
+  return {
+    trx: trx,
+    kategori: kategori,
+    anggaran: anggaran,
+    target: target,
+    settings: getSettings_(),
+  };
+}
+
+function prefetchData() {
+  return getAllData();
+}
+
+/* ---------- Transaksi ---------- */
+function simpanDataTransaksi(f) {
+  return tx_(() => {
+    const nama = String(f.nama || "").trim(),
+      nominal = Number(f.nominal);
+    if (!nama || !(nominal > 0))
+      return err_("Nama dan nominal (lebih dari 0) wajib diisi");
+    const jenis = f.jenis === "Pemasukan" ? "Pemasukan" : "Pengeluaran";
+    const kategori = String(f.kategori || "").trim() || "Umum";
+    const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
+      ? f.tanggal
+      : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    let row = 0;
+    if (f.id && last > 1) {
+      const ids = s.getRange(2, 1, last - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (String(ids[i][0]) === String(f.id)) {
+          row = i + 2;
+          break;
+        }
+      }
+    }
+
+    const isEdit = row > 0;
+    if (!isEdit) row = s.getLastRow() + 1;
+    s.getRange(row, 2).setNumberFormat("@");
+    s.getRange(row, 1, 1, 8).setValues([
+      [
+        isEdit ? f.id : "TRX-" + Date.now(),
+        tgl,
+        nama,
+        jenis,
+        kategori,
+        nominal,
+        String(f.keterangan || ""),
+        "GLOBAL",
+      ],
+    ]);
+    return ok_(isEdit ? "Transaksi berhasil diperbarui" : "Transaksi berhasil disimpan");
+  });
+}
+
+function simpanBanyakTransaksi(list) {
+  return tx_(() => {
+    if (!Array.isArray(list) || !list.length) return err_("Tidak ada data yang dikirim");
+    if (list.length > 50) return err_("Maksimal 50 data sekaligus");
+
+    const rows = [];
+    const now = Date.now();
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i] || {};
+      const nama = String(f.nama || "").trim(),
+        nominal = Number(f.nominal);
+      if (!nama || !(nominal > 0))
+        return err_("Data " + (i + 1) + ": nama dan nominal wajib diisi");
+      const jenis = f.jenis === "Pemasukan" ? "Pemasukan" : "Pengeluaran";
+      const kategori = String(f.kategori || "").trim() || "Umum";
+      const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
+        ? f.tanggal
+        : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+
+      rows.push([
+        "TRX-" + now + "-" + i,
+        tgl,
+        nama,
+        jenis,
+        kategori,
+        nominal,
+        String(f.keterangan || ""),
+        "GLOBAL",
       ]);
-      const KAT_TOP = 6; // jumlah kategori tampil sebelum digabung jadi "Lainnya"
-      const KAT_N = 5; // jumlah baris pada daftar kategori terbesar/terkecil di Laporan
-      /** Kelompokkan kategori: ringkas (KAT_TOP teratas + "Lainnya") atau lengkap (semua kategori). */
-      function katGroups(r, jenis) {
-        const kc = cats(r, jenis),
-          open = !!(S.katOpen && S.katOpen[jenis]),
-          grouped = !open && kc.length > KAT_TOP;
-        let items = kc.slice();
-        if (grouped) {
-          const top = kc.slice(0, KAT_TOP),
-            rest = kc.slice(KAT_TOP).reduce((a, x) => a + x[1], 0),
-            label = top.some((x) => x[0].toLowerCase() === "lainnya") ? "Kategori lain" : "Lainnya";
-          top.push([label, rest]);
-          items = top;
+    }
+
+    const s = getSheet_(SH_TRX);
+    const start = s.getLastRow() + 1;
+    s.getRange(start, 2, rows.length, 1).setNumberFormat("@");
+    s.getRange(start, 1, rows.length, 8).setValues(rows);
+
+    return ok_(rows.length + " transaksi berhasil disimpan");
+  });
+}
+
+function hapusTransaksi(id) {
+  return tx_(() => {
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(id)) {
+        s.deleteRow(i + 2);
+        return ok_("Transaksi berhasil dihapus");
+      }
+    }
+    return err_("Data tidak ditemukan");
+  });
+}
+
+function hapusTransaksiBanyak(ids) {
+  return tx_(() => {
+    if (!Array.isArray(ids) || !ids.length) return err_("Tidak ada data yang dipilih");
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const idSet = new Set(ids.map(String));
+    const data = s.getRange(2, 1, last - 1, 1).getValues();
+    let jml = 0;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (idSet.has(String(data[i][0]))) {
+        s.deleteRow(i + 2);
+        jml++;
+      }
+    }
+    return ok_(jml + " transaksi berhasil dihapus");
+  });
+}
+
+function editTransaksiBanyak(ids, patch) {
+  return tx_(() => {
+    if (!Array.isArray(ids) || !ids.length) return err_("Tidak ada data yang dipilih");
+    patch = patch || {};
+    const jenisBaru = patch.jenis === "Pemasukan" || patch.jenis === "Pengeluaran" ? patch.jenis : "";
+    const katBaru = String(patch.kategori || "").trim();
+    if (!jenisBaru && !katBaru) return err_("Tidak ada perubahan yang dipilih");
+
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const idSet = new Set(ids.map(String));
+    const range = s.getRange(2, 1, last - 1, 8);
+    const data = range.getValues();
+    let jml = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (idSet.has(String(data[i][0]))) {
+        if (jenisBaru) data[i][3] = jenisBaru;
+        if (katBaru) data[i][4] = katBaru;
+        jml++;
+      }
+    }
+    range.setValues(data);
+    return ok_(jml + " transaksi berhasil diperbarui");
+  });
+}
+
+/* ---------- Kategori ---------- */
+function simpanKategori(nama, tipe) {
+  return tx_(() => {
+    nama = String(nama || "").trim();
+    if (!nama) return err_("Nama kategori wajib diisi");
+    const s = getSheet_(SH_KAT);
+    const last = s.getLastRow();
+    if (last > 1) {
+      const data = s.getRange(2, 1, last - 1, 4).getValues();
+      const exists = data.some(
+        (r) => String(r[1]).toLowerCase() === nama.toLowerCase()
+      );
+      if (exists) return err_('Kategori "' + nama + '" sudah ada');
+    }
+    s.appendRow([Math.max(0, s.getLastRow() - 1) + 1, nama, tipe === "Pemasukan" ? "Pemasukan" : "Pengeluaran", "GLOBAL"]);
+    return ok_("Kategori berhasil ditambahkan");
+  });
+}
+
+function hapusKategori(nama) {
+  return tx_(() => {
+    nama = String(nama || "").trim();
+    if (!nama) return err_("Nama kategori wajib diisi");
+    const sKat = getSheet_(SH_KAT);
+    const lastKat = sKat.getLastRow();
+    if (lastKat < 2) return err_("Kategori tidak ditemukan");
+    const dataKat = sKat.getRange(2, 1, lastKat - 1, 4).getValues();
+    let rowKat = 0;
+    for (let i = 0; i < dataKat.length; i++) {
+      if (String(dataKat[i][1]).toLowerCase() === nama.toLowerCase()) {
+        rowKat = i + 2;
+        break;
+      }
+    }
+    if (!rowKat) return err_("Kategori tidak ditemukan");
+
+    // Hapus transaksi dengan kategori ini
+    const sTrx = getSheet_(SH_TRX);
+    const lastTrx = sTrx.getLastRow();
+    if (lastTrx > 1) {
+      const dataTrx = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
+      for (let i = dataTrx.length - 1; i >= 0; i--) {
+        if (String(dataTrx[i][4]).toLowerCase() === nama.toLowerCase()) {
+          sTrx.deleteRow(i + 2);
         }
-        const colors = items.map((_, i) => (grouped && i === items.length - 1 ? "#94A3B8" : PALX[i % PALX.length]));
-        return { items, colors, open, grouped, n: kc.length, total: items.reduce((a, x) => a + x[1], 0) || 1 };
       }
-      function toggleKat(j) {
-        S.katOpen = S.katOpen || { Pengeluaran: false, Pemasukan: false };
-        S.katOpen[j] = !S.katOpen[j];
-        renderDash();
+    }
+
+    // Hapus anggaran untuk kategori ini
+    const sAng = getSheet_(SH_ANG);
+    const lastAng = sAng.getLastRow();
+    if (lastAng > 1) {
+      const dataAng = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
+      for (let i = dataAng.length - 1; i >= 0; i--) {
+        if (String(dataAng[i][0]).toLowerCase() === nama.toLowerCase()) {
+          sAng.deleteRow(i + 2);
+        }
       }
-      /** Tombol "Lihat semua / Sembunyikan" + daftar lengkap kategori di bawah diagram. */
-      function renderKatDetail(r) {
-        ["Pengeluaran", "Pemasukan"].forEach((j) => {
-          const g = katGroups(r, j),
-            btn = $("katToggle_" + j),
-            box = $("katList_" + j);
-          if (!btn || !box) return;
-          btn.classList.toggle("hidden", g.n <= KAT_TOP);
-          btn.textContent = g.open ? "Sembunyikan ▲" : `Lihat semua (${g.n}) ▼`;
-          box.classList.toggle("hidden", !g.open);
-          box.innerHTML = g.open
-            ? g.items
-                .map(
-                  ([k, v], i) =>
-                    `<div class="flex items-center justify-between gap-2 text-sm"><span class="flex items-center gap-2 min-w-0"><span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${g.colors[i]}"></span><span class="font-semibold truncate">${esc(k)}</span></span><span class="text-slate-500 shrink-0 whitespace-nowrap">${rp(v)} · ${Math.round((v / g.total) * 100)}%</span></div>`,
-                )
-                .join("")
-            : "";
-        });
-      }
-      const Toast = Swal.mixin({
-        toast: true,
-        position: "bottom-end",
-        showConfirmButton: false,
-        timer: 2800,
-        timerProgressBar: true,
+    }
+
+    sKat.deleteRow(rowKat);
+    return ok_("Kategori berhasil dihapus");
+  });
+}
+
+/* ---------- Pengaturan ---------- */
+function simpanPengaturan(o) {
+  return tx_(() => {
+    const s = getSheet_(SH_SET);
+    const last = s.getLastRow();
+    const existing = {};
+    if (last > 1) {
+      const data = s.getRange(2, 1, last - 1, 3).getValues();
+      data.forEach((r, idx) => {
+        existing[String(r[1])] = idx + 2;
       });
-      const $ = (id) => document.getElementById(id);
-      const rp = (n) =>
-        new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          maximumFractionDigits: 0,
-        }).format(n);
-      const pad = (n) => String(n).padStart(2, "0");
-      const ymd = (d) =>
-        d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
-      const esc = (s) =>
-        String(s ?? "").replace(
-          /[&<>"']/g,
-          (c) =>
-            ({
-              "&": "&amp;",
-              "<": "&lt;",
-              ">": "&gt;",
-              '"': "&quot;",
-              "'": "&#39;",
-            })[c],
-        );
-      const sum = (a, j) =>
-        a.filter((t) => t.jenis === j).reduce((s, t) => s + t.nominal, 0);
-      const group = (a, keyFn) => {
-        const m = {};
-        a.forEach((t) => {
-          const k = keyFn(t);
-          (m[k] = m[k] || []).push(t);
-        });
-        return m;
+    }
+
+    for (const k in DEF_SET_) {
+      if (!(k in o)) continue;
+      const n = Number(o[k]);
+      if (isNaN(n) || n < 0) return err_('Nilai "' + k + '" tidak valid');
+      if (existing[k]) {
+        s.getRange(existing[k], 3).setValue(n);
+      } else {
+        s.appendRow(["GLOBAL", k, n]);
+      }
+    }
+    return ok_("Pengaturan berhasil disimpan");
+  });
+}
+
+/* ---------- Anggaran ---------- */
+function simpanAnggaran(kategori, batas) {
+  return tx_(() => {
+    kategori = String(kategori || "").trim();
+    batas = Number(batas);
+    if (!kategori || !(batas > 0)) return err_("Kategori dan batas anggaran wajib diisi");
+
+    const s = getSheet_(SH_ANG);
+    const last = s.getLastRow();
+    let row = 0;
+    if (last > 1) {
+      const data = s.getRange(2, 1, last - 1, 3).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]).toLowerCase() === kategori.toLowerCase()) {
+          row = i + 2;
+          break;
+        }
+      }
+    }
+
+    if (row) s.getRange(row, 2).setValue(batas);
+    else s.appendRow([kategori, batas, "GLOBAL"]);
+    return ok_("Anggaran berhasil disimpan");
+  });
+}
+
+function hapusAnggaran(kategori) {
+  return tx_(() => {
+    const s = getSheet_(SH_ANG);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Anggaran tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 3).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]).toLowerCase() === String(kategori).toLowerCase()) {
+        s.deleteRow(i + 2);
+        return ok_("Anggaran dihapus");
+      }
+    }
+    return err_("Anggaran tidak ditemukan");
+  });
+}
+
+/* ---------- Target Tabungan ---------- */
+function simpanTarget(o) {
+  return tx_(() => {
+    const nama = String(o.nama || "").trim(),
+      target = Number(o.target),
+      terkumpul = Number(o.terkumpul) || 0;
+    if (!nama || !(target > 0) || terkumpul < 0) return err_("Nama dan nominal target wajib diisi");
+    const tenggat = /^\d{4}-\d{2}-\d{2}$/.test(o.tenggat || "") ? o.tenggat : "";
+
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    let row = 0;
+    if (o.id && last > 1) {
+      const data = s.getRange(2, 1, last - 1, 6).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(o.id)) {
+          row = i + 2;
+          break;
+        }
+      }
+      if (!row) return err_("Target tidak ditemukan");
+    }
+
+    const isEdit = row > 0;
+    if (!isEdit) row = s.getLastRow() + 1;
+    s.getRange(row, 5).setNumberFormat("@");
+    s.getRange(row, 1, 1, 6).setValues([
+      [isEdit ? o.id : "TGT-" + Date.now(), nama, target, terkumpul, tenggat, "GLOBAL"],
+    ]);
+    return ok_(isEdit ? "Target berhasil diperbarui" : "Target berhasil dibuat");
+  });
+}
+
+function hapusTarget(id) {
+  return tx_(() => {
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Target tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(id)) {
+        s.deleteRow(i + 2);
+        return ok_("Target dihapus");
+      }
+    }
+    return err_("Target tidak ditemukan");
+  });
+}
+
+function setorTarget(id, jumlah) {
+  return tx_(() => {
+    jumlah = Number(jumlah);
+    if (!(jumlah > 0)) return err_("Jumlah setoran harus lebih dari 0");
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Target tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(id)) {
+        const target = Number(data[i][2]) || 0;
+        const baru = (Number(data[i][3]) || 0) + jumlah;
+        s.getRange(i + 2, 4).setValue(baru);
+        return ok_(baru >= target ? "Selamat, target tabungan tercapai! 🎉" : "Setoran berhasil ditambahkan");
+      }
+    }
+    return err_("Target tidak ditemukan");
+  });
+}
+
+/**
+ * Analisis teks suara. Mendukung 1 atau BANYAK transaksi sekaligus.
+ * Pisahkan transaksi dengan koma / titik koma / kata "lalu", "kemudian", "selanjutnya",
+ * "berikutnya", "terus", "setelah itu". Contoh:
+ *   "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
+ */
+function parseSuaraSegmen_(teks) {
+  const t = String(teks || "").trim().toLowerCase();
+  if (!t) return null;
+  const m = t.match(/(\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?)\s*(ribu|rb|k|juta|jt)?/);
+  if (!m) return null;
+  let n = /\.\d{3}/.test(m[1]) ? parseFloat(m[1].replace(/\./g, "")) : parseFloat(m[1].replace(",", "."));
+  if (/^(ribu|rb|k)$/.test(m[2] || "")) n *= 1000;
+  else if (/^(juta|jt)$/.test(m[2] || "")) n *= 1000000;
+  const masuk = /terima|gaji|masuk|bonus|dapat|untung/.test(t);
+  const kat = masuk
+    ? /gaji/.test(t)
+      ? "Gaji"
+      : "Pemasukan Lain"
+    : /makan|minum|kopi|jajan/.test(t)
+      ? "Makanan & Minuman"
+      : /bensin|ojek|grab|gojek|parkir|tol|bus|kereta/.test(t)
+        ? "Transportasi"
+        : "Lainnya";
+  const teksAsli = String(teks).trim();
+  return {
+    nama: teksAsli.charAt(0).toUpperCase() + teksAsli.slice(1),
+    jenis: masuk ? "Pemasukan" : "Pengeluaran",
+    kategori: kat,
+    nominal: Math.round(n),
+    keterangan: "Dicatat via suara",
+  };
+}
+
+function analisisSuaraPintar(teks) {
+  try {
+    const bagian = String(teks || "")
+      .split(/\s*(?:[,;]|\blalu\b|\bkemudian\b|\bselanjutnya\b|\bberikutnya\b|\bterus\b|\bsetelah itu\b|\bsesudah itu\b)\s*/i)
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const list = bagian.map(parseSuaraSegmen_).filter(Boolean);
+    if (!list.length) return err_("Nominal tidak terdeteksi, coba sebutkan angkanya");
+    if (list.length === 1) return simpanDataTransaksi(list[0]);
+    return simpanBanyakTransaksi(list);
+  } catch (e) {
+    return err_("Gagal memproses suara: " + e.message);
+  }
+}
+
+/* ============================================================
+ * AUTENTIKASI GOOGLE, DEVICE SECURITY & WEBAUTHN
+ * ============================================================ */
+
+function findUserByEmail_(email) {
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return null;
+  const data = s.getRange(2, 1, last - 1, 10).getValues();
+  const emailLow = String(email || "").toLowerCase().trim();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][2]).toLowerCase().trim() === emailLow) {
+      return { row: i + 2, data: data[i] };
+    }
+  }
+  return null;
+}
+
+function generateToken_() {
+  const bytes = [];
+  for (let i = 0; i < 32; i++) bytes.push(Math.floor(Math.random() * 256));
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function createSession_(userId, deviceId) {
+  const token = generateToken_();
+  const now = new Date();
+  const expiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Sesi 12 jam
+  const s = getSheet_(SH_SESSIONS);
+  s.appendRow([token, userId, deviceId, now.toISOString(), expiry.toISOString(), true]);
+
+  // Update LastLogin di Users sheet
+  const uSheet = getSheet_(SH_USERS);
+  const last = uSheet.getLastRow();
+  if (last >= 2) {
+    const data = uSheet.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(userId)) {
+        uSheet.getRange(i + 2, 9).setValue(now.toISOString());
+        break;
+      }
+    }
+  }
+  return { token, expiresAt: expiry.toISOString() };
+}
+
+function validateSession_(token) {
+  if (!token) return null;
+  const s = getSheet_(SH_SESSIONS);
+  const last = s.getLastRow();
+  if (last < 2) return null;
+  const data = s.getRange(2, 1, last - 1, 6).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][0]) === String(token) && data[i][5] === true) {
+      const expiry = new Date(data[i][4]);
+      if (expiry > new Date()) {
+        return { userId: String(data[i][1]), deviceId: String(data[i][2]) };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * 1. GOOGLE AUTH CHECK:
+ * Dipanggil saat user memilih akun Google / One Tap di browser.
+ * Cek apakah user baru atau sudah terdaftar, dan apakah perangkat ini terotorisasi.
+ */
+function googleAuthCheck(payload, deviceId) {
+  return tx_(() => {
+    payload = payload || {};
+    const email = String(payload.email || "").trim().toLowerCase();
+    const nama = String(payload.nama || payload.name || "").trim();
+    const picture = String(payload.picture || "").trim();
+    const googleSub = String(payload.googleSub || payload.sub || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email) return err_("Email Google tidak valid");
+
+    const user = findUserByEmail_(email);
+    if (!user) {
+      // User baru -> butuh setup PIN 6-digit
+      return {
+        status: "success",
+        isNewUser: true,
+        email: email,
+        nama: nama,
+        picture: picture,
+        googleSub: googleSub,
       };
-      const bln = (ym, l) =>
-        new Date(ym + "-01T00:00:00").toLocaleDateString("id-ID", {
-          month: l ? "long" : "short",
-          year: "numeric",
-        });
-      const cats = (a, j) =>
-        Object.entries(
-          group(
-            a.filter((t) => t.jenis === j),
-            (t) => t.kategori,
-          ),
-        )
-          .map(([k, v]) => [k, sum(v, j)])
-          .sort((a, b) => b[1] - a[1]);
-      function rangeLabel() {
-        return S.range === "month"
-          ? "Bulan ini (" + bln(ymd(new Date()).slice(0, 7), true) + ")"
-          : S.range === "30"
-            ? "30 hari terakhir"
-            : S.range === "all"
-              ? "Semua waktu"
-              : bln(S.range, true);
-      }
-      function renderFilter() {
-        const cur = ymd(new Date()).slice(0, 7);
-        const ms = [
-          ...new Set([
-            cur,
-            ...S.data.trx
-              .map((t) => t.tanggal.slice(0, 7))
-              .filter((m) => /^\d{4}-\d{2}$/.test(m)),
-          ]),
-        ]
-          .sort()
-          .reverse();
-        const html =
-          '<option value="month">Bulan ini</option><option value="30">30 hari terakhir</option><option value="all">Semua waktu</option><optgroup label="Pilih bulan">' +
-          ms
-            .map((m) => `<option value="${m}">${bln(m, true)}</option>`)
-            .join("") +
-          "</optgroup>";
-        document.querySelectorAll(".rangeSel").forEach((el) => {
-          if (el.dataset.h !== html) {
-            el.innerHTML = html;
-            el.dataset.h = html;
-          }
-          el.value = S.range;
-        });
-        $("periode").textContent = "Periode: " + rangeLabel();
-      }
-      function setRange(v) {
-        S.range = v;
-        renderFilter();
-        renderDash();
-        renderList();
-        renderLaporan();
-      }
+    }
 
-      /* ---------- Loading, panggilan server, notifikasi ---------- */
-      function loading(on, txt) {
-        S.busy += on ? 1 : -1;
-        if (on) $("loaderTxt").textContent = txt || "Memproses...";
-        $("loader").classList.toggle("hidden", S.busy <= 0);
-      }
-      /* ---------- Sambungan ke backend Google Apps Script (Web App) ----------
-         Frontend ini dihosting terpisah (mis. Vercel), jadi tidak bisa memakai
-         google.script.run. Semua panggilan dikirim lewat fetch() sebagai POST
-         dengan Content-Type: text/plain — supaya browser TIDAK melakukan CORS
-         preflight (Apps Script tidak mendukung preflight OPTIONS). */
-      const CFG_URL_KEY = "kc_apiUrl",
-        CFG_TOKEN_KEY = "kc_apiToken";
-      /* URL default — langsung dipakai jika belum ada config manual */
-      const DEFAULT_GAS_URL = "https://script.google.com/macros/s/AKfycbyyGt0wZTShzENEV_ePptnSd1N3pNhdxjzV7CR-2Uu0q7Pe7ObUTN6Wa-YRESnaSnjh/exec";
+    // User lama -> cek apakah deviceId ini sudah terdaftar
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    const isAuthorizedDevice = deviceId && devices.includes(deviceId);
 
-      function getCfg() {
-        return {
-          url: (localStorage.getItem(CFG_URL_KEY) || DEFAULT_GAS_URL).trim(),
-          token: (localStorage.getItem(CFG_TOKEN_KEY) || "").trim(),
-        };
-      }
-      function setCfg(url, token) {
-        localStorage.setItem(CFG_URL_KEY, (url || "").trim());
-        localStorage.setItem(CFG_TOKEN_KEY, (token || "").trim());
-      }
-      /** Kalau browser ini belum pernah disambungkan manual, coba ambil default
-       * dari /api/config (Environment Variables di Vercel: API_URL, API_TOKEN).
-       * Jika gagal, pakai DEFAULT_GAS_URL yang sudah ditanam di kode. */
-      async function ensureCfg() {
-        let cfg = getCfg();
-        if (cfg.url) return cfg;          // sudah ada (dari localStorage atau default)
-        try {
-          const res = await fetch("/api/config", { cache: "no-store" });
-          if (res.ok) {
-            const j = await res.json();
-            if (j && j.url) {
-              setCfg(j.url, j.token || "");
-              return getCfg();
-            }
-          }
-        } catch (_) {}
-        // Fallback ke URL default bawaan
-        return { url: DEFAULT_GAS_URL, token: "" };
-      }
-      async function rawCall(url, fn, args, token, userToken) {
-        const uTok = userToken || (typeof AUTH !== "undefined" && AUTH && AUTH.token ? AUTH.token : "");
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ fn, args: args || [], token: token || "", userToken: uTok }),
-        });
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        const j = await res.json();
-        if (j && j.status === "error") throw new Error(j.message);
-        return j;
-      }
-      const call = (fn, ...args) => {
-        const cfg = getCfg();
-        if (!cfg.url)
-          return Promise.reject(new Error("Belum tersambung ke Google Sheets"));
-        return rawCall(cfg.url, fn, args, cfg.token);
+    // Cek apakah ada biometrik tersimpan untuk device ini
+    let creds = [];
+    try {
+      creds = JSON.parse(user.data[5] || "[]");
+    } catch (_) {
+      creds = [];
+    }
+    const hasBio = creds.some((c) => c.deviceId === deviceId);
+
+    if (isAuthorizedDevice) {
+      // Perangkat terdaftar -> buka sesi langsung atau minta PIN/Bio cepat
+      return {
+        status: "success",
+        isNewUser: false,
+        isAuthorizedDevice: true,
+        hasBio: hasBio,
+        userId: String(user.data[0]),
+        nama: String(user.data[1]),
+        email: String(user.data[2]),
+        picture: String(user.data[6] || picture),
       };
-      /** Dialog untuk mengisi/mengubah URL Web App Apps Script + token. forced=true: tidak bisa ditutup sebelum berhasil (dipakai saat pertama kali buka). */
-      async function openSambungan(forced) {
-        const cur = getCfg();
-        const r = await Swal.fire({
-          title: "Sambungan ke Google Sheets",
-          html: `<div class="text-left space-y-3">
-            <p class="text-xs text-slate-500">Masukkan URL Web App Apps Script (deploy sebagai Web App, akses "Siapa saja"), diakhiri <code>/exec</code>. Isi token hanya jika kamu sudah mengatur <code>APP_TOKEN</code> di Script Properties pada Code.gs.</p>
-            <div><label class="lbl">URL Web App</label><input id="cfgUrl" class="inp" placeholder="https://script.google.com/macros/s/xxxxx/exec" value="${esc(cur.url)}"></div>
-            <div><label class="lbl">Token (opsional)</label><input id="cfgToken" type="password" class="inp" placeholder="Token rahasia" value="${esc(cur.token)}"></div>
-          </div>`,
-          showCancelButton: !forced,
-          allowOutsideClick: !forced,
-          allowEscapeKey: !forced,
-          confirmButtonText: "Simpan & tes koneksi",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#4F46E5",
-          focusConfirm: false,
-          preConfirm: async () => {
-            const url = $("cfgUrl").value.trim();
-            const token = $("cfgToken").value.trim();
-            if (!/^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/.+\/exec$/.test(url)) {
-              Swal.showValidationMessage(
-                "URL harus link Web App Apps Script yang diakhiri /exec",
-              );
-              return false;
-            }
-            Swal.showLoading();
-            try {
-              await rawCall(url, "ping", [], token);
-            } catch (e) {
-              Swal.showValidationMessage("Gagal terhubung: " + e.message);
-              return false;
-            }
-            return { url, token };
-          },
-        });
-        if (r.isConfirmed) {
-          setCfg(r.value.url, r.value.token);
-          Toast.fire({
-            icon: "success",
-            title: "Berhasil tersambung ke Google Sheets",
-          });
-          await refresh(true);
-          return true;
-        }
-        return false;
-      }
-
-      async function act(fn, args, txt) {
-        loading(true, txt);
-        let on = true;
-        const stop = () => {
-          if (on) {
-            on = false;
-            loading(false);
-          }
-        };
-        try {
-          const r = await call(fn, ...args);
-          if (r && r.status === "error") throw new Error(r.message);
-          await refresh(true);
-          stop();
-          const nw = analyze().A.filter(
-            (a) => (a.lv === "danger" || a.lv === "warn") && !S.seen.has(a.t),
-          );
-          analyze().A.forEach((a) => S.seen.add(a.t));
-          Toast.fire({
-            icon: "success",
-            title: (r && r.message) || "Berhasil",
-          });
-          if (nw.length && G("ALERT_POPUP"))
-            setTimeout(
-              () =>
-                Toast.fire({ icon: "warning", title: nw[0].t, timer: 6000 }),
-              3200,
-            );
-          return true;
-        } catch (e) {
-          stop();
-          Toast.fire({
-            icon: "error",
-            title: (e.message || "Terjadi kesalahan").replace(/^Error:\s*/, ""),
-          });
-          return false;
-        }
-      }
-
-      /* ---------- Sinkronisasi realtime dengan Sheet ---------- */
-      async function refresh(force) {
-        try {
-          const d = await call("getAllData"),
-            h = JSON.stringify(d);
-          if (force || h !== S.hash) {
-            S.hash = h;
-            S.data = d;
-            render();
-          }
-          setSync(true);
-          return true;
-        } catch (e) {
-          setSync(false);
-          return false;
-        }
-      }
-      function setSync(ok) {
-        $("dot").className =
-          "w-2 h-2 rounded-full " +
-          (ok ? "bg-emerald-400 animate-pulse" : "bg-rose-500");
-        $("syncTxt").textContent = ok
-          ? "Terhubung ke Sheet · " + new Date().toLocaleTimeString("id-ID")
-          : "Koneksi terputus, mencoba lagi...";
-      }
-      setInterval(() => {
-        if (!document.hidden && S.busy <= 0) refresh(false);
-      }, 8000);
-      document.addEventListener("visibilitychange", () => {
-        if (!document.hidden && S.busy <= 0) refresh(false);
-      });
-
-      /* ---------- Navigasi ---------- */
-      function renderNav() {
-        const t = (on, tab, ic) =>
-          on
-            ? `<button onclick="tabTo('${tab}')" class="px-3 py-1.5 rounded-full text-sm font-semibold ${S.tab === tab ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}">${tab}</button>`
-            : `<button onclick="tabTo('${tab}')" class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-2xl text-[10px] font-bold transition ${S.tab === tab ? "text-indigo-600" : "text-slate-400"}">
-                ${S.tab === tab ? '<span class="absolute top-0.5 w-1.5 h-1.5 rounded-full bg-indigo-600"></span>' : ""}
-                <span class="flex items-center justify-center w-9 h-9 rounded-2xl text-lg transition ${S.tab === tab ? "bg-indigo-50" : ""}">${ic}</span>
-                <span>${tab}</span>
-              </button>`;
-        $("navTop").innerHTML = TABS.map((x) => t(true, x[0])).join("");
-        $("navBottom").innerHTML = TABS.map((x) => t(false, x[0], x[1])).join(
-          "",
-        );
-      }
-      function tabTo(t) {
-        S.tab = t;
-        TABS.forEach((x) =>
-          $("v-" + x[0]).classList.toggle("hidden", x[0] !== t),
-        );
-        renderNav();
-        window.scrollTo({ top: 0 });
-        if (t === "Dashboard") renderDash();
-        if (t === "Pintar") renderPintar();
-      }
-
-      /* ---------- Render ---------- */
-      function render() {
-        renderFilter();
-        renderDash();
-        renderList();
-        renderLaporan();
-        renderKategori();
-        renderPintar();
-        renderSet();
-      }
-      function inRange(t) {
-        const d = t.tanggal.slice(0, 10);
-        if (S.range === "month")
-          return d.slice(0, 7) === ymd(new Date()).slice(0, 7);
-        if (S.range === "30")
-          return d >= ymd(new Date(Date.now() - 29 * 864e5));
-        if (S.range === "all") return true;
-        return d.slice(0, 7) === S.range;
-      }
-      function drawChart(id, cfg) {
-        const old = Chart.getChart(id);
-        if (old) {
-          old.data = cfg.data;
-          old.update("none");
-          return;
-        }
-        cfg.options = Object.assign(
-          {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-              legend: {
-                position: "bottom",
-                labels: { boxWidth: 10, usePointStyle: true },
-              },
-            },
-          },
-          cfg.options || {},
-        );
-        new Chart($(id), cfg);
-      }
-      function renderDash() {
-        const all = S.data.trx,
-          r = all.filter(inRange);
-        const inc = sum(r, "Pemasukan"),
-          out = sum(r, "Pengeluaran"),
-          saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
-        const rate = inc ? Math.round(((inc - out) / inc) * 100) : 0;
-        const kpi = (l, v, c, sub) =>
-          `<div class="card !p-4 ${c}"><p class="text-xs font-semibold opacity-80">${l}</p><p class="text-lg sm:text-2xl font-extrabold mt-1 break-words">${v}</p><p class="text-[11px] opacity-70 mt-1">${sub}</p></div>`;
-        $("kpi").innerHTML =
-          kpi(
-            "Saldo total",
-            rp(saldo),
-            "!bg-gradient-to-br from-indigo-600 to-violet-600 text-white",
-            "Seluruh transaksi",
-          ) +
-          kpi("Pemasukan", rp(inc), "text-emerald-600", "Periode terpilih") +
-          kpi("Pengeluaran", rp(out), "text-rose-600", "Periode terpilih") +
-          kpi(
-            "Rasio tabungan",
-            rate + "%",
-            rate >= 20
-              ? "text-emerald-600"
-              : rate >= 0
-                ? "text-amber-500"
-                : "text-rose-600",
-            rate >= 20 ? "Sehat, target 20%" : "Target minimal 20%",
-          );
-
-        const top = analyze()
-          .A.filter((a) => a.lv === "danger" || a.lv === "warn")
-          .slice(0, 3);
-        $("notif").innerHTML = top.length
-          ? top
-              .map(
-                (a) =>
-                  `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`,
-              )
-              .join("") +
-            `<button onclick="tabTo('Pintar')" class="text-xs font-semibold text-indigo-600">Lihat semua peringatan dan saran</button>`
-          : `<div class="${LV.ok} rounded-2xl p-3 text-sm font-medium">Tidak ada peringatan. Keuangan bulan ini terkendali.</div>`;
-
-        const ex = r.filter((t) => t.jenis === "Pengeluaran"),
-          days = Object.keys(group(ex, (t) => t.tanggal.slice(0, 10))).length;
-        const big = ex.slice().sort((a, b) => b.nominal - a.nominal)[0];
-        const byKat = Object.entries(group(ex, (t) => t.kategori))
-          .map(([k, v]) => [k, sum(v, "Pengeluaran")])
-          .sort((a, b) => b[1] - a[1]);
-        const mini = (l, v, s) =>
-          `<div class="card !p-4"><p class="text-xs text-slate-400 font-semibold">${l}</p><p class="font-bold mt-1 truncate">${v}</p><p class="text-[11px] text-slate-400 truncate">${s}</p></div>`;
-        $("mini").innerHTML =
-          mini(
-            "Rata-rata pengeluaran",
-            rp(days ? out / days : 0),
-            "per hari aktif",
-          ) +
-          mini(
-            "Pengeluaran terbesar",
-            big ? rp(big.nominal) : "-",
-            big ? esc(big.nama) : "Belum ada",
-          ) +
-          mini("Jumlah transaksi", r.length, "pada periode ini") +
-          mini(
-            "Kategori terboros",
-            byKat[0] ? esc(byKat[0][0]) : "-",
-            byKat[0] ? rp(byKat[0][1]) : "Belum ada",
-          );
-
-        const C = cfgs(r, all);
-        drawChart("cTren", C.tren);
-        drawChart("cKat", C.kat);
-        if (C.katIn) drawChart("cKatIn", C.katIn);
-        drawChart("cBulan", C.bulan);
-        drawChart("cSaldo", C.saldo);
-        renderKatDetail(r);
-      }
-      function cfgs(r, all) {
-        const per = r
-            .slice()
-            .sort((a, b) => a.tanggal.localeCompare(b.tanggal)),
-          g = group(per, (t) => t.tanggal.slice(0, 10)),
-          dk = Object.keys(g).slice(-31);
-        const bk = cats(r, "Pengeluaran"),
-          gm = group(all, (t) => t.tanggal.slice(0, 7)),
-          mk = Object.keys(gm).sort().slice(-6);
-        const ga = group(
-          all.slice().sort((a, b) => a.tanggal.localeCompare(b.tanggal)),
-          (t) => t.tanggal.slice(0, 10),
-        );
-        let run = 0;
-        const cum = Object.keys(ga)
-          .map(
-            (d) => (
-              (run += sum(ga[d], "Pemasukan") - sum(ga[d], "Pengeluaran")),
-              [d, run]
-            ),
-          )
-          .slice(-60);
-        return {
-          tren: {
-            type: "line",
-            data: {
-              labels: dk.map((d) => d.slice(8) + "/" + d.slice(5, 7)),
-              datasets: [
-                {
-                  label: "Pemasukan",
-                  data: dk.map((d) => sum(g[d], "Pemasukan")),
-                  borderColor: "#10B981",
-                  backgroundColor: "#10B98122",
-                  fill: true,
-                  tension: 0.35,
-                },
-                {
-                  label: "Pengeluaran",
-                  data: dk.map((d) => sum(g[d], "Pengeluaran")),
-                  borderColor: "#F43F5E",
-                  backgroundColor: "#F43F5E22",
-                  fill: true,
-                  tension: 0.35,
-                },
-              ],
-            },
-          },
-          kat: {
-            type: "doughnut",
-            data: {
-              labels: bk.map((x) => x[0]),
-              datasets: [
-                {
-                  data: bk.map((x) => x[1]),
-                  backgroundColor: PAL,
-                  borderWidth: 0,
-                },
-              ],
-            },
-            options: {
-              cutout: "62%",
-              plugins: {
-                legend: {
-                  position: "bottom",
-                  labels: { boxWidth: 10, usePointStyle: true },
-                },
-              },
-            },
-          },
-          bulan: {
-            type: "bar",
-            data: {
-              labels: mk.map((m) => bln(m)),
-              datasets: [
-                {
-                  label: "Pemasukan",
-                  data: mk.map((k) => sum(gm[k], "Pemasukan")),
-                  backgroundColor: "#10B981",
-                  borderRadius: 8,
-                },
-                {
-                  label: "Pengeluaran",
-                  data: mk.map((k) => sum(gm[k], "Pengeluaran")),
-                  backgroundColor: "#F43F5E",
-                  borderRadius: 8,
-                },
-              ],
-            },
-          },
-          saldo: {
-            type: "line",
-            data: {
-              labels: cum.map((x) => x[0].slice(8) + "/" + x[0].slice(5, 7)),
-              datasets: [
-                {
-                  label: "Saldo",
-                  data: cum.map((x) => x[1]),
-                  borderColor: "#4F46E5",
-                  backgroundColor: "#4F46E522",
-                  fill: true,
-                  tension: 0.3,
-                  pointRadius: 2,
-                },
-              ],
-            },
-            options: { plugins: { legend: { display: false } } },
-          },
-        };
-      }
-      /** Daftar transaksi yang sedang tampil sesuai filter aktif (dipakai renderList & pilih semua). */
-      function filteredTrx() {
-        return S.data.trx.filter(
-          (t) =>
-            inRange(t) &&
-            (S.jenis === "all" || t.jenis === S.jenis) &&
-            (!S.q ||
-              (t.nama + t.kategori + t.keterangan).toLowerCase().includes(S.q)),
-        );
-      }
-      function renderList() {
-        $("chips").innerHTML = [
-          ["all", "Semua"],
-          ["Pemasukan", "Pemasukan"],
-          ["Pengeluaran", "Pengeluaran"],
-        ]
-          .map(
-            (c) =>
-              `<button onclick="S.jenis='${c[0]}';renderList()" class="chip ${S.jenis === c[0] ? "on" : ""}">${c[1]}</button>`,
-          )
-          .join("");
-        const rows = filteredTrx();
-        $("cnt").textContent = `(${rows.length})`;
-        $("lsum").textContent =
-          `${rangeLabel()}: masuk ${rp(sum(rows, "Pemasukan"))}, keluar ${rp(sum(rows, "Pengeluaran"))}`;
-        $("tbody").innerHTML = rows.length
-          ? rows
-              .map((t) => {
-                const inc = t.jenis === "Pemasukan",
-                  c = inc ? "text-emerald-600" : "text-rose-600";
-                return `<tr class="hover:bg-slate-50">
-      <td class="p-2 ${S.selMode ? "" : "hidden"}"><input type="checkbox" data-id="${esc(t.id)}" onchange="toggleSel(this.dataset.id,this.checked)" ${S.sel.has(t.id) ? "checked" : ""} class="w-4 h-4 rounded accent-indigo-600" aria-label="Pilih transaksi"></td>
-      <td class="p-2 text-xs text-slate-500 hidden md:table-cell whitespace-nowrap">${esc(t.tanggal.slice(0, 16))}</td>
-      <td class="p-2"><p class="font-semibold">${esc(t.nama)}</p><p class="md:hidden text-[11px] text-slate-400">${esc(t.kategori)} · ${esc(t.tanggal.slice(5, 16))}</p></td>
-      <td class="p-2 hidden md:table-cell"><span class="chip">${esc(t.kategori)}</span></td>
-      <td class="p-2 text-xs text-slate-500 hidden lg:table-cell">${esc(t.keterangan) || "-"}</td>
-      <td class="p-2 text-right font-bold whitespace-nowrap ${c}">${inc ? "+" : "-"}${rp(t.nominal)}</td>
-      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5" aria-label="Edit">✏️</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5" aria-label="Hapus">🗑️</button></td></tr>`;
-              })
-              .join("")
-          : `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada transaksi yang cocok. Tekan + untuk menambah.</td></tr>`;
-        renderSelBar();
-      }
-
-      /* ---------- Mode pilih banyak (hapus/edit massal) ---------- */
-      function setSelMode(on) {
-        S.selMode = on;
-        if (!on) S.sel.clear();
-        $("thSel").classList.toggle("hidden", !on);
-        $("btnSelMode").textContent = on ? "✕ Batal pilih" : "☑️ Pilih";
-        $("btnSelMode").classList.toggle("pri", on);
-        if (!on) $("chkAll").checked = false;
-        renderList();
-      }
-      function toggleSelMode() {
-        setSelMode(!S.selMode);
-      }
-      function toggleSel(id, checked) {
-        if (checked) S.sel.add(id);
-        else S.sel.delete(id);
-        renderSelBar();
-      }
-      function selAllToggle(checked) {
-        const rows = filteredTrx();
-        rows.forEach((t) => (checked ? S.sel.add(t.id) : S.sel.delete(t.id)));
-        renderList();
-      }
-      function renderSelBar() {
-        const n = S.sel.size;
-        $("selBar").classList.toggle("hidden", n === 0);
-        $("selCount").textContent = n + " data dipilih";
-      }
-      async function bulkDelete() {
-        const ids = [...S.sel];
-        if (!ids.length) return;
-        const c = await Swal.fire({
-          title: `Hapus ${ids.length} transaksi?`,
-          text: "Data yang dihapus tidak bisa dikembalikan.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Hapus",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (!c.isConfirmed) return;
-        if (
-          await act(
-            "hapusTransaksiBanyak",
-            [ids],
-            `Menghapus ${ids.length} transaksi...`,
-          )
-        )
-          setSelMode(false);
-      }
-      async function bulkEdit() {
-        const ids = [...S.sel];
-        if (!ids.length) return;
-        const { value: form } = await Swal.fire({
-          title: `Edit ${ids.length} transaksi`,
-          html: `
-            <div class="text-left space-y-3">
-              <div>
-                <label class="lbl">Ubah jenis (opsional)</label>
-                <div class="flex flex-wrap gap-3 text-sm">
-                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="" checked> Tidak diubah</label>
-                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="Pengeluaran"> Pengeluaran</label>
-                  <label class="flex items-center gap-1.5"><input type="radio" name="bulkJenis" value="Pemasukan"> Pemasukan</label>
-                </div>
-              </div>
-              <div>
-                <label class="lbl">Ubah kategori (opsional)</label>
-                <input id="bKat" list="dlKat" class="inp" placeholder="Kosongkan jika tidak diubah">
-              </div>
-            </div>`,
-          focusConfirm: false,
-          showCancelButton: true,
-          confirmButtonText: "Terapkan",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#4F46E5",
-          preConfirm: () => ({
-            jenis: document.querySelector("input[name=bulkJenis]:checked")
-              .value,
-            kategori: document.getElementById("bKat").value.trim(),
-          }),
-        });
-        if (!form) return;
-        if (!form.jenis && !form.kategori)
-          return Toast.fire({
-            icon: "warning",
-            title: "Tidak ada perubahan yang dipilih",
-          });
-        if (
-          await act(
-            "editTransaksiBanyak",
-            [ids, form],
-            `Memperbarui ${ids.length} transaksi...`,
-          )
-        )
-          setSelMode(false);
-      }
-      function renderLaporan() {
-        const r = S.data.trx.filter(inRange),
-          inc = sum(r, "Pemasukan"),
-          out = sum(r, "Pengeluaran");
-        const k = (l, v, c) =>
-          `<div class="card !p-4"><p class="text-xs font-semibold text-slate-400">${l}</p><p class="text-lg sm:text-xl font-extrabold mt-1 break-words ${c}">${v}</p></div>`;
-        $("lKpi").innerHTML =
-          k("Total pemasukan", rp(inc), "text-emerald-600") +
-          k("Total pengeluaran", rp(out), "text-rose-600") +
-          k(
-            "Selisih",
-            rp(inc - out),
-            inc - out < 0 ? "text-rose-600" : "text-indigo-600",
-          );
-        const gm = group(r, (t) => t.tanggal.slice(0, 7));
-        $("tRekap").innerHTML =
-          Object.keys(gm)
-            .sort()
-            .reverse()
-            .map((m) => {
-              const i = sum(gm[m], "Pemasukan"),
-                o = sum(gm[m], "Pengeluaran");
-              return `<tr><td class="p-2 font-semibold">${bln(m)}</td><td class="p-2 text-right text-emerald-600">${rp(i)}</td><td class="p-2 text-right text-rose-600">${rp(o)}</td><td class="p-2 text-right font-bold ${i - o < 0 ? "text-rose-600" : ""}">${rp(i - o)}</td></tr>`;
-            })
-            .join("") ||
-          `<tr><td colspan="4" class="p-6 text-center text-slate-400">Belum ada data pada periode ini.</td></tr>`;
-        const cOut = cats(r, "Pengeluaran"),
-          cIn = cats(r, "Pemasukan");
-        const katBars = (list, tot, colorFn, empty) =>
-          list
-            .map(([k, v], i) => {
-              const pc = (v / tot) * 100,
-                pt = pc > 0 && pc < 1 ? pc.toFixed(1) : Math.round(pc);
-              return `<div><div class="flex justify-between items-center gap-2 text-sm"><span class="font-semibold truncate min-w-0">${esc(k)}</span><span class="text-slate-500 shrink-0 whitespace-nowrap">${rp(v)} · ${pt}%</span></div><div class="h-2 bg-slate-100 rounded-full mt-1"><div class="h-2 rounded-full" style="width:${Math.max(pc, 1.5)}%;background:${colorFn(i)}"></div></div></div>`;
-            })
-            .join("") || `<p class="text-slate-400 text-sm">${empty}</p>`;
-        const asc = (a) => a.slice().reverse().slice(0, KAT_N);
-        $("lKat").innerHTML = katBars(cOut.slice(0, KAT_N), out || 1, (i) => PAL[i % PAL.length], "Belum ada pengeluaran pada periode ini.");
-        $("lKatMin").innerHTML = katBars(asc(cOut), out || 1, () => "#F59E0B", "Belum ada pengeluaran pada periode ini.");
-        $("lKatInMax").innerHTML = katBars(cIn.slice(0, KAT_N), inc || 1, () => "#10B981", "Belum ada pemasukan pada periode ini.");
-        $("lKatInMin").innerHTML = katBars(asc(cIn), inc || 1, () => "#06B6D4", "Belum ada pemasukan pada periode ini.");
-      }
-
-      /* ---------- Cetak / simpan PDF ---------- */
-      function printReport() {
-        const r = S.data.trx
-          .filter(inRange)
-          .slice()
-          .sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-        if (!r.length)
-          return Toast.fire({
-            icon: "warning",
-            title: "Tidak ada transaksi pada periode ini",
-          });
-        const inc = sum(r, "Pemasukan"),
-          out = sum(r, "Pengeluaran"),
-          net = inc - out,
-          rate = inc ? Math.round((net / inc) * 100) : 0;
-        const catT = (j) => {
-          const c = cats(r, j),
-            t = sum(r, j) || 1;
-          return c.length
-            ? `<table><tr><th>Kategori</th><th class="r">Jumlah</th><th class="r">Porsi</th></tr>${c.map(([k, v]) => `<tr><td>${esc(k)}</td><td class="r">${rp(v)}</td><td class="r">${Math.round((v / t) * 100)}%</td></tr>`).join("")}</table>`
-            : '<p class="m">Tidak ada data.</p>';
-        };
-        const gm = group(r, (t) => t.tanggal.slice(0, 7));
-        const rekap = Object.keys(gm)
-          .sort()
-          .map(
-            (m) =>
-              `<tr><td>${bln(m, true)}</td><td class="r">${rp(sum(gm[m], "Pemasukan"))}</td><td class="r">${rp(sum(gm[m], "Pengeluaran"))}</td><td class="r"><b>${rp(sum(gm[m], "Pemasukan") - sum(gm[m], "Pengeluaran"))}</b></td></tr>`,
-          )
-          .join("");
-        const C = cfgs(r, S.data.trx),
-          R = analyze(),
-          lb = scoreLbl(R.score);
-        const fig = (t, cf) =>
-          `<figure><b>${t}</b><img src="${chartImg(cf)}"></figure>`;
-        const li = (a) =>
-          a.map((x) => `<li>${esc(x)}</li>`).join("") || "<li>Tidak ada.</li>";
-        const bud = R.budgets.length
-          ? `<h2>Anggaran bulan berjalan</h2><table><tr><th>Kategori</th><th class="r">Batas</th><th class="r">Terpakai</th><th class="r">Persen</th></tr>${R.budgets.map((b) => `<tr><td>${esc(b.kategori)}</td><td class="r">${rp(b.batas)}</td><td class="r">${rp(b.sp)}</td><td class="r">${Math.round(b.p)}%</td></tr>`).join("")}</table>`
-          : "";
-        $("printArea").innerHTML = `<div class="pr">
-    <h1>Laporan Keuangan</h1>
-    <p class="m">Periode: ${esc(rangeLabel())}. Dicetak ${new Date().toLocaleString("id-ID")}</p>
-    <div class="sum"><div><span>Pemasukan</span><b>${rp(inc)}</b></div><div><span>Pengeluaran</span><b>${rp(out)}</b></div><div><span>Selisih</span><b>${rp(net)}</b></div><div><span>Rasio tabungan</span><b>${rate}%</b></div></div>
-    <h2>Grafik keuangan</h2>
-    <div class="g2">${fig("Tren harian", C.tren)}${fig("Pengeluaran per kategori", C.kat)}${C.katIn ? fig("Pemasukan per kategori", C.katIn) : ""}${fig("Arus kas 6 bulan terakhir", C.bulan)}${fig("Pertumbuhan saldo", C.saldo)}</div>
-    <h2>Rekap bulanan</h2><table><tr><th>Bulan</th><th class="r">Masuk</th><th class="r">Keluar</th><th class="r">Selisih</th></tr>${rekap}</table>
-    <h2>Pengeluaran per kategori</h2>${catT("Pengeluaran")}
-    <h2>Pemasukan per kategori</h2>${catT("Pemasukan")}
-    ${bud}
-    <h2>Skor kesehatan keuangan: ${R.score}/100 (${lb[0]})</h2>
-    <p class="m">Peringatan dan saran dihitung dari kondisi bulan berjalan.</p>
-    <h2>Peringatan</h2><ul>${li(R.A.map((a) => a.t))}</ul>
-    <h2>Saran</h2><ul>${li(R.T)}</ul>
-    <h2>Daftar transaksi (${r.length})</h2>
-    <table><thead><tr><th>Tanggal</th><th>Transaksi</th><th>Kategori</th><th>Jenis</th><th class="r">Nominal</th><th>Catatan</th></tr></thead><tbody>
-    ${r.map((t) => `<tr><td>${esc(t.tanggal.slice(0, 16))}</td><td>${esc(t.nama)}</td><td>${esc(t.kategori)}</td><td>${t.jenis}</td><td class="r">${rp(t.nominal)}</td><td>${esc(t.keterangan)}</td></tr>`).join("")}
-    </tbody></table></div>`;
-        Toast.fire({
-          icon: "info",
-          title: 'Di dialog cetak, pilih "Simpan sebagai PDF"',
-        });
-        setTimeout(() => window.print(), 500);
-      }
-      function renderKategori() {
-        $("dlKat").innerHTML = [...new Set(S.data.kategori.map((k) => k.nama))]
-          .map((n) => `<option value="${esc(n)}">`)
-          .join("");
-      }
-
-      /* ---------- Form CRUD transaksi ---------- */
-      function setJenis(j) {
-        S.jf = j;
-        $("segJenis").innerHTML = ["Pengeluaran", "Pemasukan"]
-          .map(
-            (x) =>
-              `<button onclick="setJenis('${x}')" class="py-2.5 rounded-2xl text-sm font-bold ${x === j ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${x}</button>`,
-          )
-          .join("");
-      }
-
-      /** Baris kosong untuk mode tambah banyak data. */
-      function blankEntry() {
-        const n = new Date();
-        return {
-          jenis: "Pengeluaran",
-          nama: "",
-          nominal: "",
-          kategori: "",
-          tanggal: ymd(n) + "T" + pad(n.getHours()) + ":" + pad(n.getMinutes()),
-          keterangan: "",
-        };
-      }
-      let multiData = [blankEntry()];
-
-      function openForm(id) {
-        const t = id ? S.data.trx.find((x) => x.id === id) : null;
-        S.edit = t ? t.id : null;
-        $("mTitle").textContent = t ? "Edit transaksi" : "Transaksi baru";
-
-        if (t) {
-          // Mode edit: selalu 1 transaksi, tanpa input jumlah data
-          $("jumlahWrap").classList.add("hidden");
-          $("multiWrap").classList.add("hidden");
-          $("editWrap").classList.remove("hidden");
-          setJenis(t.jenis);
-          $("fNama").value = t.nama;
-          $("fNom").value = t.nominal;
-          $("fKat").value = t.kategori;
-          $("fKet").value = t.keterangan;
-          $("fTgl").value = t.tanggal.slice(0, 16).replace(" ", "T");
-        } else {
-          // Mode tambah: bisa 1 atau banyak data sekaligus
-          $("editWrap").classList.add("hidden");
-          $("jumlahWrap").classList.remove("hidden");
-          $("multiWrap").classList.remove("hidden");
-          $("fJumlah").value = 1;
-          multiData = [blankEntry()];
-          renderMulti();
-        }
-        updateListFloat();
-        $("modal").classList.remove("hidden");
-      }
-
-      function closeForm() {
-        $("modal").classList.add("hidden");
-        $("btnListFloat").classList.add("hidden");
-        $("listPanel").classList.add("hidden");
-      }
-
-      /** Simpan nilai yang sudah diketik user di DOM ke dalam multiData sebelum re-render. */
-      function syncMultiFromDom() {
-        multiData.forEach((e, i) => {
-          const el = $("mNama_" + i);
-          if (!el) return;
-          e.nama = el.value;
-          e.nominal = $("mNom_" + i).value;
-          e.kategori = $("mKat_" + i).value;
-          e.tanggal = $("mTgl_" + i).value;
-          e.keterangan = $("mKet_" + i).value;
-        });
-      }
-
-      /** Tombol +/- di sebelah input "Jumlah data" (tanpa perlu mengetik). */
-      function stepJumlah(delta) {
-        onJumlahChange(Number($("fJumlah").value || 1) + delta);
-      }
-      /** Dipanggil saat input "Jumlah data" berubah: menambah/mengurangi blok input transaksi. */
-      function onJumlahChange(v) {
-        let n = Math.round(Number(v));
-        if (!n || n < 1) n = 1;
-        if (n > 50) n = 50;
-        $("fJumlah").value = n;
-        syncMultiFromDom();
-        while (multiData.length < n) multiData.push(blankEntry());
-        multiData.length = n;
-        renderMulti();
-        updateListFloat();
-      }
-
-      function renderMulti() {
-        $("multiWrap").innerHTML = multiData
-          .map(
-            (e, i) => `
-    <div id="entry_${i}" class="rounded-2xl border border-slate-100 p-3 space-y-2 scroll-mt-28 transition">
-      <div class="flex items-center justify-between">
-        <p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>
-        ${multiData.length > 1 ? `<button type="button" onclick="hapusEntry(${i})" class="text-xs font-semibold text-rose-500">Hapus</button>` : ""}
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <button type="button" onclick="setMultiJenis(${i},'Pengeluaran')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pengeluaran" ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-500"}">Pengeluaran</button>
-        <button type="button" onclick="setMultiJenis(${i},'Pemasukan')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pemasukan" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}">Pemasukan</button>
-      </div>
-      <input id="mNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(e.nama)}" oninput="multiData[${i}].nama=this.value">
-      <div class="grid grid-cols-2 gap-2">
-        <input id="mNom_${i}" type="number" inputmode="numeric" class="inp" placeholder="Nominal (Rp)" value="${esc(e.nominal)}" oninput="multiData[${i}].nominal=this.value">
-        <input id="mKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(e.kategori)}" oninput="multiData[${i}].kategori=this.value">
-      </div>
-      <input id="mTgl_${i}" type="datetime-local" class="inp" value="${esc(e.tanggal)}" oninput="multiData[${i}].tanggal=this.value">
-      <input id="mKet_${i}" class="inp" placeholder="Catatan (opsional)" value="${esc(e.keterangan)}" oninput="multiData[${i}].keterangan=this.value">
-    </div>`,
-          )
-          .join("");
-        updateListFloat();
-      }
-      function setMultiJenis(i, j) {
-        syncMultiFromDom();
-        multiData[i].jenis = j;
-        renderMulti();
-      }
-      function hapusEntry(i) {
-        syncMultiFromDom();
-        multiData.splice(i, 1);
-        $("fJumlah").value = multiData.length;
-        renderMulti();
-        updateListFloat();
-      }
-
-      /* ---------- Tombol & panel list mengambang (navigasi antar data saat tambah banyak) ---------- */
-      function updateListFloat() {
-        const show = S.edit === null && multiData.length > 1;
-        $("btnListFloat").classList.toggle("hidden", !show);
-        if (!show) {
-          $("listPanel").classList.add("hidden");
-          return;
-        }
-        $("listPanel").innerHTML = multiData
-          .map(
-            (e, i) =>
-              `<button type="button" onclick="scrollToEntry(${i})" class="w-full text-left px-3 py-2 rounded-xl text-sm font-semibold hover:bg-slate-100 flex justify-between items-center gap-2"><span>Data ${i + 1}</span><span class="text-xs text-slate-400 truncate max-w-[90px]">${esc(e.nama) || "Kosong"}</span></button>`,
-          )
-          .join("");
-      }
-      function toggleListPanel() {
-        $("listPanel").classList.toggle("hidden");
-      }
-      function scrollToEntry(i) {
-        syncMultiFromDom();
-        const modalBody =
-          document.querySelector("#modal .overflow-y-auto") ||
-          document.querySelector("#modal > div");
-        const el = $("entry_" + i);
-        if (el && modalBody) {
-          // Hitung posisi elemen relatif terhadap kontainer modal yang sedang di-scroll
-          const topPos = el.offsetTop - modalBody.offsetTop - 12;
-          modalBody.scrollTo({ top: topPos, behavior: "smooth" });
-          el.classList.add("ring-2", "ring-indigo-500", "bg-indigo-50/30");
-          setTimeout(
-            () =>
-              el.classList.remove(
-                "ring-2",
-                "ring-indigo-500",
-                "bg-indigo-50/30",
-              ),
-            1200,
-          );
-        }
-        $("listPanel").classList.add("hidden");
-      }
-
-      async function saveForm() {
-        if (S.edit) {
-          // Mode edit: 1 transaksi seperti biasa
-          const f = {
-            id: S.edit,
-            nama: $("fNama").value.trim(),
-            jenis: S.jf,
-            kategori: $("fKat").value.trim(),
-            nominal: Number($("fNom").value),
-            tanggal: ($("fTgl").value || "").replace("T", " ") + ":00",
-            keterangan: $("fKet").value.trim(),
-          };
-          if (!f.nama || !(f.nominal > 0))
-            return Toast.fire({
-              icon: "warning",
-              title: "Nama dan nominal wajib diisi",
-            });
-          if (await act("simpanDataTransaksi", [f], "Menyimpan transaksi..."))
-            closeForm();
-          return;
-        }
-
-        // Mode tambah: kirim 1 atau banyak transaksi sekaligus
-        syncMultiFromDom();
-        const list = [];
-        for (let i = 0; i < multiData.length; i++) {
-          const e = multiData[i],
-            nominal = Number(e.nominal);
-          if (!e.nama || !e.nama.trim() || !(nominal > 0)) {
-            scrollToEntry(i);
-            return Toast.fire({
-              icon: "warning",
-              title: `Data ${i + 1}: nama dan nominal wajib diisi`,
-            });
-          }
-          list.push({
-            nama: e.nama.trim(),
-            jenis: e.jenis,
-            kategori: (e.kategori || "").trim() || "Umum",
-            nominal,
-            tanggal: (e.tanggal || "").replace("T", " ") + ":00",
-            keterangan: (e.keterangan || "").trim(),
-          });
-        }
-        const txt =
-          list.length > 1
-            ? `Menyimpan ${list.length} transaksi...`
-            : "Menyimpan transaksi...";
-        if (await act("simpanBanyakTransaksi", [list], txt)) closeForm();
-      }
-      async function del(id) {
-        const t = S.data.trx.find((x) => x.id === id);
-        if (!t) return;
-        const c = await Swal.fire({
-          title: "Hapus transaksi?",
-          text: `"${t.nama}" akan dihapus dari Google Sheets.`,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Hapus",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (c.isConfirmed)
-          act("hapusTransaksi", [id], "Menghapus transaksi...");
-      }
-
-      /* ---------- Mesin analisis pintar (peringatan, saran, skor) ---------- */
-      const DEF = {
-        MIN_SALDO_WARNING: 50000,
-        TARGET_TABUNGAN: 20,
-        BUDGET_TOTAL: 0,
-        ALERT_BUDGET_PCT: 80,
-        LONJAKAN_PCT: 30,
-        BATAS_TRX_BESAR: 500000,
-        HARI_TANPA_CATAT: 3,
-        DANA_DARURAT_BULAN: 3,
-        ALERT_POPUP: 1,
+    } else {
+      // Perangkat baru/lain -> LARANG akses langsung, minta verifikasi PIN
+      return {
+        status: "success",
+        isNewUser: false,
+        isAuthorizedDevice: false,
+        requiresPinChallenge: true,
+        userId: String(user.data[0]),
+        nama: String(user.data[1]),
+        email: String(user.data[2]),
+        picture: String(user.data[6] || picture),
+        message: "Perangkat baru terdeteksi! Masukkan PIN 6-digit untuk mendaftarkan perangkat ini.",
       };
-      const FIELDS = [
-        [
-          "MIN_SALDO_WARNING",
-          "Batas saldo minimum",
-          "Peringatan muncul jika saldo total di bawah nilai ini",
-          "Rp",
-        ],
-        [
-          "BUDGET_TOTAL",
-          "Anggaran pengeluaran bulanan",
-          "Isi 0 untuk menonaktifkan",
-          "Rp",
-        ],
-        [
-          "ALERT_BUDGET_PCT",
-          "Peringatkan saat anggaran terpakai",
-          "Berlaku untuk anggaran total dan per kategori",
-          "%",
-        ],
-        [
-          "TARGET_TABUNGAN",
-          "Target rasio tabungan",
-          "Persentase pemasukan yang ingin Anda sisihkan",
-          "%",
-        ],
-        [
-          "LONJAKAN_PCT",
-          "Batas lonjakan pengeluaran kategori",
-          "Dibandingkan dengan bulan lalu",
-          "%",
-        ],
-        [
-          "BATAS_TRX_BESAR",
-          "Batas transaksi besar",
-          "Pengeluaran sebesar ini atau lebih akan ditandai",
-          "Rp",
-        ],
-        [
-          "HARI_TANPA_CATAT",
-          "Ingatkan jika tidak mencatat",
-          "Jumlah hari tanpa transaksi baru",
-          "hari",
-        ],
-        [
-          "DANA_DARURAT_BULAN",
-          "Target dana darurat",
-          "Berapa bulan saldo harus menutup pengeluaran",
-          "bulan",
-        ],
-      ];
-      const LV = {
-        danger: "bg-rose-50 text-rose-700",
-        warn: "bg-amber-50 text-amber-700",
-        info: "bg-sky-50 text-sky-700",
-        ok: "bg-emerald-50 text-emerald-700",
-      };
-      const IC = { danger: "⛔", warn: "⚠️", info: "ℹ️", ok: "✅" };
-      const G = (k) => {
-        const v = S.data.settings && S.data.settings[k];
-        return v === undefined || v === "" || isNaN(v) ? DEF[k] : Number(v);
-      };
-      const scoreLbl = (s) =>
-        s >= 80
-          ? ["Sangat sehat", "#10B981"]
-          : s >= 60
-            ? ["Baik", "#4F46E5"]
-            : s >= 40
-              ? ["Perlu perhatian", "#F59E0B"]
-              : ["Kritis", "#F43F5E"];
-      const HARI = [
-        "Minggu",
-        "Senin",
-        "Selasa",
-        "Rabu",
-        "Kamis",
-        "Jumat",
-        "Sabtu",
-      ];
+    }
+  });
+}
 
-      function analyze() {
-        const all = S.data.trx,
-          now = new Date(),
-          ym = ymd(now).slice(0, 7),
-          dn = now.getDate();
-        const dim = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-        ).getDate();
-        const pym = ymd(
-          new Date(now.getFullYear(), now.getMonth() - 1, 1),
-        ).slice(0, 7);
-        const M = all.filter((t) => t.tanggal.slice(0, 7) === ym),
-          P = all.filter((t) => t.tanggal.slice(0, 7) === pym);
-        const inc = sum(M, "Pemasukan"),
-          out = sum(M, "Pengeluaran"),
-          saldo = sum(all, "Pemasukan") - sum(all, "Pengeluaran");
-        const proj = (out / dn) * dim,
-          rate = inc ? ((inc - out) / inc) * 100 : 0;
-        const A = [],
-          T = [],
-          add = (lv, t) => A.push({ lv, t });
-        const ap = G("ALERT_BUDGET_PCT"),
-          bt = G("BUDGET_TOTAL"),
-          tg = G("TARGET_TABUNGAN"),
-          dd = G("DANA_DARURAT_BULAN");
+/**
+ * 2. REGISTRASI AKUN GOOGLE BARU:
+ * Menyimpan akun baru dengan Google payload, PIN hash, dan mendaftarkan deviceId pertama.
+ */
+function googleRegisterWithPin(googleData, pinHash, deviceId) {
+  return tx_(() => {
+    googleData = googleData || {};
+    const email = String(googleData.email || "").trim().toLowerCase();
+    const nama = String(googleData.nama || googleData.name || "").trim() || "Pengguna";
+    const picture = String(googleData.picture || "").trim();
+    const googleSub = String(googleData.googleSub || googleData.sub || "").trim();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
 
-        if (saldo < G("MIN_SALDO_WARNING"))
-          add(
-            "danger",
-            `Saldo ${rp(saldo)} berada di bawah batas minimum ${rp(G("MIN_SALDO_WARNING"))}.`,
-          );
-        if (bt > 0) {
-          const p = (out / bt) * 100;
-          if (p >= 100)
-            add(
-              "danger",
-              `Anggaran bulanan terlampaui ${rp(out - bt)} (${Math.round(p)}% terpakai).`,
-            );
-          else if (p >= ap)
-            add(
-              "warn",
-              `Anggaran bulanan terpakai ${Math.round(p)}%, sisa ${rp(bt - out)}.`,
-            );
-          if (out < bt) {
-            T.push(
-              `Agar tidak melewati anggaran, batasi belanja sekitar ${rp((bt - out) / (dim - dn + 1))} per hari sampai akhir bulan.`,
-            );
-            if (proj > bt && dn >= 5)
-              add(
-                "warn",
-                `Dengan laju sekarang, pengeluaran akhir bulan diprediksi ${rp(proj)} dan melewati anggaran.`,
-              );
-          }
-        } else
-          T.push(
-            "Atur anggaran bulanan di menu Pengaturan supaya peringatan dan prediksi lebih akurat.",
-          );
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    if (findUserByEmail_(email)) return err_("Akun dengan email ini sudah terdaftar");
 
-        const budgets = S.data.anggaran.map((b) => {
-          const sp = sum(
-            M.filter(
-              (t) => t.kategori.toLowerCase() === b.kategori.toLowerCase(),
-            ),
-            "Pengeluaran",
-          );
-          return Object.assign({}, b, {
-            sp,
-            p: b.batas ? (sp / b.batas) * 100 : 0,
-          });
-        });
-        budgets.forEach((b) => {
-          if (b.p >= 100)
-            add(
-              "danger",
-              `Anggaran ${b.kategori} terlampaui ${rp(b.sp - b.batas)}.`,
-            );
-          else if (b.p >= ap)
-            add("warn", `Anggaran ${b.kategori} terpakai ${Math.round(b.p)}%.`);
-        });
+    const userId = "USR-" + Date.now();
+    const now = new Date().toISOString();
+    const devices = deviceId ? [deviceId] : [];
 
-        if (inc > 0 && proj > inc && dn >= 5)
-          add(
-            "warn",
-            `Prediksi pengeluaran bulan ini ${rp(proj)} melebihi pemasukan ${rp(inc)}.`,
-          );
-        if (inc > 0) {
-          if (rate < tg)
-            add(
-              "warn",
-              `Rasio tabungan ${Math.round(rate)}% masih di bawah target ${tg}%.`,
-            );
-          else
-            add(
-              "ok",
-              `Rasio tabungan ${Math.round(rate)}% sudah mencapai target ${tg}%.`,
-            );
-          if (rate < tg)
-            T.push(
-              `Untuk mencapai target tabungan ${tg}%, tekan pengeluaran bulan ini maksimal ${rp(inc * (1 - tg / 100))}.`,
-            );
-        } else if (dn >= 3)
-          add("info", "Belum ada pemasukan yang tercatat bulan ini.");
+    const s = getSheet_(SH_USERS);
+    s.appendRow([
+      userId,
+      nama,
+      email,
+      pinHash,
+      JSON.stringify(devices),
+      "[]",
+      picture,
+      now,
+      now,
+      googleSub,
+    ]);
 
-        const w7 = ymd(new Date(Date.now() - 6 * 864e5));
-        all
-          .filter(
-            (t) =>
-              t.jenis === "Pengeluaran" &&
-              t.nominal >= G("BATAS_TRX_BESAR") &&
-              t.tanggal.slice(0, 10) >= w7,
-          )
-          .slice(0, 2)
-          .forEach((t) =>
-            add(
-              "info",
-              `Transaksi besar minggu ini: ${t.nama} ${rp(t.nominal)}.`,
-            ),
-          );
-        if (all[0]) {
-          const gap = Math.floor(
-            (new Date(ymd(now) + "T00:00:00") -
-              new Date(all[0].tanggal.slice(0, 10) + "T00:00:00")) /
-              864e5,
-          );
-          if (gap >= G("HARI_TANPA_CATAT"))
-            add(
-              "info",
-              `Sudah ${gap} hari tidak ada transaksi baru. Jangan lupa mencatat.`,
-            );
-        }
-        cats(M, "Pengeluaran").forEach(([k, v]) => {
-          const pv = sum(
-              P.filter((t) => t.kategori === k),
-              "Pengeluaran",
-            ),
-            pj = (v / dn) * dim;
-          if (dn >= 7 && pv > 0 && pj > pv * (1 + G("LONJAKAN_PCT") / 100))
-            add(
-              "warn",
-              `Pengeluaran ${k} diprediksi naik ${Math.round((pj / pv - 1) * 100)}% dibanding bulan lalu.`,
-            );
-        });
-
-        const months = [
-          ...new Set(
-            all.map((t) => t.tanggal.slice(0, 7)).filter((m) => m < ym),
-          ),
-        ]
-          .sort()
-          .slice(-3);
-        const avgOut = months.length
-          ? months.reduce(
-              (s, m) =>
-                s +
-                sum(
-                  all.filter((t) => t.tanggal.slice(0, 7) === m),
-                  "Pengeluaran",
-                ),
-              0,
-            ) / months.length
-          : proj;
-        const runway = avgOut > 0 ? saldo / avgOut : 0;
-        if (avgOut > 0)
-          T.push(
-            runway < dd
-              ? `Dana darurat baru cukup ${runway.toFixed(1)} bulan pengeluaran. Targetkan ${dd} bulan (sekitar ${rp(avgOut * dd)}).`
-              : `Dana darurat aman: saldo mencukupi ${runway.toFixed(1)} bulan pengeluaran.`,
-          );
-
-        const ck = cats(M, "Pengeluaran");
-        if (out > 0 && ck[0] && ck[0][1] / out > 0.4)
-          T.push(
-            `${ck[0][0]} menyerap ${Math.round((ck[0][1] / out) * 100)}% pengeluaran bulan ini. Mulai berhemat dari kategori ini.`,
-          );
-        const rc = group(
-          all.filter(
-            (t) =>
-              t.jenis === "Pengeluaran" &&
-              t.tanggal.slice(0, 10) >= ymd(new Date(Date.now() - 89 * 864e5)),
-          ),
-          (t) => t.nama.toLowerCase(),
-        );
-        Object.values(rc)
-          .filter((v) => v.length >= 3)
-          .sort((a, b) => b.length - a.length)
-          .slice(0, 2)
-          .forEach((v) =>
-            T.push(
-              `"${v[0].nama}" tercatat ${v.length} kali dalam 90 hari (total ${rp(sum(v, "Pengeluaran"))}). Jadikan anggaran rutin atau kurangi frekuensinya.`,
-            ),
-          );
-        const ex = all.filter((t) => t.jenis === "Pengeluaran");
-        if (ex.length >= 10) {
-          const w = [0, 0, 0, 0, 0, 0, 0];
-          ex.forEach(
-            (t) =>
-              (w[new Date(t.tanggal.slice(0, 10) + "T00:00:00").getDay()] +=
-                t.nominal),
-          );
-          T.push(
-            `Pengeluaran paling besar biasanya terjadi pada hari ${HARI[w.indexOf(Math.max(...w))]}. Rencanakan belanja di hari itu.`,
-          );
-        }
-        const pOut = sum(P, "Pengeluaran");
-        if (pOut > 0 && dn >= 7)
-          T.push(
-            proj <= pOut
-              ? `Laju pengeluaran lebih hemat dari bulan lalu (${rp(pOut)}). Pertahankan.`
-              : `Laju pengeluaran lebih tinggi dari bulan lalu (${rp(pOut)}). Tinjau kategori terbesar.`,
-          );
-        S.data.target.forEach((g) => {
-          const sisa = g.target - g.terkumpul;
-          if (sisa <= 0) return add("ok", `Target "${g.nama}" sudah tercapai.`);
-          if (!g.tenggat) return;
-          const ml = Math.ceil(
-            (new Date(g.tenggat + "T00:00:00") - now) / (30 * 864e5),
-          );
-          if (ml <= 0)
-            add(
-              "warn",
-              `Tenggat target "${g.nama}" sudah lewat, masih kurang ${rp(sisa)}.`,
-            );
-          else
-            T.push(
-              `Untuk target "${g.nama}", sisihkan sekitar ${rp(sisa / ml)} per bulan selama ${ml} bulan.`,
-            );
-        });
-
-        const over = budgets.filter((b) => b.p >= 100).length;
-        const sT =
-          inc > 0
-            ? Math.min(1, Math.max(0, rate) / (tg || 1)) * 30
-            : out === 0
-              ? 15
-              : 0;
-        const sA =
-          bt > 0
-            ? out <= bt
-              ? 30
-              : Math.max(0, 30 - (out / bt - 1) * 60)
-            : budgets.length
-              ? Math.max(0, 30 - over * 10)
-              : 20;
-        const sD = avgOut > 0 ? Math.min(1, runway / (dd || 1)) * 20 : 10;
-        const act14 = new Set(
-          all
-            .filter(
-              (t) =>
-                t.tanggal.slice(0, 10) >=
-                ymd(new Date(Date.now() - 13 * 864e5)),
-            )
-            .map((t) => t.tanggal.slice(0, 10)),
-        ).size;
-        const parts = [
-          ["Tabungan", sT, 30],
-          ["Kepatuhan anggaran", sA, 30],
-          ["Dana darurat", sD, 20],
-          ["Konsistensi mencatat", Math.min(1, act14 / 7) * 20, 20],
-        ];
-        const O = { danger: 0, warn: 1, info: 2, ok: 3 };
-        A.sort((a, b) => O[a.lv] - O[b.lv]);
-        return {
-          A,
-          T,
-          budgets,
-          out,
-          bt,
-          parts,
-          score: Math.round(parts.reduce((s, p) => s + p[1], 0)),
-        };
-      }
-
-      /* ---------- Kartu progres: anggaran dan target ---------- */
-      const barColor = (p) =>
-        p >= 100
-          ? "#F43F5E"
-          : p >= G("ALERT_BUDGET_PCT")
-            ? "#F59E0B"
-            : "#10B981";
-
-      /** Kartu anggaran. kat kosong = anggaran total bulanan. */
-      function budgetRow(nama, sp, batas, kat, cls) {
-        const p = batas ? (sp / batas) * 100 : 0,
-          c = barColor(p),
-          sisa = batas - sp;
-        const edit = kat
-          ? "formAnggaran(this.dataset.k)"
-          : "formTotalAnggaran()";
-        const hapus = kat
-          ? "delItem('hapusAnggaran',this.dataset.k,'anggaran')"
-          : "hapusTotalAnggaran()";
-        return `<div class="${cls || ""} rounded-2xl border border-slate-100 p-3">
-    <div class="flex items-start justify-between gap-2">
-      <div class="min-w-0"><p class="font-semibold text-sm truncate">${esc(nama)}</p><p class="text-xs text-slate-500">${rp(sp)} dari ${rp(batas)}</p></div>
-      <span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span>
-    </div>
-    <div class="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div></div>
-    <div class="flex items-center justify-between gap-2 mt-2">
-      <span class="text-xs font-medium ${p >= 100 ? "text-rose-600" : "text-slate-500"}">${p >= 100 ? "Lewat " + rp(Math.abs(sisa)) : "Sisa " + rp(sisa)}</span>
-      <span class="flex gap-1.5"><button data-k="${esc(kat || "")}" onclick="${edit}" class="act pri">Edit</button><button data-k="${esc(kat || "")}" onclick="${hapus}" class="act del">Hapus</button></span>
-    </div></div>`;
-      }
-
-      /** Kartu target tabungan dengan progress bar. */
-      function targetRow(g) {
-        const p = g.target ? (g.terkumpul / g.target) * 100 : 0,
-          done = p >= 100,
-          c = done ? "#10B981" : "#4F46E5";
-        let info = done
-          ? "Target tercapai 🎉"
-          : "Kurang " + rp(g.target - g.terkumpul);
-        if (g.tenggat && !done) {
-          const d = Math.ceil(
-            (new Date(g.tenggat + "T00:00:00") -
-              new Date(ymd(new Date()) + "T00:00:00")) /
-              864e5,
-          );
-          info +=
-            d < 0
-              ? ` · lewat ${-d} hari`
-              : d === 0
-                ? " · tenggat hari ini"
-                : ` · ${d} hari lagi`;
-        }
-        return `<div class="rounded-2xl border border-slate-100 p-3">
-    <div class="flex items-start justify-between gap-2">
-      <div class="min-w-0"><p class="font-semibold text-sm truncate">${esc(g.nama)}</p><p class="text-xs text-slate-500">${rp(g.terkumpul)} dari ${rp(g.target)}</p></div>
-      <span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span>
-    </div>
-    <div class="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div></div>
-    <div class="flex flex-wrap items-center justify-between gap-2 mt-2">
-      <span class="text-xs font-medium ${done ? "text-emerald-600" : "text-slate-500"}">${esc(info)}</span>
-      <span class="flex gap-1.5">
-        <button data-id="${esc(g.id)}" onclick="setor(this.dataset.id)" class="act pri">+ Setor</button>
-        <button data-id="${esc(g.id)}" onclick="formTarget(this.dataset.id)" class="act">Edit</button>
-        <button data-id="${esc(g.id)}" onclick="delItem('hapusTarget',this.dataset.id,'target')" class="act del">Hapus</button>
-      </span>
-    </div></div>`;
-      }
-
-      function renderPintar() {
-        const R = analyze(),
-          lb = scoreLbl(R.score);
-        $("skorNum").textContent = R.score;
-        $("skorLbl").textContent = lb[0];
-        $("skorLbl").style.color = lb[1];
-        drawChart("cSkor", {
-          type: "doughnut",
-          data: {
-            datasets: [
-              {
-                data: [R.score, 100 - R.score],
-                backgroundColor: [lb[1], "#E2E8F0"],
-                borderWidth: 0,
-              },
-            ],
-          },
-          options: {
-            rotation: -90,
-            circumference: 180,
-            cutout: "78%",
-            plugins: {
-              legend: { display: false },
-              tooltip: { enabled: false },
-            },
-          },
-        });
-        $("skorParts").innerHTML = R.parts
-          .map(
-            (p) =>
-              `<div><div class="flex justify-between text-xs"><span class="font-semibold">${p[0]}</span><span class="text-slate-400">${Math.round(p[1])}/${p[2]}</span></div><div class="h-1.5 bg-slate-100 rounded-full mt-1"><div class="h-1.5 rounded-full bg-indigo-600" style="width:${(p[1] / p[2]) * 100}%"></div></div></div>`,
-          )
-          .join("");
-        $("pAlerts").innerHTML =
-          R.A.map(
-            (a) =>
-              `<div class="${LV[a.lv]} rounded-2xl p-3 text-sm font-medium flex gap-2"><span>${IC[a.lv]}</span><span>${esc(a.t)}</span></div>`,
-          ).join("") ||
-          '<p class="text-sm text-slate-400">Belum ada peringatan.</p>';
-        $("pTips").innerHTML =
-          R.T.map(
-            (t) =>
-              `<li class="flex gap-2"><span>💡</span><span>${esc(t)}</span></li>`,
-          ).join("") ||
-          '<li class="text-slate-400">Tambahkan lebih banyak transaksi agar saran muncul.</li>';
-
-        // Anggaran bulan ini
-        const total =
-          R.bt > 0
-            ? budgetRow("Total bulanan", R.out, R.bt, "", "sm:col-span-2")
-            : `<div class="sm:col-span-2 rounded-2xl border border-dashed border-slate-200 p-3 flex items-center justify-between gap-2"><span class="text-xs text-slate-500">Anggaran total bulanan belum diatur</span><button onclick="formTotalAnggaran()" class="act pri">+ Atur total</button></div>`;
-        $("pBudget").innerHTML =
-          total +
-          (R.budgets
-            .map((b) => budgetRow(b.kategori, b.sp, b.batas, b.kategori))
-            .join("") ||
-            '<p class="text-sm text-slate-400 sm:col-span-2">Belum ada anggaran per kategori. Tekan + Tambah anggaran untuk membuat batas.</p>');
-
-        // Target tabungan
-        $("pTarget").innerHTML =
-          S.data.target.map(targetRow).join("") ||
-          '<p class="text-sm text-slate-400">Belum ada target. Tekan + Tambah target untuk membuat, misalnya dana darurat atau liburan.</p>';
-      }
-
-      /* ---------- Pengaturan lengkap ---------- */
-      function renderSet() {
-        if (!$("setForm").contains(document.activeElement))
-          $("setForm").innerHTML =
-            FIELDS.map(
-              ([k, l, h, u]) =>
-                `<div><label class="lbl">${l} (${u})</label><input data-k="${k}" type="number" inputmode="numeric" class="inp" value="${G(k)}"><p class="text-[11px] text-slate-400 mt-1">${h}</p></div>`,
-            ).join("") +
-            `<label class="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" id="setPop" ${G("ALERT_POPUP") ? "checked" : ""} class="w-4 h-4 accent-indigo-600"> Tampilkan peringatan otomatis saat aplikasi dibuka</label>`;
-        $("setBudget").innerHTML =
-          S.data.anggaran
-            .map(
-              (b) =>
-                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5" aria-label="Edit">✏️</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5" aria-label="Hapus">🗑️</button></span></div>`,
-            )
-            .join("") ||
-          '<p class="text-sm text-slate-400">Belum ada anggaran kategori.</p>';
-        $("setKat").innerHTML = S.data.kategori
-          .map(
-            (k) =>
-              `<span class="chip !inline-flex items-center gap-1 ${k.tipe === "Pemasukan" ? "!bg-emerald-50 !text-emerald-600" : ""}">${esc(k.nama)}<button data-k="${esc(k.nama)}" onclick="hapusKategoriConfirm(this.dataset.k)" aria-label="Hapus kategori">×</button></span>`,
-          )
-          .join("");
-      }
-      function saveSet() {
-        const o = {};
-        document
-          .querySelectorAll("#setForm [data-k]")
-          .forEach(
-            (i) =>
-              (o[i.dataset.k] =
-                i.value === "" ? DEF[i.dataset.k] : Number(i.value)),
-          );
-        o.ALERT_POPUP = $("setPop").checked ? 1 : 0;
-        act("simpanPengaturan", [o], "Menyimpan pengaturan...");
-      }
-
-      /* ---------- Popup target tabungan: tambah, edit, hapus, setor ---------- */
-      function previewTarget() {
-        const t = Number($("tgT").value) || 0,
-          c = Number($("tgC").value) || 0,
-          p = t ? (c / t) * 100 : 0;
-        $("tgPct").textContent = Math.round(p) + "%";
-        $("tgBar").style.width = Math.min(100, p) + "%";
-        $("tgBar").style.background = p >= 100 ? "#10B981" : "#4F46E5";
-      }
-      function formTarget(id) {
-        const g = id ? S.data.target.find((x) => x.id === id) : null;
-        if (id && !g)
-          return Toast.fire({
-            icon: "error",
-            title: "Target tidak ditemukan, mungkin sudah dihapus",
-          });
-        S.tEdit = g ? g.id : null;
-        $("tgTitle").textContent = g
-          ? "Edit target tabungan"
-          : "Target tabungan baru";
-        $("tgN").value = g ? g.nama : "";
-        $("tgT").value = g ? g.target : "";
-        $("tgC").value = g ? g.terkumpul : 0;
-        $("tgD").value = g ? g.tenggat : "";
-        $("tgDel").classList.toggle("hidden", !g);
-        previewTarget();
-        $("mTarget").classList.remove("hidden");
-        setTimeout(() => $("tgN").focus(), 60);
-      }
-      function closeTarget() {
-        $("mTarget").classList.add("hidden");
-      }
-      async function saveTarget() {
-        if (S.busy > 0) return;
-        const o = {
-          id: S.tEdit || "",
-          nama: $("tgN").value.trim(),
-          target: Number($("tgT").value),
-          terkumpul: Number($("tgC").value) || 0,
-          tenggat: $("tgD").value,
-        };
-        if (!o.nama || !(o.target > 0))
-          return Toast.fire({
-            icon: "warning",
-            title: "Nama dan nominal target wajib diisi",
-          });
-        if (o.terkumpul < 0)
-          return Toast.fire({
-            icon: "warning",
-            title: "Jumlah terkumpul tidak boleh negatif",
-          });
-        if (await act("simpanTarget", [o], "Menyimpan target..."))
-          closeTarget();
-      }
-      async function hapusDariForm() {
-        const g = S.data.target.find((x) => x.id === S.tEdit);
-        if (!g) return;
-        const c = await Swal.fire({
-          title: "Hapus target?",
-          text: `"${g.nama}" akan dihapus dari Google Sheets.`,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Hapus",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (
-          c.isConfirmed &&
-          (await act("hapusTarget", [g.id], "Menghapus target..."))
-        )
-          closeTarget();
-      }
-      function setor(id) {
-        const g = S.data.target.find((x) => x.id === id);
-        if (!g) return;
-        S.sId = id;
-        $("sgTitle").textContent = "Setor ke " + g.nama;
-        $("sgInfo").textContent =
-          "Terkumpul " + rp(g.terkumpul) + " dari " + rp(g.target);
-        $("sgJml").value = "";
-        $("mSetor").classList.remove("hidden");
-        setTimeout(() => $("sgJml").focus(), 60);
-      }
-      function closeSetor() {
-        $("mSetor").classList.add("hidden");
-      }
-      function isiSisa() {
-        const g = S.data.target.find((x) => x.id === S.sId);
-        if (!g) return;
-        $("sgJml").value = Math.max(0, g.target - g.terkumpul);
-      }
-      async function saveSetor() {
-        if (S.busy > 0) return;
-        const n = Number($("sgJml").value);
-        if (!(n > 0))
-          return Toast.fire({
-            icon: "warning",
-            title: "Isi jumlah setoran lebih dari 0",
-          });
-        if (await act("setorTarget", [S.sId, n], "Menyimpan setoran..."))
-          closeSetor();
-      }
-      /* ---------- FAB mobile gabungan (Tambah + Suara) ---------- */
-      let fabOpen_ = false;
-      function toggleFabMenu() {
-        fabOpen_ = !fabOpen_;
-        const icon = $("fabMainIcon");
-        [$("fabAdd"), $("fabVoice")].forEach((b) => {
-          b.classList.toggle("opacity-0", !fabOpen_);
-          b.classList.toggle("scale-0", !fabOpen_);
-          b.classList.toggle("translate-y-2", !fabOpen_);
-          b.classList.toggle("pointer-events-none", !fabOpen_);
-        });
-        $("fabMain").classList.toggle("opacity-60", !fabOpen_);
-        $("fabMain").classList.toggle("opacity-100", fabOpen_);
-        icon.style.transform = fabOpen_ ? "rotate(45deg)" : "rotate(0deg)";
-      }
-      function closeFabMenu() {
-        if (fabOpen_) toggleFabMenu();
-      }
-      document.addEventListener("click", (e) => {
-        if (fabOpen_ && !$("fabMobile").contains(e.target)) closeFabMenu();
-      });
-      document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          closeForm();
-          closeTarget();
-          closeSetor();
-          closeVoice();
-          closeFabMenu();
-        }
-        if (e.key === "Enter" && e.target && e.target.tagName === "INPUT") {
-          if (!$("mTarget").classList.contains("hidden")) saveTarget();
-          else if (!$("mSetor").classList.contains("hidden")) saveSetor();
-        }
-      });
-
-      /* ---------- Dialog anggaran, kategori ---------- */
-      const DLG = {
-        showCancelButton: true,
-        confirmButtonText: "Simpan",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#4F46E5",
-        focusConfirm: false,
-      };
-      async function formAnggaran(kat) {
-        const b = S.data.anggaran.find((x) => x.kategori === kat);
-        const r = await Swal.fire({
-          ...DLG,
-          title: b ? "Ubah anggaran" : "Anggaran baru",
-          html: `<div class="text-left space-y-3"><div><label class="lbl">Kategori</label><input id="sK" list="dlKat" class="inp" value="${esc(kat || "")}" ${b ? "disabled" : ""} placeholder="Makanan"></div><div><label class="lbl">Batas per bulan (Rp)</label><input id="sN" type="number" inputmode="numeric" class="inp" value="${b ? b.batas : ""}"></div></div>`,
-          preConfirm: () => {
-            const o = { k: $("sK").value.trim(), n: Number($("sN").value) };
-            if (!o.k || !(o.n > 0)) {
-              Swal.showValidationMessage("Isi kategori dan batas lebih dari 0");
-              return false;
-            }
-            return o;
-          },
-        });
-        if (r.isConfirmed)
-          act(
-            "simpanAnggaran",
-            [r.value.k, r.value.n],
-            "Menyimpan anggaran...",
-          );
-      }
-      /** Anggaran total bulanan (disimpan di Pengaturan: BUDGET_TOTAL). */
-      async function formTotalAnggaran() {
-        const r = await Swal.fire({
-          ...DLG,
-          title: "Anggaran total bulanan",
-          input: "number",
-          inputLabel: "Batas pengeluaran per bulan (Rp)",
-          inputValue: G("BUDGET_TOTAL") || "",
-          inputAttributes: { inputmode: "numeric" },
-          inputValidator: (v) =>
-            Number(v) > 0 ? null : "Isi jumlah lebih dari 0",
-        });
-        if (r.isConfirmed)
-          act(
-            "simpanPengaturan",
-            [{ BUDGET_TOTAL: Number(r.value) }],
-            "Menyimpan anggaran...",
-          );
-      }
-      async function hapusTotalAnggaran() {
-        const c = await Swal.fire({
-          title: "Hapus anggaran total?",
-          text: "Anggaran total bulanan akan dinonaktifkan.",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Hapus",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (c.isConfirmed)
-          act(
-            "simpanPengaturan",
-            [{ BUDGET_TOTAL: 0 }],
-            "Menghapus anggaran...",
-          );
-      }
-      async function formKategori() {
-        const r = await Swal.fire({
-          ...DLG,
-          title: "Kategori baru",
-          html: `<div class="text-left space-y-3"><div><label class="lbl">Nama kategori</label><input id="kN" class="inp" placeholder="Kesehatan"></div><div><label class="lbl">Jenis</label><select id="kT" class="inp"><option>Pengeluaran</option><option>Pemasukan</option></select></div></div>`,
-          preConfirm: () => {
-            const n = $("kN").value.trim();
-            if (!n) {
-              Swal.showValidationMessage("Nama kategori wajib diisi");
-              return false;
-            }
-            return [n, $("kT").value];
-          },
-        });
-        if (r.isConfirmed)
-          act("simpanKategori", r.value, "Menyimpan kategori...");
-      }
-      async function delItem(fn, arg, label) {
-        const c = await Swal.fire({
-          title: "Hapus " + label + "?",
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Hapus",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (c.isConfirmed) act(fn, [arg], "Menghapus...");
-      }
-      /** Hapus kategori: kasih tahu dulu berapa transaksi & anggaran yang akan ikut terhapus (cascade). */
-      async function hapusKategoriConfirm(nama) {
-        const jmlTrx = S.data.trx.filter(
-          (t) => t.kategori.toLowerCase() === nama.toLowerCase(),
-        ).length;
-        const adaAnggaran = S.data.anggaran.some(
-          (b) => b.kategori.toLowerCase() === nama.toLowerCase(),
-        );
-        const rincian = [];
-        if (jmlTrx) rincian.push(jmlTrx + " transaksi");
-        if (adaAnggaran) rincian.push("anggaran kategori ini");
-        const html = rincian.length
-          ? `Kategori <b>${esc(nama)}</b> akan dihapus, beserta <b>${rincian.join(" dan ")}</b> yang terhubung. Tindakan ini tidak bisa dibatalkan.`
-          : `Kategori <b>${esc(nama)}</b> akan dihapus. Tindakan ini tidak bisa dibatalkan.`;
-        const c = await Swal.fire({
-          title: "Hapus kategori?",
-          html,
-          icon: "warning",
-          showCancelButton: true,
-          confirmButtonText: "Ya, hapus semua",
-          cancelButtonText: "Batal",
-          confirmButtonColor: "#F43F5E",
-        });
-        if (c.isConfirmed)
-          act("hapusKategori", [nama], "Menghapus kategori...");
-      }
-
-      /* ---------- Gambar grafik untuk PDF ---------- */
-      function chartImg(cf) {
-        const c = document.createElement("canvas");
-        c.width = 640;
-        c.height = 300;
-        c.style.cssText = "position:fixed;left:-9999px;top:0";
-        document.body.appendChild(c);
-        cf.options = Object.assign(
-          {
-            plugins: {
-              legend: {
-                position: "bottom",
-                labels: { boxWidth: 10, usePointStyle: true },
-              },
-            },
-          },
-          cf.options,
-          { responsive: false, animation: false, devicePixelRatio: 2 },
-        );
-        const ch = new Chart(c, cf),
-          u = ch.toBase64Image();
-        ch.destroy();
-        c.remove();
-        return u;
-      }
-
-      /* ---------- Catat dengan suara (pop-up mengambang) ---------- */
-      const Vst = { rec: null, listening: false, raw: "", timer: null, items: [], rawAll: [], append: false };
-
-      /* ===== 1) Alat bantu teks: token, jarak ketikan (typo), kosakata ===== */
-      const tokenV_ = (text) =>
-        String(text || "")
-          .toLowerCase()
-          .replace(/(\d)([a-z])/g, "$1 $2")
-          .replace(/([a-z])(\d)/g, "$1 $2")
-          .split(/\s+/)
-          .map((w) => w.replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, ""))
-          .filter(Boolean);
-
-      function lev_(a, b) {
-        const m = a.length, n = b.length;
-        let prev = Array.from({ length: n + 1 }, (_, j) => j);
-        for (let i = 1; i <= m; i++) {
-          const cur = [i];
-          for (let j = 1; j <= n; j++)
-            cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-          prev = cur;
-        }
-        return prev[n];
-      }
-      /** Toleransi salah ketik berdasarkan panjang kata. */
-      const thr_ = (n) => (n <= 4 ? 0 : n <= 7 ? 1 : n <= 10 ? 2 : 3);
-
-      const VTITLE_ = { bpjs: "BPJS", pln: "PLN", atm: "ATM", thr: "THR", bbm: "BBM", wifi: "WiFi", spp: "SPP", pdam: "PDAM", dp: "DP", bri: "BRI", bca: "BCA", bni: "BNI" };
-      const titleV_ = (s) =>
-        tokenV_(s).map((w) => VTITLE_[w] || w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
-      const capV_ = (s) => String(s || "").trim().replace(/\s+/g, " ").replace(/^./, (c) => c.toUpperCase());
-
-      /** Kata-kata kunci perintah (dicocokkan dengan toleransi typo). */
-      const VK_ = {
-        kat: ["kategori", "kategorinya", "category", "kategory", "katagori"],
-        alasan: ["alasan", "alasannya", "karena", "karna", "krn", "sebab", "soalnya", "lantaran"],
-        keluar: ["pengeluaran"],
-        masuk: ["pemasukan", "pendapatan"],
-        trx: ["transaksi"],
-      };
-      function cueV_(t) {
-        if (!/^[a-z]+$/.test(t)) return null;
-        for (const [cue, list] of Object.entries(VK_)) {
-          if (list.includes(t)) return cue;
-          if (t.length >= 5 && list.some((k) => k.length >= 5 && Math.abs(k.length - t.length) <= 2 && lev_(t, k) <= thr_(k.length)))
-            return cue;
-        }
-        return null;
-      }
-
-      /** Sinonim → nama kategori umum (dipakai bila kategori tidak disebut / tidak ada yang cocok). */
-      const VSYN_ = {
-        Makanan: "makan minum sarapan kopi teh nasi ayam bakso mie soto sate roti kue jajan snack jus susu kuliner resto restoran warung cafe kafe bubur gorengan lauk",
-        Transportasi: "bensin solar bbm parkir tol ojek ojol gojek grab taksi bus kereta angkot tiket pesawat travel bengkel servis oli ban",
-        Belanja: "belanja belanjaan sayur buah daging ikan telur beras minyak gula sabun sampo baju celana sepatu tas kaos jaket hijab toko mall pasar shopee tokopedia",
-        Tagihan: "listrik token pulsa paket internet wifi tagihan cicilan kredit sewa kos kontrakan pajak asuransi bpjs pdam",
-        Hiburan: "nonton bioskop film game langganan netflix spotify youtube liburan wisata konser karaoke",
-        Kesehatan: "obat dokter apotek klinik vitamin sakit periksa gym olahraga medis",
-        Pendidikan: "sekolah kuliah buku kursus les spp seminar pelatihan",
-        Sosial: "sedekah zakat infaq donasi amal arisan hadiah kado sumbangan",
-        Gaji: "gaji upah honor thr bonus komisi",
-      };
-      const VSYN_MASUK_ = new Set(["Gaji"]);
-      const VBASE_ = (
-        "dan yang untuk dengan saya aku lagi tadi sudah telah hari ini itu di ke dari pada atau juga sama waktunya waktu karena lapar haus capek sakit " +
-        "kemarin besok nama judul nominal harga sebesar senilai seharga sejumlah rupiah rp ribu juta ratus puluh belas miliar " +
-        "nol satu dua tiga empat lima enam tujuh delapan sembilan sepuluh sebelas seribu sejuta seratus setengah koma " +
-        "beli bayar belanja jual isi topup transfer terima siang malam pagi sore cuci laundry potong rambut salon hutang utang piutang pinjaman lunas " +
-        "tabungan investasi saham emas reksadana uang saku lain lainnya umum " +
-        Object.values(VSYN_).join(" ") + " " + Object.keys(VSYN_).join(" ").toLowerCase()
-      ).split(/\s+/);
-
-      /** Kosakata = kata bawaan + semua kata dari nama/kategori transaksi milik pengguna sendiri. */
-      function vocabV_() {
-        const V = new Set(VBASE_);
-        (S.data.kategori || []).forEach((k) => tokenV_(k.nama).forEach((w) => V.add(w)));
-        (S.data.trx || []).forEach((t) => tokenV_(t.nama + " " + t.kategori).forEach((w) => V.add(w)));
-        return V;
-      }
-      /** Perbaiki typo: ganti dengan kata terdekat di kosakata (huruf awal harus sama). */
-      const fixThr_ = (n) => (n <= 3 ? 0 : n <= 5 ? 1 : n <= 8 ? 2 : 3);
-      function fixWord_(w, V) {
-        if (V.has(w) || w.length < 4 || /\d/.test(w) || cueV_(w)) return w;
-        const T = Math.min(fixThr_(w.length), 2);
-        let best = w, bd = T + 1;
-        for (const v of V) {
-          if (v[0] !== w[0] || Math.abs(v.length - w.length) > T) continue;
-          const d = lev_(w, v);
-          if (d < bd) { bd = d; best = v; }
-        }
-        return best;
-      }
-
-      /* ===== 2) Angka: "25 ribu", "Rp25.000", "dua puluh lima ribu", "1,5 juta" ===== */
-      const NW_ = new Map([["nol", 0], ["satu", 1], ["dua", 2], ["tiga", 3], ["empat", 4], ["lima", 5], ["enam", 6], ["tujuh", 7], ["delapan", 8], ["sembilan", 9]]);
-      const isDig_ = (t) => /^\d+(?:[.,]\d+)*$/.test(t);
-      const isCur_ = (t) => /^(rp|rupiah|idr)$/.test(t);
-      const MAG_ = /^(belas|puluh|ratus|ribu|juta|miliar|seribu|sejuta|seratus|sepuluh|sebelas|setengah|koma)$/;
-      const isNumTok_ = (t, prev) =>
-        isDig_(t) || NW_.has(t) || MAG_.test(t) || (/^(rb|jt|k)$/.test(t) && !!prev && isDig_(prev));
-
-      function digitVal_(t) {
-        if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) return parseFloat(t.replace(/\./g, "").replace(",", "."));
-        if (/^\d{1,3}(,\d{3})+$/.test(t)) return parseFloat(t.replace(/,/g, ""));
-        return parseFloat(t.replace(",", "."));
-      }
-      function numValue_(toks) {
-        let total = 0, group = 0, cur = 0, dec = false;
-        for (let i = 0; i < toks.length; i++) {
-          const t = toks[i], nx = toks[i + 1] || "";
-          if (isCur_(t)) continue;
-          if (isDig_(t)) {
-            const v = digitVal_(t);
-            if (dec) { cur += v / Math.pow(10, t.length); dec = false; continue; }
-            // "25.000 ribu" → angkanya sudah ribuan, jangan dikali lagi
-            if ((v >= 1000 && /^(ribu|rb|k)$/.test(nx)) || (v >= 1e6 && /^(juta|jt)$/.test(nx))) i++;
-            group += cur; cur = v; continue;
-          }
-          if (NW_.has(t)) {
-            if (dec) { cur += NW_.get(t) / 10; dec = false; } else { group += cur; cur = NW_.get(t); }
-            continue;
-          }
-          if (t === "sepuluh") { group += cur + 10; cur = 0; }
-          else if (t === "sebelas") { group += cur + 11; cur = 0; }
-          else if (t === "seratus") { group += cur + 100; cur = 0; }
-          else if (t === "belas") { group += cur + 10; cur = 0; }
-          else if (t === "puluh") { group += (cur || 1) * 10; cur = 0; }
-          else if (t === "ratus") { group += (cur || 1) * 100; cur = 0; }
-          else if (t === "setengah") cur += 0.5;
-          else if (t === "koma") dec = true;
-          else if (/^(ribu|seribu|rb|k)$/.test(t)) { total += (group + cur || 1) * 1e3; group = cur = 0; }
-          else if (/^(juta|sejuta|jt)$/.test(t)) { total += (group + cur || 1) * 1e6; group = cur = 0; }
-          else if (t === "miliar") { total += (group + cur || 1) * 1e9; group = cur = 0; }
-        }
-        return Math.round(total + group + cur);
-      }
-      /** Cari deretan kata angka dalam satu bagian; pilih yang paling meyakinkan sebagai nominal. */
-      function findNominal_(items) {
-        const runs = [];
-        let run = null;
-        items.forEach((it, i) => {
-          const prev = run ? run.w[run.w.length - 1] : "";
-          const ok = (isNumTok_(it.w, prev) || isCur_(it.w)) && (!run || run.sec === it.sec);
-          if (!ok) { run = null; return; }
-          if (!run) { run = { start: i, end: i, sec: it.sec, w: [] }; runs.push(run); }
-          run.w.push(it.w); run.end = i;
-        });
-        const cand = runs
-          .filter((r) => r.w.some((w) => isDig_(w) || NW_.has(w) || /^(seribu|sejuta|seratus|sepuluh|sebelas|setengah)$/.test(w)))
-          .map((r) => {
-            r.value = numValue_(r.w);
-            r.strong = r.w.some((w) => isCur_(w) || /^(ribu|juta|rb|jt|k|miliar|seribu|sejuta|ratus|seratus)$/.test(w)) || r.value >= 1000;
-            r.tier = (r.strong ? 2 : 0) + (r.sec === "head" ? 1 : 0);
-            return r;
-          })
-          .filter((r) => r.value > 0 && r.value < 1e12);
-        cand.sort((a, b) => b.tier - a.tier || b.value - a.value);
-        return cand[0] || null;
-      }
-
-      /* ===== 3) Kategori: cocokkan dengan data yang sudah ada ===== */
-      function stemV_(w) {
-        let s = w.replace(/(lah|kah|nya)$/, "");
-        let m = s.match(/^(?:meng|meny|men|mem|me|peng|peny|pen|pem|per|pe|ber|ter|di|ke|se)(.{4,})$/);
-        if (m) s = m[1];
-        m = s.match(/^(.{4,}?)(?:kan|an|i)$/);
-        return m ? m[1] : s;
-      }
-      /** Skor kemiripan dua kata: 3 sama persis, 2.6 satu akar, 2.2 saling memuat, 1.8 mirip (typo). */
-      function wordMatch_(a, b) {
-        if (a === b) return 3;
-        if (a.length < 3 || b.length < 3) return 0;
-        if (stemV_(a) === stemV_(b)) return 2.6;
-        if (a.length >= 4 && b.length >= 4 && (a.includes(b) || b.includes(a))) return 2.2;
-        const L = Math.max(a.length, b.length);
-        if (a[0] === b[0] && lev_(a, b) <= Math.min(thr_(L), 2)) return 1.8;
-        return 0;
-      }
-      const VSTOP_ = /^(dan|atau|yang|di|ke|untuk|dengan|lain|lainnya|nya|hari|ini|itu|saya|aku|tadi|beli|bayar)$/;
-      function katPoolV_() {
-        const m = new Map();
-        const add = (nama, tipe, n) => {
-          const k = String(nama || "").trim();
-          if (!k) return;
-          const o = m.get(k.toLowerCase()) || { nama: k, tipe: "", n: 0 };
-          if (!o.tipe && tipe) o.tipe = tipe;
-          o.n += n;
-          m.set(k.toLowerCase(), o);
-        };
-        (S.data.kategori || []).forEach((k) => add(k.nama, k.tipe, 0));
-        (S.data.trx || []).forEach((t) => add(t.kategori, t.jenis, 1));
-        return [...m.values()];
-      }
-      function pickKat_(words, jenis, minScore) {
-        const ws = words.filter((w) => w.length >= 3 && !VSTOP_.test(w) && !/\d/.test(w));
-        let best = null, bs = 0;
-        katPoolV_().forEach((c) => {
-          let s = 0;
-          tokenV_(c.nama).filter((w) => !VSTOP_.test(w)).forEach((a) => ws.forEach((b) => (s = Math.max(s, wordMatch_(a, b)))));
-          if (!s) return;
-          if (c.tipe && c.tipe !== jenis && s < 2.9) return; // beda jenis: harus hampir persis
-          s += (c.tipe === jenis ? 0.3 : 0) + Math.min(c.n, 20) * 0.01;
-          if (s > bs) { bs = s; best = c; }
-        });
-        return bs >= minScore ? best : null;
-      }
-      /** Kategori dari riwayat: transaksi lama dengan nama yang mirip → pakai kategorinya. */
-      function katRiwayat_(namaWords, jenis) {
-        const ws = namaWords.filter((w) => w.length >= 3 && !VSTOP_.test(w));
-        if (!ws.length) return null;
-        const votes = new Map();
-        (S.data.trx || []).forEach((t) => {
-          if (t.jenis !== jenis || !t.kategori) return;
-          const tw = tokenV_(t.nama);
-          const hit = ws.filter((a) => tw.some((b) => wordMatch_(a, b) >= 2.2)).length;
-          if (hit / ws.length >= 0.75) votes.set(t.kategori, (votes.get(t.kategori) || 0) + hit);
-        });
-        return [...votes.entries()].sort((a, b) => b[1] - a[1]).map((x) => x[0])[0] || null;
-      }
-      function katSinonim_(words, jenis) {
-        let best = null, bc = 0;
-        Object.entries(VSYN_).forEach(([name, list]) => {
-          if (VSYN_MASUK_.has(name) !== (jenis === "Pemasukan")) return;
-          const set = list.split(" ");
-          const c = words.filter((w) => set.includes(w)).length;
-          if (c > bc) { bc = c; best = name; }
-        });
-        return best;
-      }
-      /** Hasil: { nama, baru } — baru=false artinya memakai kategori yang sudah ada. */
-      function resolveKat_(spoken, namaWords, ctxWords, jenis) {
-        if (spoken.length) {
-          const c = pickKat_(spoken, jenis, 1.8);
-          return c ? { nama: c.nama, baru: false } : { nama: titleV_(spoken.join(" ")), baru: true };
-        }
-        const rw = katRiwayat_(namaWords, jenis);
-        if (rw) return { nama: rw, baru: false };
-        const c = pickKat_(ctxWords, jenis, 2.2);
-        if (c) return { nama: c.nama, baru: false };
-        const sn = katSinonim_(ctxWords, jenis);
-        if (sn) {
-          const e = pickKat_([sn.toLowerCase()], jenis, 1.8);
-          return e ? { nama: e.nama, baru: false } : { nama: sn, baru: true };
-        }
-        const u = katPoolV_().find((k) => k.nama.toLowerCase() === "umum");
-        return { nama: u ? u.nama : "Umum", baru: !u };
-      }
-
-      /* ===== 4) Parser utama ===== */
-      const VLEAD_ = /^(transaksi|catat|catatkan|tambah|tambahkan|tolong|saya|aku|tadi|barusan|baru|saja|sudah|telah|lagi|nama|judul|pengeluaran|pemasukan|hari|ini)$/;
-      const VTAIL_ = /^(sebesar|senilai|seharga|harga|nominal|sejumlah|sebanyak|dengan|yaitu|adalah|dan|rp|rupiah|sebesar)$/;
-      const VMASUK_ = /^(gaji|bonus|honor|upah|thr|komisi|menerima|diterima|terima)$/;
-
-      /**
-       * Contoh yang dipahami (koma tidak wajib, urutan bebas setelah nama):
-       *  "transaksi pengeluaran makan siang 25 ribu kategori makanan alasan lapar"
-       *  "saya makan siang 25 rb karna lapar dan waktunya makan"
-       */
-      function parseVoiceCommand_(text) {
-        const raw = String(text || "").trim();
-        const V = vocabV_();
-        const toks = tokenV_(raw);
-
-        // a) bagi ucapan jadi bagian: head (nama+nominal) | kategori | alasan
-        const items = [];
-        let sec = "head", jenisEksplisit = null;
-        for (let i = 0; i < toks.length; i++) {
-          const t = toks[i];
-          let c = cueV_(t);
-          if (!c && toks[i + 1] && t.length <= 6 && /^[a-z]+$/.test(t + toks[i + 1]) && (t + toks[i + 1]).length >= 6) {
-            const j = cueV_(t + toks[i + 1]);
-            if (j) { c = j; i++; }
-          }
-          if (c === "kat" || c === "alasan") { sec = c; continue; }
-          if (c === "trx") continue;
-          if (c === "keluar" || c === "masuk") { jenisEksplisit = c === "masuk" ? "Pemasukan" : "Pengeluaran"; continue; }
-          items.push({ w: t, sec });
-        }
-        // b) perbaiki typo tiap kata
-        items.forEach((it) => { if (!isNumTok_(it.w, "") && !isCur_(it.w)) it.w = fixWord_(it.w, V); });
-
-        // c) nominal
-        const nom = findNominal_(items);
-        const nominal = nom ? nom.value : 0;
-        const rest = nom ? items.filter((_, i) => i < nom.start || i > nom.end) : items.slice();
-        const head = rest.filter((x) => x.sec === "head").map((x) => x.w);
-        const katW = rest.filter((x) => x.sec === "kat").map((x) => x.w).filter((w) => !VTAIL_.test(w));
-        const alsW = rest.filter((x) => x.sec === "alasan").map((x) => x.w);
-
-        // d) jenis
-        const semua = items.map((x) => x.w);
-        const jenis = jenisEksplisit || (semua.some((w) => VMASUK_.test(w)) ? "Pemasukan" : "Pengeluaran");
-
-        // e) nama transaksi: buang kata pembuka/penutup & nominal, rapikan jadi judul
-        const nm = head.slice();
-        while (nm.length && VLEAD_.test(nm[0])) nm.shift();
-        while (nm.length && VTAIL_.test(nm[nm.length - 1])) nm.pop();
-        const nama = nm.length ? titleV_(nm.join(" ")) : katW.length ? titleV_(katW.join(" ")) : jenis;
-
-        // f) kategori (cocokkan dengan data yang ada)
-        const ctx = nm.concat(alsW);
-        const kat = resolveKat_(katW, nm, ctx, jenis);
-
-        // g) alasan: yang diucapkan setelah "alasan/karena"; kalau tidak disebut sama sekali,
-        // pakai kalimat aslinya (nominal diganti format rupiah) sebagai alasan otomatis.
-        let alasan;
-        if (alsW.length) alasan = alsW.join(" ");
-        else {
-          const parts = [];
-          items.forEach((x, i) => {
-            if (x.sec !== "head") return;
-            if (nom && i >= nom.start && i <= nom.end) {
-              if (i === nom.start) parts.push(rp(nominal));
-              return;
-            }
-            parts.push(x.w);
-          });
-          while (parts.length && VLEAD_.test(parts[0])) parts.shift();
-          alasan = parts.join(" ");
-        }
-        return { jenis, nama: capV_(nama), nominal, kategori: kat.nama, kategoriBaru: kat.baru, keterangan: capV_(alasan || nama), raw };
-      }
-
-      /* ===== 4b) Banyak transaksi sekaligus dalam satu ucapan ===== */
-      const VSPLIT_ = /^(lalu|kemudian|selanjutnya|berikutnya|terus|setelahnya)$/;
-      const VORD_ = /^(kedua|ketiga|keempat|kelima|keenam|ketujuh|kedelapan)$/;
-      const VCONN_ = /^(dan|juga|serta|sama)$/;
-      const hasNumV_ = (a) => a.some((w) => isDig_(w) || NW_.has(w) || /^(ribu|juta|rb|jt|seribu|sejuta|ratus|seratus|miliar)$/.test(w));
-
-      /** Pecah ucapan berdasarkan kata pemisah: lalu / kemudian / selanjutnya / transaksi / pengeluaran / pemasukan. */
-      function splitVoice_(text) {
-        const toks = tokenV_(text), segs = [];
-        let cur = [], sub = false;
-        const flush = () => { if (cur.length) segs.push(cur); cur = []; sub = false; };
-        for (let i = 0; i < toks.length; i++) {
-          const t = toks[i], nx = toks[i + 1] || "";
-          if (VSPLIT_.test(t)) { if (hasNumV_(cur)) flush(); continue; }
-          if ((t === "setelah" || t === "sesudah") && nx === "itu") { if (hasNumV_(cur)) flush(); i++; continue; }
-          if (t === "yang" && VORD_.test(nx)) { if (hasNumV_(cur)) flush(); i++; continue; }
-          if (VORD_.test(t) && !cur.length) continue;
-          const c = cueV_(t);
-          if (c === "trx" && hasNumV_(cur)) flush();
-          else if ((c === "keluar" || c === "masuk") && hasNumV_(cur) && !sub) flush();
-          if (c === "kat" || c === "alasan") sub = true;
-          cur.push(t);
-        }
-        flush();
-        // Cadangan: "makan 25 ribu bensin 20 ribu" (tanpa kata pemisah) → pecah setelah nominal yang jelas
-        const out = [];
-        segs.forEach((sg) => splitByNominal_(sg).forEach((x) => out.push(x)));
-        return out;
-      }
-      function splitByNominal_(seg) {
-        if (seg.some((w) => { const c = cueV_(w); return c === "kat" || c === "alasan"; })) return [seg];
-        const runs = [];
-        let run = null;
-        seg.forEach((w, i) => {
-          const prev = run ? seg[run.end] : "";
-          if (isNumTok_(w, prev) || isCur_(w)) {
-            if (!run) { run = { start: i, end: i, w: [] }; runs.push(run); }
-            run.w.push(w); run.end = i;
-          } else run = null;
-        });
-        const strong = runs.filter((r) =>
-          r.w.some((w) => isCur_(w) || /^(ribu|juta|rb|jt|k|miliar|seribu|sejuta|ratus|seratus)$/.test(w)) ||
-          (r.w.some(isDig_) && numValue_(r.w) >= 1000));
-        if (strong.length < 2) return [seg];
-        const out = [];
-        let from = 0;
-        strong.slice(0, -1).forEach((r) => { out.push(seg.slice(from, r.end + 1)); from = r.end + 1; });
-        out.push(seg.slice(from));
-        return out;
-      }
-      function parseVoiceMulti_(text) {
-        const segs = splitVoice_(text)
-          .map((sg) => {
-            const a = sg.slice();
-            while (a.length && VCONN_.test(a[0])) a.shift();
-            while (a.length && VCONN_.test(a[a.length - 1])) a.pop();
-            return a;
-          })
-          .filter((sg) => sg.length);
-        const list = segs.map((sg) => parseVoiceCommand_(sg.join(" ")));
-        return list.length ? list : [parseVoiceCommand_(text)];
-      }
-
-      /* ===== 5) UI ===== */
-      function setVoiceJenis(i, j) {
-        if (!Vst.items[i]) return;
-        Vst.items[i].jenis = j;
-        renderVoiceItems_();
-      }
-      /** Petunjuk di bawah kolom kategori & nominal tiap data (juga jalan saat pengguna mengetik sendiri). */
-      function voiceHint_(i) {
-        const kEl = $("vKat_" + i), nEl = $("vNom_" + i);
-        if (!kEl || !nEl) return;
-        const k = kEl.value.trim().toLowerCase();
-        const ada = katPoolV_().some((c) => c.nama.toLowerCase() === k);
-        $("vKatInfo_" + i).innerHTML = !k ? "" : ada ? "✓ Kategori sudah ada" : "✨ Akan dibuat sebagai kategori baru";
-        $("vKatInfo_" + i).className = "text-[11px] mt-1 font-semibold " + (ada ? "text-emerald-600" : "text-indigo-600");
-        const n = Number(nEl.value) || 0;
-        $("vNomInfo_" + i).innerHTML =
-          n > 0 && n < 1000
-            ? `${rp(n)} — maksudnya ribuan? <button type="button" class="underline font-bold" onclick="Vst.items[${i}].nominal=${n * 1000};$('vNom_${i}').value=${n * 1000};voiceHint_(${i})">Jadikan ${rp(n * 1000)}</button>`
-            : n > 0 ? rp(n) : "";
-      }
-      function voiceItemHtml_(it, i) {
-        const btn = (j, on) =>
-          `<button type="button" onclick="setVoiceJenis(${i},'${j}')" class="py-2 rounded-xl text-xs font-bold ${on ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${j}</button>`;
-        return `<div class="rounded-2xl border border-slate-100 p-3 space-y-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>
-            ${Vst.items.length > 1 ? `<button type="button" onclick="voiceDel(${i})" class="text-xs font-semibold text-rose-500">Hapus</button>` : ""}
-          </div>
-          <div class="grid grid-cols-2 gap-2">${btn("Pengeluaran", it.jenis === "Pengeluaran")}${btn("Pemasukan", it.jenis === "Pemasukan")}</div>
-          <input id="vNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(it.nama)}" oninput="Vst.items[${i}].nama=this.value">
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <input id="vNom_${i}" type="number" inputmode="numeric" class="inp" placeholder="Nominal (Rp)" value="${esc(it.nominal)}" oninput="Vst.items[${i}].nominal=this.value;voiceHint_(${i})">
-              <p id="vNomInfo_${i}" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
-            </div>
-            <div>
-              <input id="vKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(it.kategori)}" oninput="Vst.items[${i}].kategori=this.value;voiceHint_(${i})">
-              <p id="vKatInfo_${i}" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
-            </div>
-          </div>
-          <input id="vKet_${i}" class="inp" placeholder="Alasan / catatan" value="${esc(it.keterangan)}" oninput="Vst.items[${i}].keterangan=this.value">
-        </div>`;
-      }
-      function renderVoiceItems_() {
-        $("voiceItems").innerHTML = Vst.items.map(voiceItemHtml_).join("");
-        Vst.items.forEach((_, i) => voiceHint_(i));
-        const n = Vst.items.length;
-        $("voiceCount").textContent = n > 1 ? `${n} transaksi terdeteksi` : "";
-        $("voiceSaveBtn").textContent = n > 1 ? `Simpan ${n} transaksi` : "Simpan transaksi";
-      }
-      function voiceDel(i) {
-        Vst.items.splice(i, 1);
-        if (!Vst.items.length) return voiceRetry();
-        renderVoiceItems_();
-      }
-
-      function voiceBars_(idle) {
-        document.querySelectorAll("#voiceBars .voice-bar").forEach((b) => b.classList.toggle("idle", idle));
-      }
-      function openVoice(append) {
-        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SR) return Toast.fire({ icon: "error", title: "Browser tidak mendukung input suara" });
-        $("mVoice").classList.remove("hidden");
-        $("voiceListen").classList.remove("hidden");
-        $("voiceReview").classList.add("hidden");
-        $("voiceTranscript").innerHTML = '<span class="italic text-slate-400">Silakan bicara...</span>';
-        $("voiceStatus").textContent = "Menyiapkan mikrofon...";
-        voiceBars_(false);
-        Vst.raw = "";
-        Vst.append = append === true;
-        clearTimeout(Vst.timer);
-
-        const r = new SR();
-        Vst.rec = r;
-        r.lang = "id-ID";
-        r.interimResults = true;
-        r.continuous = true; // tetap mendengarkan walau pengguna jeda sebentar
-        r.maxAlternatives = 1;
-
-        r.onstart = () => {
-          Vst.listening = true;
-          $("voiceStatus").textContent = "Mendengarkan... ketuk Selesai kalau sudah";
-        };
-        r.onresult = (e) => {
-          // gabungkan semua potongan; buang duplikat (bug Chrome Android di mode continuous)
-          let acc = "";
-          for (let i = 0; i < e.results.length; i++) {
-            const s = e.results[i][0].transcript.trim(), a = acc.toLowerCase(), b = s.toLowerCase();
-            if (!s) continue;
-            if (!acc || b.startsWith(a)) acc = s;
-            else if (!a.endsWith(b)) acc += " " + s;
-          }
-          Vst.raw = acc;
-          $("voiceTranscript").textContent = acc;
-          clearTimeout(Vst.timer);
-          Vst.timer = setTimeout(() => { try { r.stop(); } catch (_) {} }, 2200); // diam 2,2 dtk → selesai
-        };
-        r.onerror = (e) => {
-          Vst.listening = false;
-          voiceBars_(true);
-          $("voiceStatus").textContent =
-            e.error === "no-speech" ? "Tidak terdengar suara. Coba lagi, bicara lebih jelas." : "Gagal menangkap suara. Pastikan izin mikrofon aktif.";
-          if (e.error !== "no-speech" && e.error !== "aborted") Toast.fire({ icon: "error", title: "Gagal menangkap suara" });
-        };
-        r.onend = () => {
-          Vst.listening = false;
-          clearTimeout(Vst.timer);
-          voiceBars_(true);
-          if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
-          else if (Vst.append && Vst.items.length) { Vst.append = false; showVoicePane_(); }
-        };
-        r.start();
-      }
-      function voiceStop() {
-        if (Vst.rec && Vst.listening) { try { Vst.rec.stop(); } catch (_) {} }
-        else if (Vst.raw.trim()) showVoiceReview_(Vst.raw);
-      }
-
-      function showVoicePane_() {
-        $("voiceListen").classList.add("hidden");
-        $("voiceReview").classList.remove("hidden");
-        $("voiceRawText").textContent = Vst.rawAll.join(" · ");
-        renderVoiceItems_();
-      }
-      function showVoiceReview_(text) {
-        if (!Vst.append) { Vst.items = []; Vst.rawAll = []; }
-        Vst.append = false;
-        Vst.rawAll.push(text);
-        parseVoiceMulti_(text).forEach((p) =>
-          Vst.items.push({ jenis: p.jenis, nama: p.nama, nominal: p.nominal || "", kategori: p.kategori, keterangan: p.keterangan }));
-        if (Vst.items.length > 50) Vst.items.length = 50; // batas server: 50 data
-        showVoicePane_();
-      }
-
-      function voiceRetry() {
-        Vst.items = []; Vst.rawAll = [];
-        $("voiceReview").classList.add("hidden");
-        $("voiceListen").classList.remove("hidden");
-        openVoice(false);
-      }
-      /** Rekam ucapan tambahan; hasilnya ditambahkan ke daftar yang sudah ada. */
-      function voiceMore() {
-        $("voiceReview").classList.add("hidden");
-        $("voiceListen").classList.remove("hidden");
-        openVoice(true);
-      }
-
-      function closeVoice() {
-        clearTimeout(Vst.timer);
-        Vst.raw = "";
-        Vst.items = []; Vst.rawAll = []; Vst.append = false;
-        if (Vst.rec && Vst.listening) { try { Vst.rec.stop(); } catch (_) {} }
-        $("mVoice").classList.add("hidden");
-      }
-
-      async function voiceSave() {
-        if (!Vst.items.length) return Toast.fire({ icon: "warning", title: "Belum ada data untuk disimpan" });
-        const list = [];
-        for (let i = 0; i < Vst.items.length; i++) {
-          const it = Vst.items[i], nominal = Number(it.nominal), nama = String(it.nama || "").trim();
-          if (!nama || !(nominal > 0))
-            return Toast.fire({ icon: "warning", title: (Vst.items.length > 1 ? `Data ${i + 1}: n` : "N") + "ama dan nominal (lebih dari 0) wajib diisi" });
-          list.push({ jenis: it.jenis, nama, nominal, kategori: String(it.kategori || "").trim() || "Umum", keterangan: String(it.keterangan || "").trim(), tanggal: "" });
-        }
-        const ok = list.length === 1
-          ? await act("simpanDataTransaksi", [list[0]], "Menyimpan transaksi...")
-          : await act("simpanBanyakTransaksi", [list], `Menyimpan ${list.length} transaksi...`);
-        if (ok) closeVoice();
-      }
-
-
-      /* ════════════════════════════════════════════════════════════
-         ENTRY POINT — dijalankan setelah AUTH selesai
-      ════════════════════════════════════════════════════════════ */
-      async function initApp() {
-        renderNav();
-        setJenis("Pengeluaran");
-        // data sudah di-prefetch saat auth (S.data sudah terisi)
-        render();
-        // Update info akun di halaman Pengaturan
-        if (typeof updateAkunUI === "function") updateAkunUI();
-        const R = analyze();
-        R.A.forEach((a) => S.seen.add(a.t));
-        const w = R.A.filter((a) => a.lv === "danger" || a.lv === "warn");
-        if (w.length && G("ALERT_POPUP"))
-          Toast.fire({
-            icon: "warning",
-            title: `${w.length} peringatan keuangan. Ketuk untuk melihat.`,
-            timer: 6000,
-            didOpen: (t) =>
-              t.addEventListener("click", () => {
-                tabTo("Pintar");
-                Swal.close();
-              }),
-          });
-        // Mulai polling periodik
-        setInterval(() => {
-          if (!document.hidden && S.busy <= 0) refresh(false);
-        }, 8000);
-        document.addEventListener("visibilitychange", () => {
-          if (!document.hidden && S.busy <= 0) refresh(false);
-        });
-      }
-
-      /* Jalankan di load: tidak perlu menampilkan halaman karena
-         auth script di bawah yang akan menanganinya setelah terdefinisi */
-      // (Inisialisasi ditangani oleh auth script di bawah #page-app)
-    </script>
-  </div><!-- /#page-app -->
-
-  <!-- ═══════════════════════════════════════════════════════════════
-       AUTH JAVASCRIPT
-  ════════════════════════════════════════════════════════════════ -->
-  <script>
-    /* ── Konstanta storage ── */
-    const KC_DEVICE_KEY   = "kc_deviceId";
-    const KC_LOGGED_IN    = "kc_logged_in";
-    const KC_SESSION_KEY  = "kc_session";
-    const KC_USER_KEY     = "kc_user";
-    const KC_CRED_KEY     = "kc_bioCredId";
-    const KC_EMAIL_KEY    = "kc_lastEmail";
-
-    /* ── State auth ── */
-    const AUTH = {
-      token: null,
-      userId: null,
-      nama: null,
-      email: null,
-      deviceId: null,
+    const session = createSession_(userId, deviceId);
+    return {
+      status: "success",
+      userId: userId,
+      nama: nama,
+      email: email,
+      picture: picture,
+      token: session.token,
+      expiresAt: session.expiresAt,
     };
+  });
+}
 
-    /* ── Utility ── */
-    function authErr(id, msg) {
-      const el = document.getElementById(id);
-      if (!el) return;
-      el.textContent = msg;
-      el.classList.toggle("show", !!msg);
+/**
+ * 3. VERIFIKASI PERANGKAT BARU DENGAN PIN:
+ * Jika user login dari perangkat lain, sistem meminta PIN. Jika PIN benar,
+ * perangkat tersebut langsung ditambahkan ke daftar DeviceIds user dan sesi dibuka.
+ */
+function verifyNewDeviceWithPin(email, pinHash, deviceId) {
+  return tx_(() => {
+    email = String(email || "").trim().toLowerCase();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    const user = findUserByEmail_(email);
+    if (!user) return err_("Akun tidak ditemukan");
+
+    if (String(user.data[3]) !== pinHash) {
+      return err_("PIN salah! Akses dari perangkat ini ditolak.");
     }
 
-    function getOrCreateDeviceId() {
-      let id = localStorage.getItem(KC_DEVICE_KEY);
-      if (!id) {
-        id = "DEV-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
-        localStorage.setItem(KC_DEVICE_KEY, id);
-      }
-      return id;
+    // PIN Benar -> Daftarkan deviceId baru
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (deviceId && !devices.includes(deviceId)) {
+      devices.push(deviceId);
+      getSheet_(SH_USERS).getRange(user.row, 5).setValue(JSON.stringify(devices));
     }
 
-    async function sha256(str) {
-      const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+    const session = createSession_(String(user.data[0]), deviceId);
+    return {
+      status: "success",
+      message: "Perangkat berhasil diverifikasi dan didaftarkan!",
+      userId: String(user.data[0]),
+      nama: String(user.data[1]),
+      email: String(user.data[2]),
+      picture: String(user.data[6] || ""),
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  });
+}
+
+/**
+ * Login konvensional dengan PIN
+ */
+function loginWithPin(email, pinHash, deviceId) {
+  return tx_(() => {
+    email = String(email || "").trim().toLowerCase();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    const user = findUserByEmail_(email);
+    if (!user) return err_("Email tidak ditemukan");
+
+    if (String(user.data[3]) !== pinHash) return err_("PIN salah");
+
+    // Otomatis daftarkan device jika PIN benar
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (deviceId && !devices.includes(deviceId)) {
+      devices.push(deviceId);
+      getSheet_(SH_USERS).getRange(user.row, 5).setValue(JSON.stringify(devices));
     }
 
-    /* ── Navigasi halaman auth ── */
-    function showAuthPage(page) {
-      const pLogin = document.getElementById("page-login");
-      const pApp = document.getElementById("page-app");
-      if (pLogin) pLogin.classList.toggle("active", page === "login");
-      if (pApp) pApp.classList.toggle("active", page === "app");
-      document.body.style.backgroundColor = (page === "app") ? "" : "#0f172a";
-    }
+    const session = createSession_(String(user.data[0]), deviceId);
+    return {
+      status: "success",
+      userId: String(user.data[0]),
+      nama: String(user.data[1]),
+      email: String(user.data[2]),
+      picture: String(user.data[6] || ""),
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  });
+}
 
-    async function checkDeviceState() {
-      const deviceId = getOrCreateDeviceId();
-      const cfg = getCfg();
-      if (!cfg.url) {
-        showLogin();
-        authErr("loginErr", "⚙️ Sambungkan ke Google Sheets terlebih dahulu");
-        return;
-      }
+function registerUser(email, nama, pinHash, deviceId) {
+  return googleRegisterWithPin({ email, nama, picture: "", sub: "" }, pinHash, deviceId);
+}
+
+/**
+ * Cek ketersediaan biometrik untuk deviceId
+ */
+function checkDeviceBiometric(deviceId, credentialId) {
+  deviceId = String(deviceId || "").trim();
+  credentialId = String(credentialId || "").trim();
+  if (!deviceId || !credentialId) return { status: "success", found: false };
+
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", found: false };
+  const data = s.getRange(2, 1, last - 1, 7).getValues();
+  for (let i = 0; i < data.length; i++) {
+    let creds = [];
+    try {
+      creds = JSON.parse(data[i][5] || "[]");
+    } catch (_) {
+      creds = [];
+    }
+    const found = creds.find((c) => c.credentialId === credentialId && c.deviceId === deviceId);
+    if (found) {
+      return {
+        status: "success",
+        found: true,
+        userId: String(data[i][0]),
+        nama: String(data[i][1]),
+        picture: String(data[i][6] || ""),
+      };
+    }
+  }
+  return { status: "success", found: false };
+}
+
+/**
+ * Login via WebAuthn Biometrik
+ */
+function loginWithBiometric(credentialId, deviceId) {
+  return tx_(() => {
+    credentialId = String(credentialId || "").trim();
+    deviceId = String(deviceId || "").trim();
+    if (!credentialId || !deviceId) return err_("Credential biometrik tidak valid");
+
+    const s = getSheet_(SH_USERS);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Tidak ada pengguna terdaftar");
+    const data = s.getRange(2, 1, last - 1, 7).getValues();
+    for (let i = 0; i < data.length; i++) {
+      let creds = [];
       try {
-        const res = await rawAuthCall("checkDevice", [deviceId]);
-        if (res && res.isRegistered) {
-          showLogin(res.email, res.nama);
-        } else {
-          showRegister();
-        }
+        creds = JSON.parse(data[i][5] || "[]");
       } catch (_) {
-        const savedEmail = localStorage.getItem(KC_EMAIL_KEY);
-        if (savedEmail) showLogin(savedEmail, localStorage.getItem(KC_USER_KEY));
-        else showRegister();
+        creds = [];
+      }
+      const found = creds.find((c) => c.credentialId === credentialId && c.deviceId === deviceId);
+      if (found) {
+        const session = createSession_(String(data[i][0]), deviceId);
+        return {
+          status: "success",
+          userId: String(data[i][0]),
+          nama: String(data[i][1]),
+          email: String(data[i][2]),
+          picture: String(data[i][6] || ""),
+          token: session.token,
+          expiresAt: session.expiresAt,
+        };
       }
     }
+    return err_("Sidik jari tidak dikenali. Silakan login dengan PIN.");
+  });
+}
 
-    function showLogin(prefillEmail, prefillNama) {
-      showAuthPage("login");
-      document.getElementById("loginForm").style.display = "";
-      const reg = document.getElementById("registerPanel");
-      if (reg) reg.style.display = "none";
-      document.getElementById("forgotPinPanel").style.display = "none";
-      document.getElementById("loginLoading").style.display = "none";
+function registerBiometric(token, credentialId, deviceId) {
+  return tx_(() => {
+    const sess = validateSession_(token);
+    if (!sess) return err_("Sesi tidak valid, silakan login ulang");
+    credentialId = String(credentialId || "").trim();
+    deviceId = String(deviceId || "").trim();
+    if (!credentialId || !deviceId) return err_("Data biometrik tidak valid");
 
-      const email = prefillEmail || localStorage.getItem(KC_EMAIL_KEY) || "";
-      const nama = prefillNama || localStorage.getItem(KC_USER_KEY) || "";
-      document.getElementById("loginEmail").value = email;
-
-      const badgeDesc = document.getElementById("badgeDeviceDesc");
-      if (badgeDesc) {
-        badgeDesc.textContent = nama ? `Akun: ${nama} (${email})` : "Perangkat dikenali di sistem";
-      }
-
-      authErr("loginErr", "");
-      resetPinState(loginPIN);
-      updateDots("loginPinDots", 0);
-      checkBioAvailability();
-    }
-
-    function showRegister() {
-      showAuthPage("login");
-      document.getElementById("loginForm").style.display = "none";
-      const reg = document.getElementById("registerPanel");
-      if (reg) reg.style.display = "";
-      document.getElementById("forgotPinPanel").style.display = "none";
-      document.getElementById("loginLoading").style.display = "none";
-
-      document.getElementById("regEmail").value = localStorage.getItem(KC_EMAIL_KEY) || "";
-      document.getElementById("regNama").value = localStorage.getItem(KC_USER_KEY) || "";
-      authErr("regErr", "");
-      resetPinState(regPIN1);
-      resetPinState(regPIN2);
-      updateDots("regPinDots1", 0);
-      updateDots("regPinDots2", 0);
-      showRegStep(1);
-    }
-
-    function showRegStep(step) {
-      const s1 = document.getElementById("regPinStep1");
-      const s2 = document.getElementById("regPinStep2");
-      if (s1) s1.style.display = step === 1 ? "" : "none";
-      if (s2) s2.style.display = step === 2 ? "" : "none";
-      const d1 = document.getElementById("regStepDot1");
-      const d2 = document.getElementById("regStepDot2");
-      if (d1) {
-        d1.style.background = step >= 1 ? "#6366f1" : "rgba(255,255,255,0.2)";
-        d1.style.width = step === 1 ? "20px" : "8px";
-      }
-      if (d2) {
-        d2.style.background = step >= 2 ? "#6366f1" : "rgba(255,255,255,0.2)";
-        d2.style.width = step === 2 ? "20px" : "8px";
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       KEYPAD PIN BUILDER & STATES
-     ════════════════════════════════════════════════════════════ */
-    function buildKeypad(containerId, dotsId, onComplete, onDel) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      container.innerHTML = "";
-      const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
-      keys.forEach(k => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "keypad-btn" + (k === "" ? " empty" : "") + (k === "⌫" ? " del" : "");
-        btn.textContent = k;
-        if (k && k !== "⌫") {
-          btn.addEventListener("click", () => {
-            btn.classList.add("pressed");
-            setTimeout(() => btn.classList.remove("pressed"), 120);
-            if (onComplete) onComplete(k, false);
-          });
-        } else if (k === "⌫") {
-          btn.addEventListener("click", () => {
-            if (onDel) onDel();
-          });
+    const s = getSheet_(SH_USERS);
+    const last = s.getLastRow();
+    if (last < 2) return err_("User tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(sess.userId)) {
+        let creds = [];
+        try {
+          creds = JSON.parse(data[i][5] || "[]");
+        } catch (_) {
+          creds = [];
         }
-        container.appendChild(btn);
-      });
-    }
-
-    function updateDots(dotsId, length) {
-      const dots = document.querySelectorAll(`#${dotsId} .pin-dot`);
-      dots.forEach((d, i) => d.classList.toggle("filled", i < length));
-    }
-
-    function flashDotsError(dotsId) {
-      const dots = document.querySelectorAll(`#${dotsId} .pin-dot`);
-      dots.forEach(d => { d.classList.add("error"); setTimeout(() => d.classList.remove("error"), 500); });
-    }
-
-    function resetPinState(state) { state.value = ""; }
-
-    /* Login PIN */
-    const loginPIN = { value: "" };
-    function loginPinKey(k) {
-      if (loginPIN.value.length >= 6) return;
-      loginPIN.value += k;
-      updateDots("loginPinDots", loginPIN.value.length);
-      if (loginPIN.value.length === 6) setTimeout(() => loginWithPin(), 200);
-    }
-    function loginPinDel() {
-      if (!loginPIN.value.length) return;
-      loginPIN.value = loginPIN.value.slice(0, -1);
-      updateDots("loginPinDots", loginPIN.value.length);
-    }
-
-    /* Register PIN step 1 */
-    const regPIN1 = { value: "" };
-    function regPinKey1(k) {
-      if (regPIN1.value.length >= 6) return;
-      regPIN1.value += k;
-      updateDots("regPinDots1", regPIN1.value.length);
-      if (regPIN1.value.length === 6) {
-        setTimeout(() => {
-          showRegStep(2);
-        }, 220);
+        creds = creds.filter((c) => c.deviceId !== deviceId);
+        creds.push({ credentialId, deviceId, registeredAt: new Date().toISOString() });
+        s.getRange(i + 2, 6).setValue(JSON.stringify(creds));
+        return ok_("Sidik jari berhasil didaftarkan");
       }
     }
-    function regPinDel1() {
-      if (!regPIN1.value.length) return;
-      regPIN1.value = regPIN1.value.slice(0, -1);
-      updateDots("regPinDots1", regPIN1.value.length);
+    return err_("User tidak ditemukan");
+  });
+}
+
+function validateSession(token) {
+  const sess = validateSession_(token);
+  if (!sess) return { status: "success", valid: false };
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", valid: false };
+  const data = s.getRange(2, 1, last - 1, 7).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][0]) === sess.userId) {
+      return {
+        status: "success",
+        valid: true,
+        userId: sess.userId,
+        nama: String(data[i][1]),
+        email: String(data[i][2]),
+        picture: String(data[i][6] || ""),
+      };
     }
-
-    /* Register PIN step 2 */
-    const regPIN2 = { value: "" };
-    function regPinKey2(k) {
-      if (regPIN2.value.length >= 6) return;
-      regPIN2.value += k;
-      updateDots("regPinDots2", regPIN2.value.length);
-      if (regPIN2.value.length === 6) {
-        setTimeout(() => submitRegister(), 220);
-      }
-    }
-    function regPinDel2() {
-      if (!regPIN2.value.length) return;
-      regPIN2.value = regPIN2.value.slice(0, -1);
-      updateDots("regPinDots2", regPIN2.value.length);
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       AUTH LOADING & STEPS UI
-     ════════════════════════════════════════════════════════════ */
-    function setStep(stepId, state, iconContent) {
-      const el = document.getElementById(stepId);
-      if (!el) return;
-      el.className = "auth-step " + state;
-      el.style.opacity = "1";
-      const icon = el.querySelector(".step-icon");
-      if (icon) {
-        if (state === "active") {
-          icon.innerHTML = '<div class="step-spinner"></div>';
-        } else if (iconContent) {
-          icon.innerHTML = iconContent;
-        }
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       LOGIN DENGAN PIN
-     ════════════════════════════════════════════════════════════ */
-    async function loginWithPin() {
-      const email = document.getElementById("loginEmail").value.trim();
-      if (!email) { authErr("loginErr", "Masukkan email akun kamu"); return; }
-      if (loginPIN.value.length < 6) {
-        authErr("loginErr", "Masukkan PIN 6 digit");
-        flashDotsError("loginPinDots");
-        return;
-      }
-      authErr("loginErr", "");
-      const deviceId = getOrCreateDeviceId();
-      const pinHash = await sha256(loginPIN.value);
-
-      document.getElementById("loginForm").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
-      document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
-      document.getElementById("loadingSubtitle").textContent = "Memeriksa PIN akun...";
-      document.getElementById("loadingIcon").textContent = "🔍";
-
-      ["step1","step2","step3"].forEach((s,i) => {
-        const el = document.getElementById(s);
-        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
-      });
-      setStep("step1", "active");
-
-      try {
-        const res = await rawAuthCall("loginWithPin", [email, pinHash, deviceId]);
-        if (!res || res.status === "error") {
-          throw new Error((res && res.message) || "PIN salah atau email belum terdaftar");
-        }
-
-        setStep("step1", "done", "✓");
-        setStep("step2", "active");
-        document.getElementById("step2").style.opacity = "1";
-
-        // Simpan status login permanen: REFRESH TIDAK PERLU LOGIN ULANG!
-        localStorage.setItem(KC_LOGGED_IN, "true");
-        localStorage.setItem(KC_EMAIL_KEY, res.email);
-        localStorage.setItem(KC_USER_KEY, res.nama);
-        if (res.userId) localStorage.setItem("kc_userId", res.userId);
-
-        AUTH.token    = res.token;
-        AUTH.userId   = res.userId;
-        AUTH.nama     = res.nama;
-        AUTH.email    = res.email;
-        AUTH.deviceId = deviceId;
-
-        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
-          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
-          email: AUTH.email, expiresAt: res.expiresAt
-        }));
-
-        setStep("step2", "done", "✓");
-        setStep("step3", "active");
-        document.getElementById("step3").style.opacity = "1";
-        document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
-
-        await refresh(true);
-
-        setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
-        await sleep(350);
-
-        showAuthPage("app");
-        updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
-
-        offerBiometric();
-        await initApp();
-      } catch (e) {
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        resetPinState(loginPIN);
-        updateDots("loginPinDots", 0);
-        authErr("loginErr", e.message || "Login gagal, silakan coba lagi");
-        flashDotsError("loginPinDots");
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       DAFTAR AKUN & DAFTARKAN PERANGKAT
-     ════════════════════════════════════════════════════════════ */
-    async function submitRegister() {
-      const email = document.getElementById("regEmail").value.trim().toLowerCase();
-      const nama  = document.getElementById("regNama").value.trim();
-      if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
-        authErr("regErr", "Masukkan format email yang valid");
-        return;
-      }
-      if (!nama) {
-        authErr("regErr", "Masukkan nama lengkap Anda");
-        return;
-      }
-      if (regPIN1.value.length < 6) {
-        authErr("regErr", "Buat PIN 6 digit terlebih dahulu");
-        return;
-      }
-      if (regPIN1.value !== regPIN2.value) {
-        flashDotsError("regPinDots2");
-        authErr("regErr", "PIN konfirmasi tidak cocok, silakan ulangi");
-        regPIN2.value = "";
-        updateDots("regPinDots2", 0);
-        return;
-      }
-
-      authErr("regErr", "");
-      const deviceId = getOrCreateDeviceId();
-      const pinHash = await sha256(regPIN1.value);
-
-      const reg = document.getElementById("registerPanel");
-      if (reg) reg.style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
-      document.getElementById("loadingTitle").textContent = "Mendaftarkan Akun & Perangkat";
-      document.getElementById("loadingSubtitle").textContent = "Menyimpan data akun Anda...";
-      document.getElementById("loadingIcon").textContent = "✨";
-
-      ["step1","step2","step3"].forEach((s,i) => {
-        const el = document.getElementById(s);
-        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
-      });
-      setStep("step1", "active");
-
-      try {
-        const res = await rawAuthCall("registerUser", [email, nama, pinHash, deviceId]);
-        if (!res || res.status === "error") {
-          throw new Error((res && res.message) || "Gagal mendaftarkan akun");
-        }
-
-        setStep("step1", "done", "✓");
-        setStep("step2", "active");
-        document.getElementById("step2").style.opacity = "1";
-
-        // Simpan status login permanen: REFRESH TIDAK PERLU LOGIN ULANG!
-        localStorage.setItem(KC_LOGGED_IN, "true");
-        localStorage.setItem(KC_EMAIL_KEY, res.email);
-        localStorage.setItem(KC_USER_KEY, res.nama);
-        if (res.userId) localStorage.setItem("kc_userId", res.userId);
-
-        AUTH.token    = res.token;
-        AUTH.userId   = res.userId;
-        AUTH.nama     = res.nama;
-        AUTH.email    = res.email;
-        AUTH.deviceId = deviceId;
-
-        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
-          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
-          email: AUTH.email, expiresAt: res.expiresAt
-        }));
-
-        setStep("step2", "done", "✓");
-        setStep("step3", "active");
-        document.getElementById("step3").style.opacity = "1";
-        document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
-
-        await refresh(true);
-
-        setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
-        await sleep(350);
-
-        showAuthPage("app");
-        updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar! 🎉`, timer: 2500 });
-
-        offerBiometric();
-        await initApp();
-      } catch (e) {
-        document.getElementById("loginLoading").style.display = "none";
-        const regPanel = document.getElementById("registerPanel");
-        if (regPanel) regPanel.style.display = "";
-        authErr("regErr", e.message || "Gagal mendaftarkan akun");
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       LOGIN DENGAN BIOMETRIC (WebAuthn)
-     ════════════════════════════════════════════════════════════ */
-    async function checkBioAvailability() {
-      const credId = localStorage.getItem(KC_CRED_KEY);
-      const deviceId = getOrCreateDeviceId();
-      const bioSection = document.getElementById("bioSection");
-      if (!bioSection) return;
-
-      if (!credId || !window.PublicKeyCredential) {
-        bioSection.style.display = "none";
-        return;
-      }
-      try {
-        const cfg = getCfg();
-        if (!cfg.url) { bioSection.style.display = "none"; return; }
-        const res = await rawCall(cfg.url, "checkDeviceBiometric", [deviceId, credId], cfg.token);
-        if (res && res.found) {
-          bioSection.style.display = "";
-          if (res.nama) {
-            document.getElementById("bioBtnTxt").textContent = `Masuk sebagai ${res.nama}`;
-            document.getElementById("loginEmail").value = localStorage.getItem(KC_EMAIL_KEY) || "";
-          }
-        } else {
-          bioSection.style.display = "none";
-        }
-      } catch(_) { bioSection.style.display = "none"; }
-    }
-
-    async function loginBiometric() {
-      const credId = localStorage.getItem(KC_CRED_KEY);
-      if (!credId || !window.PublicKeyCredential) {
-        authErr("loginErr", "Sidik jari tidak tersedia di perangkat ini");
-        return;
-      }
-      authErr("loginErr", "");
-      const deviceId = getOrCreateDeviceId();
-
-      document.getElementById("loginForm").style.display = "none";
-      document.getElementById("loginLoading").style.display = "";
-      document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
-      document.getElementById("loadingSubtitle").textContent = "Tempelkan sidik jari pada sensor...";
-      document.getElementById("loadingIcon").textContent = "🫆";
-
-      ["step1","step2","step3"].forEach((s,i) => {
-        const el = document.getElementById(s);
-        if (el) { el.className = "auth-step"; el.style.opacity = i === 0 ? "1" : "0.4"; }
-      });
-      setStep("step1", "active");
-
-      try {
-        const credIdBytes = base64urlDecode(credId);
-        const assertion = await navigator.credentials.get({
-          publicKey: {
-            challenge: crypto.getRandomValues(new Uint8Array(32)),
-            allowCredentials: [{
-              id: credIdBytes,
-              type: "public-key",
-              transports: ["internal", "hybrid"],
-            }],
-            userVerification: "required",
-            timeout: 60000,
-          }
-        });
-        if (!assertion) throw new Error("Verifikasi dibatalkan");
-
-        setStep("step1", "done", "✓");
-        setStep("step2", "active");
-
-        const credentialIdB64 = base64urlEncode(new Uint8Array(assertion.rawId));
-        const res = await rawAuthCall("loginWithBiometric", [credentialIdB64, deviceId]);
-        if (!res || res.status === "error") {
-          throw new Error((res && res.message) || "Sidik jari tidak dikenali");
-        }
-
-        setStep("step2", "done", "✓");
-        setStep("step3", "active");
-
-        localStorage.setItem(KC_LOGGED_IN, "true");
-        localStorage.setItem(KC_EMAIL_KEY, res.email);
-        localStorage.setItem(KC_USER_KEY, res.nama);
-
-        AUTH.token    = res.token;
-        AUTH.userId   = res.userId;
-        AUTH.nama     = res.nama;
-        AUTH.email    = res.email;
-        AUTH.deviceId = deviceId;
-
-        sessionStorage.setItem(KC_SESSION_KEY, JSON.stringify({
-          token: AUTH.token, userId: AUTH.userId, nama: AUTH.nama,
-          email: AUTH.email, expiresAt: res.expiresAt
-        }));
-
-        await refresh(true);
-
-        setStep("step3", "done", "✓");
-        await sleep(350);
-
-        showAuthPage("app");
-        updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
-        await initApp();
-      } catch(e) {
-        document.getElementById("loginLoading").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        if (e.name === "NotAllowedError") {
-          authErr("loginErr", "Verifikasi sidik jari dibatalkan");
-        } else {
-          authErr("loginErr", e.message || "Sidik jari gagal diverifikasi");
-        }
-      }
-    }
-
-    async function offerBiometric() {
-      if (!window.PublicKeyCredential) return;
-      if (localStorage.getItem(KC_CRED_KEY)) return;
-
-      const r = await Swal.fire({
-        title: "Aktifkan Sidik Jari?",
-        html: `<div style="color:#64748b;font-size:0.875rem;line-height:1.6;">
-          Masuk lebih cepat dengan sidik jari atau wajah tanpa perlu ketik PIN setiap saat.
-          <br><br>
-          <span style="font-size:2.5rem">🫆</span>
-        </div>`,
-        showCancelButton: true,
-        confirmButtonText: "Ya, aktifkan",
-        cancelButtonText: "Nanti saja",
-        confirmButtonColor: "#6366f1",
-        customClass: { popup: "rounded-3xl" },
-      });
-      if (!r.isConfirmed) return;
-
-      try {
-        const deviceId = getOrCreateDeviceId();
-        const userId = AUTH.userId || "user";
-        const userIdBytes = new TextEncoder().encode(userId);
-
-        const credential = await navigator.credentials.create({
-          publicKey: {
-            challenge: crypto.getRandomValues(new Uint8Array(32)),
-            rp: { name: "Keuangan Cerdas", id: location.hostname === "localhost" ? "localhost" : location.hostname },
-            user: {
-              id: userIdBytes,
-              name: AUTH.email || userId,
-              displayName: AUTH.nama || "User",
-            },
-            pubKeyCredParams: [
-              { type: "public-key", alg: -7 },
-              { type: "public-key", alg: -257 },
-            ],
-            authenticatorSelection: {
-              authenticatorAttachment: "platform",
-              userVerification: "required",
-              residentKey: "preferred",
-            },
-            timeout: 60000,
-            attestation: "none",
-          }
-        });
-
-        if (!credential) throw new Error("Gagal membuat credential");
-        const credentialIdB64 = base64urlEncode(new Uint8Array(credential.rawId));
-
-        const cfg = getCfg();
-        await rawCall(cfg.url, "registerBiometric", [AUTH.token, credentialIdB64, deviceId], cfg.token);
-        localStorage.setItem(KC_CRED_KEY, credentialIdB64);
-        updateAkunUI();
-
-        Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan! 🫆" });
-      } catch(e) {
-        if (e.name !== "NotAllowedError") {
-          Toast.fire({ icon: "info", title: "Sidik jari tidak bisa didaftarkan sekarang" });
-        }
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       HAPUS BIOMETRIC
-     ════════════════════════════════════════════════════════════ */
-    async function hapusBiometric() {
-      const r = await Swal.fire({
-        title: "Hapus sidik jari?",
-        text: "Kamu harus login dengan PIN setelah ini.",
-        showCancelButton: true,
-        confirmButtonText: "Hapus",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#f43f5e",
-        customClass: { popup: "rounded-3xl" },
-      });
-      if (!r.isConfirmed) return;
-      localStorage.removeItem(KC_CRED_KEY);
-      updateAkunUI();
-      Toast.fire({ icon: "success", title: "Sidik jari dihapus dari perangkat ini" });
-    }
-
-    /* Ubah PIN dari halaman Pengaturan → arahkan ke forgot PIN flow */
-    async function ubahPin() {
-      const r = await Swal.fire({
-        title: "Ubah PIN?",
-        html: `<p style="color:#64748b;font-size:0.875rem;">Kode OTP akan dikirimkan ke email <strong>${AUTH.email || ""}</strong> untuk verifikasi.</p>`,
-        showCancelButton: true,
-        confirmButtonText: "Lanjutkan",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#6366f1",
-        customClass: { popup: "rounded-3xl" },
-      });
-      if (!r.isConfirmed) return;
-      showAuthPage("login");
-      document.getElementById("loginForm").style.display = "none";
-      const reg = document.getElementById("registerPanel");
-      if (reg) reg.style.display = "none";
-      document.getElementById("loginLoading").style.display = "none";
-      document.getElementById("forgotPinPanel").style.display = "";
-      document.getElementById("fpEmail").value = AUTH.email || "";
-      authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
-      fpPIN1.value = ""; fpPIN2.value = ""; _fpOtp = "";
-      showFpStep(1);
-      fpSendOtp();
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       UPDATE INFO AKUN DI HALAMAN PENGATURAN
-    ════════════════════════════════════════════════════════════ */
-    function updateAkunUI() {
-      const nama = document.getElementById("akunNama");
-      const email = document.getElementById("akunEmail");
-      const btnHapus = document.getElementById("btnHapusBio");
-      const btnDaftar = document.getElementById("btnDaftarBio");
-      if (nama) {
-        const pic = AUTH.picture
-          ? `<img src="${AUTH.picture}" alt="Avatar" style="width:26px;height:26px;border-radius:50%;display:inline-block;vertical-align:middle;margin-right:8px;border:1.5px solid #6366f1;" />`
-          : "";
-        nama.innerHTML = `${pic}<span class="font-semibold">${AUTH.nama || "-"}</span>`;
-      }
-      if (email) email.textContent = AUTH.email || "-";
-      const hasBio = !!localStorage.getItem(KC_CRED_KEY);
-      if (btnHapus) btnHapus.classList.toggle("hidden", !hasBio);
-      if (btnDaftar) btnDaftar.classList.toggle("hidden", hasBio || !window.PublicKeyCredential);
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       LOGOUT
-     ════════════════════════════════════════════════════════════ */
-    async function doLogout() {
-      const r = await Swal.fire({
-        title: "Keluar dari akun?",
-        text: "Setelah keluar, Anda perlu memasukkan PIN untuk masuk kembali.",
-        showCancelButton: true,
-        confirmButtonText: "Keluar",
-        cancelButtonText: "Batal",
-        confirmButtonColor: "#f43f5e",
-        customClass: { popup: "rounded-3xl" },
-      });
-      if (!r.isConfirmed) return;
-      try {
-        const cfg = getCfg();
-        if (cfg.url && AUTH.token)
-          await rawCall(cfg.url, "logoutSession", [AUTH.token], cfg.token);
-      } catch(_) {}
-      localStorage.removeItem(KC_LOGGED_IN);
-      sessionStorage.removeItem(KC_SESSION_KEY);
-      AUTH.token = AUTH.userId = AUTH.nama = AUTH.email = null;
-      location.reload();
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       HELPER: rawAuthCall tanpa token (fungsi khusus auth)
-     ════════════════════════════════════════════════════════════ */
-    async function rawAuthCall(fn, args) {
-      const cfg = getCfg();
-      if (!cfg.url) throw new Error("Belum tersambung ke Google Sheets");
-      return rawCall(cfg.url, fn, args, cfg.token);
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       OTP HELPERS
-     ════════════════════════════════════════════════════════════ */
-    const _otpTimers = {};
-
-    /** Countdown X detik, lalu tampilkan tombol resend */
-    function startOtpCountdown(secId, countdownId, resendBtnId, seconds) {
-      if (_otpTimers[secId]) clearInterval(_otpTimers[secId]);
-      let rem = seconds;
-      const secEl = document.getElementById(secId);
-      const cdEl  = document.getElementById(countdownId);
-      const btnEl = document.getElementById(resendBtnId);
-      if (secEl) secEl.textContent = rem;
-      if (cdEl) cdEl.style.display = "";
-      if (btnEl) btnEl.style.display = "none";
-      _otpTimers[secId] = setInterval(() => {
-        rem--;
-        if (secEl) secEl.textContent = rem;
-        if (rem <= 0) {
-          clearInterval(_otpTimers[secId]);
-          if (cdEl) cdEl.style.display = "none";
-          if (btnEl) btnEl.style.display = "";
-        }
-      }, 1000);
-    }
-
-    /** Inisialisasi OTP box dengan auto-focus dan keyboard navigation */
-    function initOtpBoxes(containerId, onComplete) {
-      const boxes = document.querySelectorAll(`#${containerId} .otp-box`);
-      boxes.forEach((box, i) => {
-        box.addEventListener("input", e => {
-          const val = e.target.value.replace(/\D/g, "");
-          e.target.value = val.slice(0,1);
-          e.target.classList.toggle("filled", !!e.target.value);
-          if (val && i < boxes.length - 1) boxes[i+1].focus();
-          if (i === boxes.length - 1 && val) {
-            const otp = Array.from(boxes).map(b => b.value).join("");
-            if (otp.length === 6 && onComplete) setTimeout(() => onComplete(otp), 200);
-          }
-        });
-        box.addEventListener("keydown", e => {
-          if (e.key === "Backspace" && !box.value && i > 0) {
-            boxes[i-1].focus();
-            boxes[i-1].value = "";
-            boxes[i-1].classList.remove("filled");
-          }
-          if (e.key === "ArrowLeft" && i > 0) boxes[i-1].focus();
-          if (e.key === "ArrowRight" && i < boxes.length - 1) boxes[i+1].focus();
-        });
-        box.addEventListener("paste", e => {
-          e.preventDefault();
-          const text = (e.clipboardData || window.clipboardData).getData("text").replace(/\D/g,"");
-          boxes.forEach((b, j) => {
-            b.value = text[j] || "";
-            b.classList.toggle("filled", !!b.value);
-          });
-          const filled = text.slice(0,6);
-          if (filled.length === 6 && onComplete) setTimeout(() => onComplete(filled), 200);
-          (boxes[Math.min(text.length, boxes.length-1)] || boxes[boxes.length-1]).focus();
-        });
-      });
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       LUPA PIN — FORGOT PIN FLOW
-     ════════════════════════════════════════════════════════════ */
-    const fpPIN1 = { value: "" };
-    const fpPIN2 = { value: "" };
-    let _fpOtp = "";
-
-    function showForgotPin() {
-      document.getElementById("loginForm").style.display = "none";
-      const reg = document.getElementById("registerPanel");
-      if (reg) reg.style.display = "none";
-      document.getElementById("loginLoading").style.display = "none";
-      document.getElementById("forgotPinPanel").style.display = "";
-      authErr("fpErr1",""); authErr("fpErr2",""); authErr("fpErr3",""); authErr("fpErr4","");
-      fpPIN1.value = ""; fpPIN2.value = "";
-      _fpOtp = "";
-      showFpStep(1);
-      const lastEmail = localStorage.getItem(KC_EMAIL_KEY) || "";
-      document.getElementById("fpEmail").value = lastEmail;
-    }
-
-    function hideForgotPin() {
-      document.getElementById("forgotPinPanel").style.display = "none";
-      document.getElementById("loginForm").style.display = "";
-    }
-
-    function showFpStep(n) {
-      ["fpStep1","fpStep2","fpStep3","fpStep4"].forEach((id,i) => {
-        const el = document.getElementById(id);
-        if (el) el.style.display = (i+1 === n) ? "" : "none";
-      });
-      ["fpsd1","fpsd2","fpsd3","fpsd4"].forEach((id,i) => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.style.background = i+1 <= n ? "#6366f1" : "rgba(255,255,255,0.2)";
-        el.style.width = i+1 === n ? "20px" : "8px";
-        el.style.borderRadius = "4px";
-      });
-    }
-
-    async function fpSendOtp(isResend) {
-      const email = document.getElementById("fpEmail").value.trim();
-      if (!isResend) {
-        if (!/^[^@]+@[^@]+\.[^@]+$/.test(email)) {
-          return authErr("fpErr1","Format email tidak valid");
-        }
-        authErr("fpErr1","");
-      }
-      const btn = document.getElementById("fpSendBtn");
-      if (btn) { btn.disabled = true; btn.textContent = "Mengirim OTP..."; }
-
-      try {
-        const res = await rawAuthCall("sendOtpEmail", [email, "reset"]);
-        if (!res || res.status === "error") {
-          if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
-          return authErr("fpErr1", (res && res.message) || "Gagal mengirim OTP");
-        }
-        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
-
-        document.getElementById("fpEmailHint").textContent = email;
-        authErr("fpErr2","");
-        showFpStep(2);
-        buildFpOtpBoxes();
-        startOtpCountdown("fpResendSec","fpResendCountdown","fpResendBtn",60);
-      } catch(e) {
-        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
-        authErr("fpErr1", e.message || "Gagal mengirim OTP");
-      }
-    }
-
-    function buildFpOtpBoxes() {
-      const cont = document.getElementById("fpOtpBoxes");
-      cont.innerHTML = "";
-      for (let i = 0; i < 6; i++) {
-        const inp = document.createElement("input");
-        inp.className = "otp-box";
-        inp.maxLength = 1;
-        inp.type = "text";
-        inp.inputMode = "numeric";
-        inp.pattern = "[0-9]";
-        cont.appendChild(inp);
-      }
-      initOtpBoxes("fpOtpBoxes", (otp) => { _fpOtp = otp; fpVerifyOtp(); });
-      cont.querySelector(".otp-box").focus();
-    }
-
-    async function fpVerifyOtp() {
-      const email = document.getElementById("fpEmail").value.trim();
-      const otp = _fpOtp || Array.from(document.querySelectorAll("#fpOtpBoxes .otp-box")).map(b => b.value).join("");
-      if (otp.length < 6) {
-        authErr("fpErr2","Masukkan 6 digit kode OTP");
-        document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
-        setTimeout(() => document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
-        return;
-      }
-      const btn = document.getElementById("fpVerifyBtn");
-      btn.disabled = true; btn.textContent = "Memverifikasi...";
-      authErr("fpErr2","");
-      try {
-        const res = await rawAuthCall("verifyOtp", [email, otp]);
-        if (!res || res.status === "error") {
-          authErr("fpErr2", (res && res.message) || "OTP salah");
-          document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.add("error"));
-          setTimeout(() => document.querySelectorAll("#fpOtpBoxes .otp-box").forEach(b => b.classList.remove("error")), 500);
-          btn.disabled = false; btn.textContent = "Verifikasi OTP";
-          _fpOtp = "";
-          return;
-        }
-        _fpOtp = otp;
-        fpPIN1.value = "";
-        updateDots("fpPinDots", 0);
-        authErr("fpErr3","");
-        showFpStep(3);
-      } catch(e) {
-        authErr("fpErr2", e.message || "Verifikasi gagal");
-        btn.disabled = false; btn.textContent = "Verifikasi OTP";
-      }
-    }
-
-    function fpPinKey(k) {
-      if (fpPIN1.value.length >= 6) return;
-      fpPIN1.value += k;
-      updateDots("fpPinDots", fpPIN1.value.length);
-      if (fpPIN1.value.length === 6) setTimeout(() => {
-        updateDots("fpConfDots", 0);
-        fpPIN2.value = "";
-        authErr("fpErr4","");
-        showFpStep(4);
-      }, 250);
-    }
-    function fpPinDel() {
-      if (!fpPIN1.value.length) return;
-      fpPIN1.value = fpPIN1.value.slice(0,-1);
-      updateDots("fpPinDots", fpPIN1.value.length);
-    }
-    function fpConfKey(k) {
-      if (fpPIN2.value.length >= 6) return;
-      fpPIN2.value += k;
-      updateDots("fpConfDots", fpPIN2.value.length);
-      if (fpPIN2.value.length === 6) setTimeout(() => fpResetPin(), 250);
-    }
-    function fpConfDel() {
-      if (!fpPIN2.value.length) return;
-      fpPIN2.value = fpPIN2.value.slice(0,-1);
-      updateDots("fpConfDots", fpPIN2.value.length);
-    }
-
-    async function fpResetPin() {
-      if (fpPIN1.value !== fpPIN2.value) {
-        flashDotsError("fpConfDots");
-        authErr("fpErr4","PIN tidak cocok, coba lagi");
-        fpPIN2.value = "";
-        updateDots("fpConfDots", 0);
-        return;
-      }
-      const email = document.getElementById("fpEmail").value.trim();
-      const newPinHash = await sha256(fpPIN1.value);
-      authErr("fpErr4","");
-      const dots = document.querySelectorAll("#fpConfDots .pin-dot");
-      dots.forEach(d => d.style.opacity = "0.5");
-      try {
-        const res = await rawAuthCall("resetPin", [email, _fpOtp, newPinHash]);
-        if (!res || res.status === "error") {
-          dots.forEach(d => d.style.opacity = "");
-          flashDotsError("fpConfDots");
-          authErr("fpErr4", (res && res.message) || "Reset PIN gagal");
-          fpPIN2.value = ""; updateDots("fpConfDots", 0);
-          return;
-        }
-        document.getElementById("forgotPinPanel").style.display = "none";
-        document.getElementById("loginForm").style.display = "";
-        await Swal.fire({
-          icon: "success",
-          title: "PIN berhasil direset! 🎉",
-          text: "Silakan login dengan PIN baru kamu.",
-          confirmButtonText: "Login sekarang",
-          confirmButtonColor: "#6366f1",
-          customClass: { popup: "rounded-3xl" },
-        });
-        showLogin();
-      } catch(e) {
-        dots.forEach(d => d.style.opacity = "");
-        authErr("fpErr4", e.message || "Reset PIN gagal");
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       BASE64URL HELPERS (WebAuthn)
-    ════════════════════════════════════════════════════════════ */
-    function base64urlEncode(buffer) {
-      return btoa(String.fromCharCode(...buffer))
-        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
-    }
-    function base64urlDecode(str) {
-      str = str.replace(/-/g, '+').replace(/_/g, '/');
-      while (str.length % 4) str += '=';
-      return Uint8Array.from(atob(str), c => c.charCodeAt(0));
-    }
-
-    const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-    function updateHeaderUser(nama) {
-      const h1 = document.querySelector("header h1");
-      if (h1 && nama) {
-        h1.innerHTML = `<span style="display:inline-flex;align-items:center;"><span>Keuangan Cerdas</span><span style="font-size:0.75rem;opacity:0.6;font-weight:400;margin-left:6px;">· ${nama}</span></span>`;
-      }
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       SHEET LOADING CONTROLLER (Animasi keren saat memuat sheet)
-     ════════════════════════════════════════════════════════════ */
-    function showSheetLoader(subtitle = "Menyinkronkan data Google Sheets...") {
-      const el = document.getElementById("sheetLoadingOverlay");
-      if (!el) return;
-      const sub = document.getElementById("sheetLoadingSubtitle");
-      if (sub) sub.textContent = subtitle;
-      el.style.display = "flex";
-      el.style.opacity = "1";
-      el.style.transform = "scale(1)";
-      el.style.pointerEvents = "auto";
-      setSheetLoaderStep(1);
-    }
-
-    function setSheetLoaderStep(step) {
-      const bar = document.getElementById("sheetLoadingBar");
-      const c1 = document.getElementById("stepCloud");
-      const c1s = document.getElementById("stepCloudStatus");
-      const c2 = document.getElementById("stepData");
-      const c2s = document.getElementById("stepDataStatus");
-      const c3 = document.getElementById("stepDash");
-      const c3s = document.getElementById("stepDashStatus");
-      const sub = document.getElementById("sheetLoadingSubtitle");
-
-      if (step === 1) {
-        if (bar) bar.style.width = "30%";
-        if (c1) { c1.style.opacity = "1"; c1.style.borderColor = "rgba(99,102,241,0.4)"; }
-        if (c1s) c1s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Terhubung</span>';
-        if (c2) c2.style.opacity = "0.45";
-        if (c3) c3.style.opacity = "0.45";
-      } else if (step === 2) {
-        if (bar) bar.style.width = "75%";
-        if (sub) sub.textContent = "Mengunduh transaksi & kalkulasi saldo...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
-        if (c2) { c2.style.opacity = "1"; c2.style.borderColor = "rgba(99,102,241,0.4)"; }
-        if (c2s) c2s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memuat...</span>';
-        if (c3) c3.style.opacity = "0.45";
-      } else if (step === 3) {
-        if (bar) bar.style.width = "100%";
-        if (sub) sub.textContent = "Dashboard siap! Membuka aplikasi...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
-        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;">✓ Selesai</span>';
-        if (c3) { c3.style.opacity = "1"; c3.style.borderColor = "rgba(74,222,128,0.4)"; }
-        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;">✓ Siap</span>';
-      }
-    }
-
-    async function hideSheetLoader() {
-      const el = document.getElementById("sheetLoadingOverlay");
-      if (!el) return;
-      setSheetLoaderStep(3);
-      await sleep(400);
-      el.style.opacity = "0";
-      el.style.transform = "scale(1.03)";
-      el.style.pointerEvents = "none";
-      setTimeout(() => {
-        el.style.display = "none";
-        el.style.opacity = "1";
-        el.style.transform = "none";
-      }, 500);
-    }
-
-    async function triggerManualSync() {
-      showSheetLoader("Menyinkronkan data Google Sheets...");
-      setSheetLoaderStep(1);
-      await sleep(200);
-      setSheetLoaderStep(2);
-      await refresh(true);
-      setSheetLoaderStep(3);
-      await sleep(350);
-      await hideSheetLoader();
-      Toast.fire({ icon: "success", title: "Data Spreadsheet tersinkronisasi! ✓", timer: 2000 });
-    }
-
-    /* ════════════════════════════════════════════════════════════
-       INISIALISASI KEYPAD & CEK STATUS PERANGKAT / SESI
-     ════════════════════════════════════════════════════════════ */
-    (async function initAuth() {
-      // 1. Build keypad login
-      buildKeypad("loginKeypad", "loginPinDots", loginPinKey, loginPinDel);
-
-      // 2. Build keypad register (step 1 & step 2)
-      buildKeypad("regKeypad1", "regPinDots1", regPinKey1, regPinDel1);
-      buildKeypad("regKeypad2", "regPinDots2", regPinKey2, regPinDel2);
-
-      // 3. Build keypad forgot PIN
-      buildKeypad("fpPinKeypad", "fpPinDots", fpPinKey, fpPinDel);
-      buildKeypad("fpConfKeypad", "fpConfDots", fpConfKey, fpConfDel);
-
-      // 4. Tombol logout di header
-      const headerBtns = document.querySelector("header .flex.items-center.gap-2");
-      if (headerBtns && !document.getElementById("btnHeaderLogout")) {
-        const logoutBtn = document.createElement("button");
-        logoutBtn.id = "btnHeaderLogout";
-        logoutBtn.onclick = doLogout;
-        logoutBtn.className = "w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition";
-        logoutBtn.title = "Keluar dari akun";
-        logoutBtn.setAttribute("aria-label", "Keluar dari akun");
-        logoutBtn.textContent = "🚪";
-        headerBtns.insertBefore(logoutBtn, headerBtns.firstChild);
-      }
-
-      // 5. AUTO-LOGIN SAAT REFRESH DENGAN LOADING KEREN:
-      // "saat sudah loading dan di refrest ada loading kerennya saat memuat sheet"
-      const isLoggedIn = localStorage.getItem(KC_LOGGED_IN) === "true";
-      if (isLoggedIn) {
-        const email = localStorage.getItem(KC_EMAIL_KEY) || "";
-        const nama  = localStorage.getItem(KC_USER_KEY) || "Pengguna";
-        const deviceId = getOrCreateDeviceId();
-        AUTH.email = email;
-        AUTH.nama  = nama;
-        AUTH.deviceId = deviceId;
-        AUTH.userId = localStorage.getItem("kc_userId") || "USR-DEFAULT";
-
-        const sessRaw = sessionStorage.getItem(KC_SESSION_KEY);
-        if (sessRaw) {
-          try {
-            const sess = JSON.parse(sessRaw);
-            if (sess.token) AUTH.token = sess.token;
-            if (sess.userId) AUTH.userId = sess.userId;
-          } catch (_) {}
-        }
-
-        let cfg = await ensureCfg();
-        if (cfg && cfg.url) {
-          showAuthPage("app");
-          updateHeaderUser(AUTH.nama);
-
-          // TAMPILKAN ANIMASI LOADING KEREN SAAT MEMUAT SHEET
-          showSheetLoader("Menyinkronkan data Google Sheets...");
-          setSheetLoaderStep(1);
-          await sleep(250);
-
-          setSheetLoaderStep(2);
-          await refresh(true);
-
-          setSheetLoaderStep(3);
-          await initApp();
-          await hideSheetLoader();
-          return;
-        }
-      }
-
-      // 6. Jika belum login atau habis logout:
-      // Tampilkan halaman login dan cek status pendaftaran perangkat di server
-      showAuthPage("login");
-      const cfgInit = await ensureCfg();
-      if (!cfgInit.url) {
-        authErr("loginErr", "⚙️ Hubungkan ke Google Sheets terlebih dahulu");
-        return;
-      }
-      await checkDeviceState();
-    })();
-  </script>
-
-  <!-- Modul grafik responsif (mobile + PC) -->
-  <script>
-/* Keuangan Cerdas — Modul grafik responsif (mobile + PC)
- * Menimpa cfgs() dan drawChart() milik index.html. Dimuat SETELAH semua script lain. */
-(function () {
-  "use strict";
-  var mq = window.matchMedia("(max-width: 640px)");
-  var M = function () { return mq.matches; };
-
-  var st = document.createElement("style");
-  st.textContent =
-    "canvas{display:block;touch-action:pan-y}" +
-    "@media(max-width:640px){#page-app .card{padding:1rem}#page-app .h-64{height:17rem}}" +
-    "@media(min-width:1024px){#page-app .h-64{height:18rem}}";
-  document.head.appendChild(st);
-
-  var fmtC = function (v) {
-    var a = Math.abs(v), s = v < 0 ? "-" : "", f = function (x) { return String(+x.toFixed(1)); };
-    if (a >= 1e9) return s + f(a / 1e9) + " M";
-    if (a >= 1e6) return s + f(a / 1e6) + " jt";
-    if (a >= 1e3) return s + Math.round(a / 1e3) + " rb";
-    return s + a;
-  };
-  var pd = function (s) { return new Date(s.slice(0, 10) + "T00:00:00"); };
-  var grad = function (color) {
-    return function (c) {
-      var a = c.chart.chartArea;
-      if (!a) return color + "22";
-      var g = c.chart.ctx.createLinearGradient(0, a.top, 0, a.bottom);
-      g.addColorStop(0, color + "55"); g.addColorStop(1, color + "05");
-      return g;
-    };
-  };
-  var emptyPlugin = {
-    id: "kcEmpty",
-    afterDraw: function (ch) {
-      var has = ch.data.datasets.some(function (d) { return d.data.some(function (v) { return v !== 0 && v != null; }); });
-      var a = ch.chartArea;
-      if (has || !a) return;
-      var c = ch.ctx; c.save();
-      c.fillStyle = "#94a3b8"; c.font = "500 12px 'Plus Jakarta Sans',sans-serif";
-      c.textAlign = "center"; c.textBaseline = "middle";
-      c.fillText("Belum ada data pada periode ini", (a.left + a.right) / 2, (a.top + a.bottom) / 2);
-      c.restore();
-    }
-  };
-
-  function baseOpts(m, extra) {
-    var fs = m ? 10 : 12;
-    return Object.assign({
-      responsive: true, maintainAspectRatio: false, devicePixelRatio: Math.max(2, window.devicePixelRatio || 1),
-      interaction: { mode: "index", intersect: false },
-      layout: { padding: { top: 4, right: m ? 6 : 10 } },
-      plugins: {
-        legend: { position: "bottom", labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: m ? 10 : 14, font: { size: fs } } },
-        tooltip: {
-          padding: 10, cornerRadius: 10, titleFont: { size: fs + 1 }, bodyFont: { size: fs + 1 },
-          callbacks: { label: function (c) { return " " + c.dataset.label + ": " + rp(c.parsed.y); } }
-        }
-      }
-    }, extra || {});
   }
-  function scales(m, opt) {
-    var fs = m ? 10 : 11;
-    return {
-      x: { grid: { display: false }, border: { display: false },
-        ticks: { autoSkip: true, maxRotation: 0, maxTicksLimit: m ? 5 : 10, font: { size: fs }, color: "#94a3b8" } },
-      y: { beginAtZero: !!(opt && opt.zero), grid: { color: "#f1f5f9" }, border: { display: false },
-        ticks: { callback: fmtC, maxTicksLimit: m ? 5 : 7, font: { size: fs }, color: "#94a3b8" } }
-    };
-  }
+  return { status: "success", valid: false };
+}
 
-  /* ---- rentang & pengelompokan waktu (harian → mingguan → bulanan) ---- */
-  function span(r) {
-    var today = ymd(new Date()), ds = r.map(function (t) { return t.tanggal.slice(0, 10); }).sort();
-    var s = ds[0] || today, e = ds[ds.length - 1] || today;
-    if (S.range === "month") { s = today.slice(0, 8) + "01"; if (e < today) e = today; }
-    else if (S.range === "30") { s = ymd(new Date(Date.now() - 29 * 864e5)); e = today; }
-    if (s > e) { var x = s; s = e; e = x; }
-    return [s, e];
-  }
-  function plan(s, e) {
-    var days = [], d = pd(s), end = pd(e);
-    while (d <= end && days.length < 3700) { days.push(new Date(d)); d.setDate(d.getDate() + 1); }
-    var mode = days.length <= 45 ? "d" : days.length <= 200 ? "w" : "m";
-    var keys = [], labels = [], idx = {}, dk = [];
-    days.forEach(function (x) {
-      var k;
-      if (mode === "d") k = ymd(x);
-      else if (mode === "w") { var w = new Date(x); w.setDate(x.getDate() - ((x.getDay() + 6) % 7)); k = ymd(w); }
-      else k = ymd(x).slice(0, 7);
-      if (!(k in idx)) {
-        idx[k] = keys.length; keys.push(k);
-        labels.push(mode === "d" ? pad(x.getDate()) + "/" + pad(x.getMonth() + 1)
-          : mode === "w" ? x.toLocaleDateString("id-ID", { day: "numeric", month: "short" }) : bln(k));
+function logoutSession(token) {
+  return tx_(() => {
+    if (!token) return ok_("Berhasil logout");
+    const s = getSheet_(SH_SESSIONS);
+    const last = s.getLastRow();
+    if (last < 2) return ok_("Berhasil logout");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(token)) {
+        s.getRange(i + 2, 6).setValue(false);
+        break;
       }
-      dk.push(k);
-    });
-    return { days: days, mode: mode, keys: keys, labels: labels, idx: idx, dk: dk };
-  }
-
-  window.cfgs = function (r, all) {
-    var m = M(), sp = span(r), p = plan(sp[0], sp[1]);
-    var dInc = {}, dOut = {}, net = {}, open = 0;
-    r.forEach(function (t) {
-      var d = t.tanggal.slice(0, 10);
-      (t.jenis === "Pemasukan" ? dInc : dOut)[d] = ((t.jenis === "Pemasukan" ? dInc : dOut)[d] || 0) + t.nominal;
-    });
-    all.forEach(function (t) {
-      var d = t.tanggal.slice(0, 10), v = t.jenis === "Pemasukan" ? t.nominal : -t.nominal;
-      if (d < sp[0]) open += v; else net[d] = (net[d] || 0) + v;
-    });
-    var inc = p.keys.map(function () { return 0; }), out = inc.slice(), bal = inc.slice(), run = open;
-    p.days.forEach(function (d, i) {
-      var k = ymd(d), b = p.idx[p.dk[i]];
-      inc[b] += dInc[k] || 0; out[b] += dOut[k] || 0;
-      run += net[k] || 0; bal[b] = run;
-    });
-    var pr = p.keys.length <= 31 ? (m ? 2 : 3) : 0;
-    var line = function (label, data, color) {
-      return { label: label, data: data, borderColor: color, backgroundColor: grad(color), fill: true, tension: 0.3,
-        borderWidth: 2, pointRadius: pr, pointHoverRadius: 5, pointBackgroundColor: color };
-    };
-
-    /* kategori: ringkas (6 teratas + "Lainnya") atau lengkap; dipakai untuk pengeluaran & pemasukan */
-    var donut = function (jenis) {
-      var g = katGroups(r, jenis);
-      return { type: "doughnut", plugins: [emptyPlugin],
-        data: { labels: g.items.map(function (x) { return x[0]; }),
-          datasets: [{ data: g.items.map(function (x) { return x[1]; }), backgroundColor: g.colors, borderWidth: 2, borderColor: "#fff", hoverOffset: 6 }] },
-        options: baseOpts(m, { cutout: m ? "58%" : "64%", interaction: { mode: "nearest", intersect: true },
-          plugins: {
-            legend: { display: !g.open, position: "bottom", labels: { usePointStyle: true, boxWidth: 8, boxHeight: 8, padding: m ? 8 : 12, font: { size: m ? 10 : 12 } } },
-            tooltip: { padding: 10, cornerRadius: 10, callbacks: { label: function (c) { return " " + c.label + ": " + rp(c.parsed) + " (" + Math.round(c.parsed / g.total * 100) + "%)"; } } }
-          } }) };
-    };
-
-    /* 6 bulan kalender terakhir (bulan kosong tetap tampil) */
-    var latest = all.reduce(function (mx, t) { var x = t.tanggal.slice(0, 7); return x > mx ? x : mx; }, ymd(new Date()).slice(0, 7));
-    var months = [], b0 = new Date(latest + "-01T00:00:00");
-    for (var i = 5; i >= 0; i--) { var q = new Date(b0.getFullYear(), b0.getMonth() - i, 1); months.push(ymd(q).slice(0, 7)); }
-    var gm = group(all, function (t) { return t.tanggal.slice(0, 7); });
-
-    return {
-      tren: { type: "line", plugins: [emptyPlugin],
-        data: { labels: p.labels, datasets: [line("Pemasukan", inc, "#10B981"), line("Pengeluaran", out, "#F43F5E")] },
-        options: baseOpts(m, { scales: scales(m, { zero: true }) }) },
-      kat: donut("Pengeluaran"),
-      katIn: donut("Pemasukan"),
-      bulan: { type: "bar", plugins: [emptyPlugin],
-        data: { labels: months.map(function (x) { return bln(x); }),
-          datasets: [
-            { label: "Pemasukan", data: months.map(function (k) { return gm[k] ? sum(gm[k], "Pemasukan") : 0; }), backgroundColor: "#10B981", borderRadius: 6, maxBarThickness: 26 },
-            { label: "Pengeluaran", data: months.map(function (k) { return gm[k] ? sum(gm[k], "Pengeluaran") : 0; }), backgroundColor: "#F43F5E", borderRadius: 6, maxBarThickness: 26 }] },
-        options: baseOpts(m, { scales: scales(m, { zero: true }) }) },
-      saldo: { type: "line",
-        data: { labels: p.labels, datasets: [line("Saldo", bal, "#4F46E5")] },
-        options: baseOpts(m, { scales: scales(m), plugins: { legend: { display: false },
-          tooltip: { padding: 10, cornerRadius: 10, callbacks: { label: function (c) { return " Saldo: " + rp(c.parsed.y); } } } } }) }
-    };
-  };
-
-  window.drawChart = function (id, cfg) {
-    cfg.options = Object.assign({ responsive: true, maintainAspectRatio: false }, cfg.options || {});
-    var old = Chart.getChart(id);
-    if (old) {
-      if (old.config.type === cfg.type) { old.data = cfg.data; old.options = cfg.options; old.update("none"); return; }
-      old.destroy();
     }
-    new Chart($(id), cfg);
-  };
+    return ok_("Berhasil logout");
+  });
+}
 
-  var redraw = function () { try { if (S && S.data && S.data.trx && S.data.trx.length !== undefined && Chart.getChart("cTren")) renderDash(); } catch (_) {} };
-  (mq.addEventListener ? mq.addEventListener("change", redraw) : mq.addListener(redraw));
-  window.addEventListener("orientationchange", function () { setTimeout(redraw, 250); });
-  setTimeout(redraw, 0);
-})();
+/* ============================================================
+ * OTP & RESET PIN
+ * ============================================================ */
 
-  </script>
-  </body>
-</html>
+function sendOtpEmail(email, context) {
+  return tx_(() => {
+    email = String(email || "").trim().toLowerCase();
+    context = String(context || "register");
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) return err_("Format email tidak valid");
+
+    if (context === "reset") {
+      const user = findUserByEmail_(email);
+      if (!user) return err_("Email tidak terdaftar");
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 10 * 60 * 1000);
+
+    const s = getSheet_(SH_OTP);
+    const last = s.getLastRow();
+    if (last >= 2) {
+      const data = s.getRange(2, 1, last - 1, 4).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]).toLowerCase() === email && !data[i][3]) {
+          s.getRange(i + 2, 4).setValue(true);
+        }
+      }
+    }
+
+    s.appendRow([email, otp, expiry.toISOString(), false]);
+
+    const subject = context === "reset" ? "Reset PIN - Keuangan Cerdas" : "Verifikasi Email - Keuangan Cerdas";
+    const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:16px">
+      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px">
+        <h1 style="color:#fff;margin:0;font-size:24px">💰 Keuangan Cerdas</h1>
+      </div>
+      <h2 style="color:#1e293b;margin:0 0 8px">${context === "reset" ? "Reset PIN" : "Verifikasi Email"}</h2>
+      <p style="color:#64748b;margin:0 0 24px">Masukkan kode OTP berikut di aplikasi:</p>
+      <div style="background:#fff;border:2px solid #6366f1;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
+        <span style="font-size:36px;font-weight:900;letter-spacing:8px;color:#6366f1">${otp}</span>
+      </div>
+      <p style="color:#94a3b8;font-size:12px">Kode berlaku selama <strong>10 menit</strong>. Jangan bagikan kode ini ke siapapun.</p>
+    </div>`;
+
+    MailApp.sendEmail(email, subject, "Kode OTP Anda: " + otp, { htmlBody: htmlBody });
+    return { status: "success", message: "OTP dikirim ke email Anda", expiresInMinutes: 10 };
+  });
+}
+
+function verifyOtp(email, otp) {
+  return tx_(() => {
+    email = String(email || "").trim().toLowerCase();
+    otp = String(otp || "").trim();
+    if (!email || !otp) return err_("Email dan OTP wajib diisi");
+
+    const s = getSheet_(SH_OTP);
+    const last = s.getLastRow();
+    if (last < 2) return err_("OTP tidak valid atau sudah kadaluarsa");
+    const data = s.getRange(2, 1, last - 1, 4).getValues();
+    let foundRow = -1;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (String(data[i][0]).toLowerCase().trim() === email && String(data[i][1]).trim() === otp && !data[i][3]) {
+        const expiry = new Date(data[i][2]);
+        if (expiry < new Date()) return err_("OTP sudah kadaluarsa. Minta OTP baru.");
+        foundRow = i + 2;
+        break;
+      }
+    }
+    if (foundRow < 0) return err_("OTP salah. Coba lagi.");
+    s.getRange(foundRow, 4).setValue(true);
+    return { status: "success", message: "OTP valid", verified: true };
+  });
+}
+
+function resetPin(email, otp, newPinHash) {
+  return tx_(() => {
+    email = String(email || "").trim().toLowerCase();
+    otp = String(otp || "").trim();
+    newPinHash = String(newPinHash || "").trim();
+    if (!email || !otp || !newPinHash) return err_("Semua field wajib diisi");
+
+    const otpResult = verifyOtp(email, otp);
+    if (otpResult.status !== "success" || !otpResult.verified) {
+      return err_(otpResult.message || "OTP tidak valid");
+    }
+
+    const user = findUserByEmail_(email);
+    if (!user) return err_("User tidak ditemukan");
+    getSheet_(SH_USERS).getRange(user.row, 4).setValue(newPinHash);
+
+    // Invalidasi sesi user
+    const sSheet = getSheet_(SH_SESSIONS);
+    const last = sSheet.getLastRow();
+    if (last >= 2) {
+      const data = sSheet.getRange(2, 1, last - 1, 6).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][1]) === String(user.data[0])) {
+          sSheet.getRange(i + 2, 6).setValue(false);
+        }
+      }
+    }
+    return { status: "success", message: "PIN berhasil direset. Silakan login dengan PIN baru." };
+  });
+}
