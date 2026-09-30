@@ -634,6 +634,12 @@ function hapusAnggaran(kategori) {
 /* ---------- Target Tabungan ---------- */
 function simpanTarget(o) {
   return tx_(() => {
+    if (typeof o === "string") {
+      try {
+        o = JSON.parse(o);
+      } catch (_) {}
+    }
+    o = o || {};
     const nama = String(o.nama || "").trim(),
       target = Number(o.target),
       terkumpul = Number(o.terkumpul) || 0;
@@ -643,22 +649,30 @@ function simpanTarget(o) {
     const s = getSheet_(SH_TGT);
     const last = s.getLastRow();
     let row = 0;
-    if (o.id && last > 1) {
+    const tgtId = String(o.id || "").trim();
+    if (tgtId && last > 1) {
       const data = s.getRange(2, 1, last - 1, 6).getValues();
       for (let i = 0; i < data.length; i++) {
-        if (String(data[i][0]) === String(o.id)) {
+        if (String(data[i][0]).trim() === tgtId) {
           row = i + 2;
           break;
         }
       }
-      if (!row) return err_("Target tidak ditemukan");
+      if (!row) {
+        for (let i = 0; i < data.length; i++) {
+          if (String(data[i][1]).trim().toLowerCase() === nama.toLowerCase()) {
+            row = i + 2;
+            break;
+          }
+        }
+      }
     }
 
     const isEdit = row > 0;
     if (!isEdit) row = s.getLastRow() + 1;
     s.getRange(row, 5).setNumberFormat("@");
     s.getRange(row, 1, 1, 6).setValues([
-      [isEdit ? o.id : "TGT-" + Date.now(), nama, target, terkumpul, tenggat, "GLOBAL"],
+      [isEdit ? (tgtId || "TGT-" + Date.now()) : ("TGT-" + Date.now()), nama, target, terkumpul, tenggat, "GLOBAL"],
     ]);
     return ok_(isEdit ? "Target berhasil diperbarui" : "Target berhasil dibuat");
   });
@@ -666,14 +680,16 @@ function simpanTarget(o) {
 
 function hapusTarget(id) {
   return tx_(() => {
+    id = String(id || "").trim();
+    if (!id) return err_("ID target wajib diisi");
     const s = getSheet_(SH_TGT);
     const last = s.getLastRow();
     if (last < 2) return err_("Target tidak ditemukan");
     const data = s.getRange(2, 1, last - 1, 6).getValues();
     for (let i = 0; i < data.length; i++) {
-      if (String(data[i][0]) === String(id)) {
+      if (String(data[i][0]).trim() === id || String(data[i][1]).trim().toLowerCase() === id.toLowerCase()) {
         s.deleteRow(i + 2);
-        return ok_("Target dihapus");
+        return ok_("Target berhasil dihapus");
       }
     }
     return err_("Target tidak ditemukan");
@@ -682,6 +698,7 @@ function hapusTarget(id) {
 
 function setorTarget(id, jumlah) {
   return tx_(() => {
+    id = String(id || "").trim();
     jumlah = Number(jumlah);
     if (!(jumlah > 0)) return err_("Jumlah setoran harus lebih dari 0");
     const s = getSheet_(SH_TGT);
@@ -689,11 +706,11 @@ function setorTarget(id, jumlah) {
     if (last < 2) return err_("Target tidak ditemukan");
     const data = s.getRange(2, 1, last - 1, 6).getValues();
     for (let i = 0; i < data.length; i++) {
-      if (String(data[i][0]) === String(id)) {
+      if (String(data[i][0]).trim() === id || String(data[i][1]).trim().toLowerCase() === id.toLowerCase()) {
         const target = Number(data[i][2]) || 0;
         const baru = (Number(data[i][3]) || 0) + jumlah;
         s.getRange(i + 2, 4).setValue(baru);
-        return ok_(baru >= target ? "Selamat, target tabungan tercapai! 🎉" : "Setoran berhasil ditambahkan");
+        return ok_(baru >= target ? "Selamat, target tabungan tercapai!" : "Setoran berhasil ditambahkan");
       }
     }
     return err_("Target tidak ditemukan");
@@ -714,20 +731,54 @@ function parseSuaraSegmen_(teks) {
   let n = /\.\d{3}/.test(m[1]) ? parseFloat(m[1].replace(/\./g, "")) : parseFloat(m[1].replace(",", "."));
   if (/^(ribu|rb|k)$/.test(m[2] || "")) n *= 1000;
   else if (/^(juta|jt)$/.test(m[2] || "")) n *= 1000000;
-  const masuk = /terima|gaji|masuk|bonus|dapat|untung/.test(t);
-  const kat = masuk
-    ? /gaji/.test(t)
-      ? "Gaji"
-      : "Pemasukan Lain"
-    : /makan|minum|kopi|jajan/.test(t)
-      ? "Makanan & Minuman"
-      : /bensin|ojek|grab|gojek|parkir|tol|bus|kereta/.test(t)
-        ? "Transportasi"
-        : "Lainnya";
+
+  // Cek kategori di Sheet Kategori
+  let katList = [];
+  try {
+    const sKat = getSheet_(SH_KAT);
+    if (sKat.getLastRow() > 1) {
+      katList = sKat.getRange(2, 1, sKat.getLastRow() - 1, 3).getValues().map(r => ({
+        nama: String(r[1]).trim(),
+        tipe: String(r[2]).trim() === "Pemasukan" ? "Pemasukan" : "Pengeluaran"
+      }));
+    }
+  } catch (_) {}
+
+  // Cari kategori yang cocok dengan teks
+  let matchedKat = null;
+  for (let i = 0; i < katList.length; i++) {
+    const kn = katList[i].nama.toLowerCase();
+    if (t.includes(kn)) {
+      matchedKat = katList[i];
+      break;
+    }
+  }
+
+  let masuk = /terima|gaji|masuk|bonus|dapat|untung/.test(t);
+  let kat = "Lainnya";
+  let jenis = masuk ? "Pemasukan" : "Pengeluaran";
+
+  if (matchedKat) {
+    kat = matchedKat.nama;
+    jenis = matchedKat.tipe; // Mengikuti jenis transaksi kategori secara otomatis
+  } else {
+    if (masuk) {
+      kat = /gaji/.test(t) ? "Gaji" : "Pemasukan Lain";
+      jenis = "Pemasukan";
+    } else {
+      kat = /makan|minum|kopi|jajan/.test(t)
+        ? "Makanan & Minuman"
+        : /bensin|ojek|grab|gojek|parkir|tol|bus|kereta/.test(t)
+          ? "Transportasi"
+          : "Lainnya";
+      jenis = "Pengeluaran";
+    }
+  }
+
   const teksAsli = String(teks).trim();
   return {
     nama: teksAsli.charAt(0).toUpperCase() + teksAsli.slice(1),
-    jenis: masuk ? "Pemasukan" : "Pengeluaran",
+    jenis: jenis,
     kategori: kat,
     nominal: Math.round(n),
     keterangan: "Dicatat via suara",
@@ -1200,7 +1251,7 @@ function sendOtpEmail(email, context) {
     const subject = context === "reset" ? "Reset PIN - Keuangan Cerdas" : "Verifikasi Email - Keuangan Cerdas";
     const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:16px">
       <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px">
-        <h1 style="color:#fff;margin:0;font-size:24px">💰 Keuangan Cerdas</h1>
+        <h1 style="color:#fff;margin:0;font-size:24px">Keuangan Cerdas</h1>
       </div>
       <h2 style="color:#1e293b;margin:0 0 8px">${context === "reset" ? "Reset PIN" : "Verifikasi Email"}</h2>
       <p style="color:#64748b;margin:0 0 24px">Masukkan kode OTP berikut di aplikasi:</p>

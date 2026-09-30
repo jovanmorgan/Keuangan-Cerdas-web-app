@@ -725,7 +725,9 @@
       <div id="loginForm" class="auth-card auth-fade-in">
         <!-- Logo & judul -->
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">💰</div>
+          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;display:flex;align-items:center;justify-content:center;">
+            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+          </div>
           <div>
             <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Keuangan Cerdas</h1>
             <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Aplikasi Keuangan Pribadi</p>
@@ -734,7 +736,9 @@
 
         <!-- Badge Status Perangkat -->
         <div id="deviceBadgeLogin" class="device-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">📱</span>
+          <span style="font-size:1.3rem;flex-shrink:0;display:flex;align-items:center;">
+            <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+          </span>
           <div style="min-width:0;">
             <strong style="display:block;font-size:0.82rem;color:#86efac;">Perangkat Terdaftar</strong>
             <span id="badgeDeviceDesc" style="font-size:0.75rem;color:rgba(255,255,255,0.7);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Perangkat dikenali di sistem</span>
@@ -750,1093 +754,12 @@
 
         <!-- Tombol biometric jika ada -->
         <div id="bioSection" style="display:none;margin-bottom:12px;">
-          <button class="auth-btn auth-btn-bio" onclick="loginBiometric()" id="bioBtn" type="button">
-            <span style="font-size:1.4rem;">🫆</span>
-            <span id="bioBtnTxt">Masuk dengan Sidik Jari</span>
-          </button>
-        </div>
-
-        <!-- PIN dots & label -->
-        <div style="margin-bottom:6px;">
-          <label class="auth-lbl">PIN 6 Digit</label>
-          <div class="pin-dots" id="loginPinDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-        </div>
-
-        <!-- Keypad PIN -->
-        <div class="keypad" id="loginKeypad"></div>
-
-        <!-- Error -->
-        <div id="loginErr" class="auth-error"></div>
-
-        <!-- Tombol masuk PIN -->
-        <button class="auth-btn auth-btn-primary" onclick="loginWithPin()" style="margin-top:14px;" id="loginBtn" type="button">
-          Masuk dengan PIN
-        </button>
-
-        <!-- Pindah ke Daftar Baru -->
-        <p style="text-align:center;margin-top:14px;">
-          <button onclick="showRegister()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">+ Daftarkan Akun / Perangkat Baru</button>
-        </p>
-
-        <!-- Lupa PIN -->
-        <p style="text-align:center;margin-top:8px;">
-          <button onclick="showForgotPin()" type="button" style="color:rgba(255,255,255,0.4);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;text-decoration:underline;text-underline-offset:3px;">Lupa PIN?</button>
-        </p>
-
-        <!-- Link konfigurasi sheet -->
-        <p style="text-align:center;margin-top:10px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
-        </p>
-      </div>
-
-      <!-- Panel 2: Register Form (Jika perangkat belum terdaftar) -->
-      <div id="registerPanel" class="auth-card auth-fade-in" style="display:none;">
-        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">✨</div>
-          <div>
-            <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Daftar Akun</h1>
-            <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Daftarkan email & perangkat Anda</p>
-          </div>
-        </div>
-
-        <div class="device-badge" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#c7d2fe;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">🛡️</span>
-          <div>
-            <strong style="display:block;font-size:0.82rem;color:#c7d2fe;">Pendaftaran Perangkat</strong>
-            <span style="font-size:0.75rem;color:rgba(255,255,255,0.7);">Perangkat ini akan otomatis terhubung ke akun Anda.</span>
-          </div>
-        </div>
-
-        <!-- Input Email & Nama -->
-        <div style="margin-bottom:10px;">
-          <label class="auth-lbl">Email</label>
-          <input id="regEmail" type="email" class="auth-inp" placeholder="email@gmail.com" autocomplete="email" oninput="authErr('regErr','')" />
-        </div>
-        <div style="margin-bottom:14px;">
-          <label class="auth-lbl">Nama Lengkap</label>
-          <input id="regNama" type="text" class="auth-inp" placeholder="Nama Anda" autocomplete="name" oninput="authErr('regErr','')" />
-        </div>
-
-        <!-- Step 1: Buat PIN -->
-        <div id="regPinStep1">
-          <div style="text-align:center;margin-bottom:6px;">
-            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Buat PIN 6 Digit</p>
-          </div>
-          <div class="pin-dots" id="regPinDots1">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="regKeypad1"></div>
-        </div>
-
-        <!-- Step 2: Konfirmasi PIN -->
-        <div id="regPinStep2" style="display:none;">
-          <div style="text-align:center;margin-bottom:6px;">
-            <p style="color:rgba(255,255,255,0.85);font-size:0.85rem;font-weight:600;">Konfirmasi Ulang PIN 6 Digit</p>
-          </div>
-          <div class="pin-dots" id="regPinDots2">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="regKeypad2"></div>
-        </div>
-
-        <!-- Indikator Langkah PIN -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:12px;">
-          <div id="regStepDot1" style="width:20px;height:8px;border-radius:4px;background:#6366f1;transition:all 0.3s;"></div>
-          <div id="regStepDot2" style="width:8px;height:8px;border-radius:4px;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-        </div>
-
-        <!-- Error -->
-        <div id="regErr" class="auth-error"></div>
-
-        <!-- Pindah ke Login -->
-        <p style="text-align:center;margin-top:16px;">
-          <button onclick="showLogin()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">← Sudah punya akun? Masuk di sini</button>
-        </p>
-
-        <!-- Link konfigurasi sheet -->
-        <p style="text-align:center;margin-top:8px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
-        </p>
-      </div>
-
-      <!-- State 4: Panel Lupa PIN -->
-      <div id="forgotPinPanel" class="auth-card auth-fade-in" style="display:none;">
-        <!-- Step FP1: Masukkan email -->
-        <div id="fpStep1">
-          <div style="text-align:center;margin-bottom:20px;">
-            <div style="font-size:2rem;margin-bottom:6px;">🔑</div>
-            <h2 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0;">Lupa PIN?</h2>
-            <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:6px;">Masukkan email akun kamu. Kami akan kirimkan kode OTP untuk reset PIN.</p>
-          </div>
-          <div style="margin-bottom:14px;">
-            <label class="auth-lbl">Email Akun</label>
-            <input id="fpEmail" type="email" class="auth-inp" placeholder="email@gmail.com" autocomplete="email" />
-          </div>
-          <div id="fpErr1" class="auth-error"></div>
-          <button class="auth-btn auth-btn-primary" onclick="fpSendOtp()" style="margin-top:6px;" id="fpSendBtn" type="button">
-            Kirim Kode OTP →
-          </button>
-          <p style="text-align:center;margin-top:14px;">
-            <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Kembali ke login</button>
-          </p>
-        </div>
-
-        <!-- Step FP2: Masukkan OTP -->
-        <div id="fpStep2" style="display:none;">
-          <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:2rem;margin-bottom:6px;">📧</div>
-            <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;font-weight:700;">Masukkan Kode OTP</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Cek inbox / spam email <strong id="fpEmailHint" style="color:#a5b4fc;"></strong></p>
-          </div>
-          <div id="fpOtpBoxes" style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;"></div>
-          <div id="fpErr2" class="auth-error"></div>
-          <button class="auth-btn auth-btn-primary" onclick="fpVerifyOtp()" style="margin-top:8px;" id="fpVerifyBtn" type="button">
-            Verifikasi OTP
-          </button>
-          <p style="text-align:center;margin-top:12px;font-size:0.78rem;color:rgba(255,255,255,0.4);">
-            <button id="fpResendBtn" onclick="fpSendOtp(true)" type="button" style="color:#a5b4fc;font-weight:700;background:none;border:none;cursor:pointer;font-family:inherit;font-size:inherit;display:none;">Kirim ulang OTP</button>
-            <span id="fpResendCountdown">Kirim ulang dalam <span id="fpResendSec">60</span>s</span>
-          </p>
-        </div>
-
-        <!-- Step FP3: Buat PIN baru -->
-        <div id="fpStep3" style="display:none;">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Buat PIN Baru</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Masukkan PIN 6 digit yang baru</p>
-          </div>
-          <div class="pin-dots" id="fpPinDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="fpPinKeypad"></div>
-          <div id="fpErr3" class="auth-error"></div>
-        </div>
-
-        <!-- Step FP4: Konfirmasi PIN baru -->
-        <div id="fpStep4" style="display:none;">
-          <div style="text-align:center;margin-bottom:8px;">
-            <p style="color:rgba(255,255,255,0.7);font-size:0.9rem;font-weight:600;">Konfirmasi PIN Baru</p>
-            <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Ulangi PIN yang baru kamu buat</p>
-          </div>
-          <div class="pin-dots" id="fpConfDots">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-          </div>
-          <div class="keypad" id="fpConfKeypad"></div>
-          <div id="fpErr4" class="auth-error"></div>
-        </div>
-
-        <!-- Step indicator (4 titik) -->
-        <div style="display:flex;justify-content:center;gap:8px;margin-top:20px;">
-          <div id="fpsd1" style="width:8px;height:8px;border-radius:50%;background:#6366f1;transition:all 0.3s;"></div>
-          <div id="fpsd2" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-          <div id="fpsd3" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-          <div id="fpsd4" style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);transition:all 0.3s;"></div>
-        </div>
-      </div>
-
-      <!-- State 5: Loading (Pengecekan device → Verifikasi identitas → Memuat data) -->
-      <div id="loginLoading" class="auth-card" style="display:none;">
-        <div style="text-align:center;margin-bottom:24px;">
-          <div style="position:relative;width:72px;height:72px;margin:0 auto 16px;">
-            <div style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;animation:spin 1s linear infinite;"></div>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon">💰</div>
-          </div>
-          <h2 style="font-size:1.1rem;font-weight:800;color:#fff;" id="loadingTitle">Memverifikasi identitas</h2>
-          <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-top:4px;" id="loadingSubtitle">Mohon tunggu sebentar...</p>
-        </div>
-        <div id="authSteps" style="padding:0 8px;">
-          <div class="auth-step" id="step1">
-            <div class="step-icon"><div class="step-spinner"></div></div>
-            <span>Memeriksa ID perangkat...</span>
-          </div>
-          <div class="auth-step" id="step2" style="opacity:0.4;">
-            <div class="step-icon">2</div>
-            <span id="step2Txt">Memverifikasi identitas...</span>
-          </div>
-          <div class="auth-step" id="step3" style="opacity:0.4;">
-            <div class="step-icon">3</div>
-            <span>Memuat data keuangan pribadi...</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         COOL SHEET LOADING OVERLAY (Tampil saat refresh / memuat sheet)
-    ════════════════════════════════════════════════════════════════ -->
-    <div id="sheetLoadingOverlay" style="display:none;position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg, #090d16 0%, #0f172a 50%, #090d16 100%);flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s ease;overflow:hidden;backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);">
-      <!-- Floating glowing gradient ambient blobs -->
-      <div class="auth-blob auth-blob-1" style="background:#6366f1;opacity:0.25;top:-60px;right:-60px;"></div>
-      <div class="auth-blob auth-blob-2" style="background:#8b5cf6;opacity:0.22;bottom:-50px;left:-50px;"></div>
-      <div class="auth-blob auth-blob-3" style="background:#06b6d4;opacity:0.2;top:40%;left:45%;"></div>
-
-      <div class="animate-float-slow" style="position:relative;z-index:10;width:92%;max-width:390px;padding:36px 30px;border-radius:28px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);box-shadow:0 30px 70px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.15);display:flex;flex-direction:column;align-items:center;text-align:center;">
-        <!-- Animated 3D Floating Icon with Glowing Pulse Rings -->
-        <div style="position:relative;width:88px;height:88px;margin-bottom:20px;display:flex;align-items:center;justify-content:center;">
-          <div style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
-          <div style="position:absolute;inset:-4px;border-radius:26px;border:1.5px dashed rgba(129,140,248,0.5);animation:spin 12s linear infinite;"></div>
-          <div class="shimmer-glow" style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(79,70,229,0.5);border:2px solid rgba(255,255,255,0.25);">
-            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);">💰</span>
-          </div>
-        </div>
-
-        <!-- Title & Subtitle -->
-        <h2 style="font-size:1.35rem;font-weight:800;letter-spacing:-0.02em;background:linear-gradient(135deg, #ffffff 30%, #c7d2fe 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:0 0 6px 0;">
-          Keuangan Cerdas
-        </h2>
-        <p id="sheetLoadingSubtitle" style="font-size:0.82rem;color:#94a3b8;font-weight:500;margin:0 0 20px 0;min-height:20px;transition:all 0.3s;">
-          Menyinkronkan data Google Sheets...
-        </p>
-
-        <!-- Progress Track -->
-        <div style="width:100%;height:7px;background:rgba(255,255,255,0.08);border-radius:999px;overflow:hidden;position:relative;margin-bottom:20px;box-shadow:inset 0 1px 2px rgba(0,0,0,0.4);">
-          <div id="sheetLoadingBar" style="height:100%;width:35%;border-radius:999px;background:linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #06b6d4 100%);box-shadow:0 0 14px rgba(99,102,241,0.8);transition:width 0.4s ease-out;"></div>
-        </div>
-
-        <!-- Loading Steps Badges -->
-        <div style="width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:0.78rem;">
-          <div id="stepCloud" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">☁️</span>
-              <span style="color:#e2e8f0;font-weight:600;">Sambungan Spreadsheet</span>
-            </div>
-            <span id="stepCloudStatus" style="font-weight:700;color:#818cf8;display:flex;align-items:center;gap:5px;">
-              <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memeriksa
-            </span>
-          </div>
-
-          <div id="stepData" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">📊</span>
-              <span style="color:#e2e8f0;font-weight:600;">Data Transaksi & Anggaran</span>
-            </div>
-            <span id="stepDataStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
-          </div>
-
-          <div id="stepDash" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">✨</span>
-              <span style="color:#e2e8f0;font-weight:600;">Menyiapkan Dashboard</span>
-            </div>
-            <span id="stepDashStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
-          </div>
-        </div>
-
-        <!-- Security footer badge -->
-        <div style="margin-top:22px;display:flex;align-items:center;gap:6px;font-size:0.7rem;color:rgba(255,255,255,0.4);font-weight:500;">
-          <span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#4ade80;"></span>
-          <span>Perangkat terverifikasi &amp; data terenkripsi</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════════════════════════════════════════════════
-         APP UTAMA (dibungkus, hanya tampil setelah login)
-    ════════════════════════════════════════════════════════════════ -->
-    <div id="page-app">
-    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-lg">
-      <div
-        class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3"
-      >
-        <div>
-          <h1 class="text-lg font-extrabold tracking-tight">Keuangan Cerdas</h1>
-          <p
-            id="sync"
-            onclick="triggerManualSync()"
-            class="text-[11px] text-slate-400 flex items-center gap-1.5 cursor-pointer hover:text-indigo-300 transition"
-            title="Klik untuk menyinkronkan data Google Sheets"
-          >
-            <span id="dot" class="w-2 h-2 rounded-full bg-slate-500"></span
-            ><span id="syncTxt">Menghubungkan...</span>
-          </p>
-        </div>
-        <nav id="navTop" class="hidden md:flex gap-1"></nav>
-        <div class="flex items-center gap-2">
-          <button
-            onclick="openSambungan(false)"
-            class="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
-            aria-label="Pengaturan sambungan Google Sheets"
-            title="Sambungan Google Sheets"
-          >
-            ⚙️
-          </button>
-          <button onclick="openForm()" class="hidden md:block btn">
-            + Tambah transaksi
-          </button>
-        </div>
-      </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 mt-5">
-      <!-- DASHBOARD -->
-      <section id="v-Dashboard" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <div>
-            <h2 class="text-xl font-extrabold">Ringkasan keuangan</h2>
-            <p id="periode" class="text-xs text-slate-500"></p>
-          </div>
-          <select
-            onchange="setRange(this.value)"
-            class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
-          ></select>
-        </div>
-        <div id="kpi" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
-        <div id="notif" class="space-y-2"></div>
-        <div id="mini" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>
-        <div class="grid lg:grid-cols-2 gap-4 items-start">
-          <div class="card">
-            <h3 class="font-bold text-sm mb-3">
-              Tren harian: pemasukan vs pengeluaran
-            </h3>
-            <div class="h-64"><canvas id="cTren"></canvas></div>
-          </div>
-          <div class="space-y-4 lg:row-span-2">
-            <div class="card">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <h3 class="font-bold text-sm">Pengeluaran per kategori</h3>
-                <button id="katToggle_Pengeluaran" onclick="toggleKat('Pengeluaran')" class="hidden text-xs font-bold text-indigo-600 whitespace-nowrap"></button>
-              </div>
-              <div class="h-64"><canvas id="cKat"></canvas></div>
-              <div id="katList_Pengeluaran" class="hidden mt-4 space-y-2"></div>
-            </div>
-            <div class="card">
-              <div class="flex items-center justify-between gap-2 mb-3">
-                <h3 class="font-bold text-sm">Pemasukan per kategori</h3>
-                <button id="katToggle_Pemasukan" onclick="toggleKat('Pemasukan')" class="hidden text-xs font-bold text-indigo-600 whitespace-nowrap"></button>
-              </div>
-              <div class="h-64"><canvas id="cKatIn"></canvas></div>
-              <div id="katList_Pemasukan" class="hidden mt-4 space-y-2"></div>
-            </div>
-          </div>
-          <div class="card">
-            <h3 class="font-bold text-sm mb-3">Arus kas 6 bulan terakhir</h3>
-            <div class="h-64"><canvas id="cBulan"></canvas></div>
-          </div>
-          <div class="card lg:col-span-2">
-            <h3 class="font-bold text-sm mb-3">Pertumbuhan saldo</h3>
-            <div class="h-64"><canvas id="cSaldo"></canvas></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- TRANSAKSI -->
-      <section id="v-Transaksi" class="hidden space-y-4">
-        <div class="card space-y-3">
-          <div class="flex items-center justify-between gap-2">
-            <h2 class="text-lg font-extrabold">
-              Transaksi
-              <span id="cnt" class="text-slate-400 font-medium text-sm"></span>
-            </h2>
-            <div class="flex gap-2">
-              <button id="btnSelMode" onclick="toggleSelMode()" class="act">
-                ☑️ Pilih
-              </button>
-              <button onclick="printReport()" class="btn !py-2">
-                🖨️ Cetak PDF
-              </button>
-            </div>
-          </div>
-          <div class="flex flex-col sm:flex-row gap-2">
-            <select
-              onchange="setRange(this.value)"
-              class="rangeSel inp sm:!w-56 font-semibold"
-            ></select>
-            <input
-              id="q"
-              oninput="
-                S.q = this.value.toLowerCase();
-                renderList();
-              "
-              placeholder="Cari nama, kategori, catatan..."
-              class="inp sm:flex-1"
-            />
-          </div>
-          <div id="chips" class="flex gap-2"></div>
-          <p id="lsum" class="text-xs text-slate-500"></p>
-          <div class="overflow-x-auto -mx-2">
-            <table class="w-full text-sm">
-              <thead>
-                <tr
-                  class="text-left text-xs text-slate-400 border-b border-slate-100"
-                >
-                  <th id="thSel" class="p-2 w-8 hidden">
-                    <input
-                      type="checkbox"
-                      id="chkAll"
-                      onchange="selAllToggle(this.checked)"
-                      class="w-4 h-4 rounded accent-indigo-600"
-                      aria-label="Pilih semua"
-                    />
-                  </th>
-                  <th class="p-2 font-semibold hidden md:table-cell">
-                    Tanggal
-                  </th>
-                  <th class="p-2 font-semibold">Transaksi</th>
-                  <th class="p-2 font-semibold hidden md:table-cell">
-                    Kategori
-                  </th>
-                  <th class="p-2 font-semibold hidden lg:table-cell">
-                    Catatan
-                  </th>
-                  <th class="p-2 font-semibold text-right">Nominal</th>
-                  <th class="p-2"></th>
-                </tr>
-              </thead>
-              <tbody id="tbody" class="divide-y divide-slate-50"></tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      <!-- LAPORAN -->
-      <section id="v-Laporan" class="hidden space-y-4">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <h2 class="text-xl font-extrabold">Laporan keuangan</h2>
-          <div class="flex gap-2">
-            <select
-              onchange="setRange(this.value)"
-              class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
-            ></select>
-            <button onclick="printReport()" class="btn !py-2">
-              🖨️ Cetak / Simpan PDF
-            </button>
-          </div>
-        </div>
-        <div id="lKpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card">
-            <h3 class="font-extrabold mb-3">Rekap bulanan</h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-sm">
-                <thead>
-                  <tr
-                    class="text-left text-xs text-slate-400 border-b border-slate-100"
-                  >
-                    <th class="p-2 font-semibold">Bulan</th>
-                    <th class="p-2 font-semibold text-right">Masuk</th>
-                    <th class="p-2 font-semibold text-right">Keluar</th>
-                    <th class="p-2 font-semibold text-right">Selisih</th>
-                  </tr>
-                </thead>
-                <tbody id="tRekap" class="divide-y divide-slate-50"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="space-y-4">
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pengeluaran terbesar</h3>
-              <div id="lKat" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pengeluaran terkecil</h3>
-              <div id="lKatMin" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pemasukan terbesar</h3>
-              <div id="lKatInMax" class="space-y-3"></div>
-            </div>
-            <div class="card">
-              <h3 class="font-extrabold mb-3">Kategori pemasukan terkecil</h3>
-              <div id="lKatInMin" class="space-y-3"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- PINTAR -->
-      <section id="v-Pintar" class="hidden space-y-4">
-        <div>
-          <h2 class="text-xl font-extrabold">Asisten keuangan pintar</h2>
-          <p class="text-xs text-slate-500">
-            Dianalisis otomatis dari data bulan berjalan
-          </p>
-        </div>
-        <div class="grid lg:grid-cols-3 gap-4">
-          <div class="card text-center">
-            <h3 class="font-bold text-sm">Skor kesehatan keuangan</h3>
-            <div class="relative h-32 mt-3">
-              <canvas id="cSkor"></canvas>
-              <div class="absolute inset-x-0 bottom-0">
-                <p
-                  id="skorNum"
-                  class="text-3xl font-extrabold leading-none"
-                ></p>
-                <p id="skorLbl" class="text-xs font-bold"></p>
-              </div>
-            </div>
-            <div id="skorParts" class="space-y-2 mt-4 text-left"></div>
-          </div>
-          <div class="card lg:col-span-2">
-            <h3 class="font-bold mb-3">Peringatan</h3>
-            <div id="pAlerts" class="space-y-2"></div>
-          </div>
-        </div>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card">
-            <h3 class="font-bold mb-3">Saran untuk Anda</h3>
-            <ul id="pTips" class="space-y-2.5 text-sm"></ul>
-          </div>
-          <div class="card">
-            <div class="flex justify-between items-center mb-3">
-              <h3 class="font-bold">Target tabungan</h3>
-              <button onclick="formTarget()" class="btn !py-1.5 !px-3 !text-xs">
-                + Tambah target
-              </button>
-            </div>
-            <div id="pTarget" class="space-y-3"></div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="flex justify-between items-center mb-3">
-            <h3 class="font-bold">Anggaran bulan ini</h3>
-            <button onclick="formAnggaran()" class="btn !py-1.5 !px-3 !text-xs">
-              + Tambah anggaran
-            </button>
-          </div>
-          <div id="pBudget" class="grid sm:grid-cols-2 gap-3"></div>
-        </div>
-      </section>
-
-      <!-- PENGATURAN -->
-      <section id="v-Pengaturan" class="hidden space-y-4">
-        <h2 class="text-xl font-extrabold">Pengaturan</h2>
-        <div class="grid lg:grid-cols-2 gap-4">
-          <div class="card space-y-3">
-            <h3 class="font-bold">Peringatan dan target</h3>
-            <div id="setForm" class="space-y-3"></div>
-            <button onclick="saveSet()" class="btn w-full">
-              Simpan pengaturan
-            </button>
-          </div>
-          <div class="space-y-4">
-            <div class="card">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold">Anggaran per kategori</h3>
-                <button onclick="formAnggaran()" class="chip on">
-                  + Tambah
-                </button>
-              </div>
-              <div id="setBudget" class="space-y-2"></div>
-            </div>
-            <div class="card">
-              <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold">Kategori</h3>
-                <button onclick="formKategori()" class="chip on">
-                  + Tambah
-                </button>
-              </div>
-              <div id="setKat" class="flex flex-wrap gap-2"></div>
-            </div>
-            <div class="card space-y-3">
-              <h3 class="font-bold">Sinkronisasi data</h3>
-              <p class="text-xs text-slate-400">
-                Data disinkronkan dengan Google Sheets setiap 8 detik, termasuk
-                perubahan yang Anda ketik langsung di sheet.
-              </p>
-              <button
-                onclick="
-                  refresh(true).then((ok) =>
-                    Toast.fire({
-                      icon: ok ? 'success' : 'error',
-                      title: ok ? 'Data disegarkan' : 'Gagal menyegarkan data',
-                    }),
-                  )
-                "
-                class="btn !bg-slate-200 !text-slate-700 hover:!bg-slate-300"
-              >
-                Segarkan data
-              </button>
-            </div>
-            <div class="card space-y-3">
-              <h3 class="font-bold">Akun</h3>
-              <div id="akunInfo" class="text-sm text-slate-600 space-y-1">
-                <p>👤 <span id="akunNama" class="font-semibold">-</span></p>
-                <p class="text-slate-400 text-xs" id="akunEmail">-</p>
-              </div>
-              <div class="flex flex-col gap-2">
-                <button
-                  onclick="ubahPin()"
-                  class="btn !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 !shadow-none"
-                >
-                  🔑 Ubah PIN
-                </button>
-                <button
-                  onclick="doLogout()"
-                  class="btn !bg-rose-50 !text-rose-600 hover:!bg-rose-100 !shadow-none"
-                >
-                  🚪 Keluar dari akun
-                </button>
-                <button
-                  id="btnHapusBio"
-                  onclick="hapusBiometric()"
-                  class="btn !bg-slate-100 !text-slate-600 hover:!bg-slate-200 !shadow-none hidden"
-                >
-                  🫆 Hapus sidik jari tersimpan
-                </button>
-                <button
-                  onclick="offerBiometric()"
-                  id="btnDaftarBio"
-                  class="btn !bg-indigo-50 !text-indigo-600 hover:!bg-indigo-100 !shadow-none"
-                >
-                  🫆 Daftarkan sidik jari
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-    </main>
-
-    <!-- Mobile: satu FAB gabungan (tekan untuk membuka pilihan Tambah / Suara) -->
-    <div
-      id="fabMobile"
-      class="md:hidden fixed right-4 bottom-24 z-40 flex flex-col items-end gap-3"
-    >
-      <button
-        id="fabAdd"
-        onclick="closeFabMenu(); openForm()"
-        class="w-12 h-12 rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
-        aria-label="Tambah transaksi"
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-5 h-5 block m-auto"
-        >
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
-      <button
-        id="fabVoice"
-        onclick="closeFabMenu(); openVoice()"
-        class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-lg shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
-        aria-label="Catat dengan suara"
-      >
-        🎙️
-      </button>
-      <button
-        id="fabMain"
-        onclick="toggleFabMenu()"
-        class="w-14 h-14 rounded-full bg-indigo-600 text-white opacity-60 shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center"
-        aria-label="Buka menu tambah transaksi"
-      >
-        <svg
-          id="fabMainIcon"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          class="w-6 h-6 block m-auto transition-transform duration-200"
-        >
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
-    </div>
-    <!-- Desktop: tombol mengambang catat transaksi dengan suara (mobile pakai FAB gabungan di atas) -->
-    <button
-      onclick="openVoice()"
-      class="hidden md:flex fixed right-6 bottom-6 z-40 w-14 h-14 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-2xl shadow-xl shadow-indigo-400/50 active:scale-90 transition items-center justify-center"
-      aria-label="Catat dengan suara"
-      title="Catat dengan suara"
-    >
-      🎙️
-    </button>
-    <nav
-      id="navBottom"
-      class="md:hidden fixed bottom-3 inset-x-3 z-40 bg-white/90 backdrop-blur-xl border border-slate-100 rounded-3xl shadow-[0_10px_36px_rgba(15,23,42,0.16)] flex justify-around items-center px-1.5 py-1.5"
-      style="padding-bottom: max(0.375rem, env(safe-area-inset-bottom))"
-    ></nav>
-
-    <!-- Tombol & panel list mengambang (hanya tampak saat form tambah dengan jumlah data > 1) -->
-    <button
-      id="btnListFloat"
-      onclick="toggleListPanel()"
-      class="hidden fixed right-4 bottom-20 z-[60] w-12 h-12 rounded-full bg-slate-900 text-white shadow-xl active:scale-90 transition flex items-center justify-center"
-      aria-label="Daftar data"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        class="w-5 h-5 block m-auto"
-      >
-        <line x1="8" y1="6" x2="21" y2="6"></line>
-        <line x1="8" y1="12" x2="21" y2="12"></line>
-        <line x1="8" y1="18" x2="21" y2="18"></line>
-        <line x1="3" y1="6" x2="3.01" y2="6"></line>
-        <line x1="3" y1="12" x2="3.01" y2="12"></line>
-        <line x1="3" y1="18" x2="3.01" y2="18"></line>
-      </svg>
-    </button>
-    <div
-      id="listPanel"
-      class="hidden fixed right-4 bottom-36 z-[60] w-52 max-h-72 overflow-y-auto bg-white rounded-2xl shadow-2xl border border-slate-100 p-2 space-y-1"
-    ></div>
-
-    <!-- Bar aksi mengambang: muncul saat mode "Pilih" aktif dan ada data tercentang -->
-    <div
-      id="selBar"
-      class="hidden fixed inset-x-3 bottom-24 md:inset-x-auto md:right-6 md:left-auto md:w-80 z-50 bg-slate-900 text-white rounded-2xl shadow-2xl px-4 py-3 flex items-center justify-between gap-3"
-    >
-      <span id="selCount" class="text-sm font-semibold"></span>
-      <div class="flex gap-2">
-        <button
-          onclick="bulkEdit()"
-          class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition"
-        >
-          ✏️ Edit
-        </button>
-        <button
-          onclick="bulkDelete()"
-          class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold transition"
-        >
-          🗑️ Hapus
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal form transaksi -->
-    <div
-      id="modal"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeForm();"
-    >
-      <div
-        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl flex flex-col max-h-[94vh] overflow-hidden shadow-2xl relative"
-      >
-        <!-- Floating Header Container (Flush to top, Jumlah data langsung menempel di bawah judul) -->
-        <div class="shrink-0 bg-slate-50/95 backdrop-blur-md px-5 pt-4 pb-2.5 z-20 relative">
-          <div class="flex justify-between items-center">
-            <h3 id="mTitle" class="font-extrabold text-lg text-slate-800"></h3>
-            <button
-              onclick="closeForm()"
-              class="w-8 h-8 rounded-full bg-slate-200/60 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition"
-              aria-label="Tutup"
-            >
-              ×
-            </button>
-          </div>
-
-          <!-- Jumlah data: dempet tepat di bawah judul, hanya muncul saat menambah transaksi baru (bukan edit) -->
-          <div id="jumlahWrap" class="hidden pt-2.5">
-            <label class="lbl text-slate-600 font-semibold"
-              >Jumlah data yang ingin ditambahkan</label
-            >
-            <div class="flex items-stretch gap-2 mt-1">
-              <button
-                type="button"
-                onclick="stepJumlah(-1)"
-                class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
-                aria-label="Kurangi jumlah"
-              >
-                <span class="block translate-y-[-1px]">&minus;</span>
-              </button>
-              <input
-                id="fJumlah"
-                type="number"
-                min="1"
-                max="50"
-                step="1"
-                inputmode="numeric"
-                value="1"
-                class="inp no-spinner font-extrabold text-center text-lg !bg-white border-indigo-100"
-                oninput="onJumlahChange(this.value)"
-              />
-              <button
-                type="button"
-                onclick="stepJumlah(1)"
-                class="w-11 shrink-0 rounded-2xl border border-indigo-100 bg-white text-xl font-bold text-slate-600 hover:bg-slate-100 active:scale-95 transition flex items-center justify-center leading-none shadow-sm"
-                aria-label="Tambah jumlah"
-              >
-                <span class="block translate-y-[-1px]">+</span>
-              </button>
-            </div>
-            <p class="text-[11px] text-slate-400 mt-1">
-              Ubah angka ini untuk menambah beberapa transaksi sekaligus (maks.
-              50).
-            </p>
-          </div>
-
-          <!-- Pembatas elegan: memisahkan area mengambang (judul + jumlah data) dari area input di bawahnya -->
-          <div class="modal-divider mt-3.5 -mx-5"></div>
-        </div>
-
-        <!-- Scrollable Form Body -->
-        <div class="flex-1 overflow-y-auto p-5 pt-4 space-y-3">
-          <!-- Mode edit: 1 transaksi -->
-          <div id="editWrap" class="hidden space-y-3">
-            <div class="grid grid-cols-2 gap-2" id="segJenis"></div>
-            <div>
-              <label class="lbl">Nama transaksi</label
-              ><input
-                id="fNama"
-                class="inp"
-                placeholder="Contoh: Makan siang"
-              />
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="lbl">Nominal (Rp)</label
-                ><input
-                  id="fNom"
-                  type="number"
-                  inputmode="numeric"
-                  class="inp"
-                  placeholder="0"
-                />
-              </div>
-              <div>
-                <label class="lbl">Kategori</label
-                ><input
-                  id="fKat"
-                  list="dlKat"
-                  class="inp"
-                  placeholder="Makanan"
-                />
-              </div>
-            </div>
-            <div>
-              <label class="lbl">Tanggal & waktu</label
-              ><input id="fTgl" type="datetime-local" class="inp" />
-            </div>
-            <div>
-              <label class="lbl">Catatan (opsional)</label
-              ><input id="fKet" class="inp" placeholder="Catatan tambahan" />
-            </div>
-          </div>
-
-          <!-- Mode tambah: bisa banyak transaksi sekaligus -->
-          <div id="multiWrap" class="hidden space-y-3"></div>
-          <datalist id="dlKat"></datalist>
-        </div>
-
-        <!-- Floating Footer Container (dempet ke paling bawah, tanpa celah tambahan) -->
-        <div
-          class="shrink-0 bg-slate-50/95 backdrop-blur-md px-4 pt-3 z-20 relative"
-          style="padding-bottom: max(0.75rem, env(safe-area-inset-bottom))"
-        >
-          <div class="modal-divider absolute top-0 left-4 right-4"></div>
-          <button
-            onclick="saveForm()"
-            class="btn w-full !py-3.5 font-bold text-base shadow-md shadow-indigo-600/20"
-          >
-            Simpan transaksi
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal target tabungan (tambah / edit) -->
-    <div
-      id="mTarget"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeTarget();"
-    >
-      <div
-        class="bg-white w-full md:max-w-lg rounded-t-3xl md:rounded-3xl p-5 max-h-[92vh] overflow-y-auto space-y-3"
-      >
-        <div class="flex justify-between items-center">
-          <h3 id="tgTitle" class="font-extrabold text-lg"></h3>
-          <button
-            onclick="closeTarget()"
-            class="text-slate-400 text-2xl leading-none"
-            aria-label="Tutup"
-          >
-            ×
-          </button>
-        </div>
-        <div>
-          <label class="lbl" for="tgN">Nama target</label
-          ><input
-            id="tgN"
-            class="inp"
-            maxlength="60"
-            placeholder="Contoh: Dana darurat"
-          />
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="lbl" for="tgT">Target (Rp)</label
-            ><input
-              id="tgT"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              class="inp"
-              placeholder="10000000"
-              oninput="previewTarget()"
-            />
-          </div>
-          <div>
-            <label class="lbl" for="tgC">Sudah terkumpul (Rp)</label
-            ><input
-              id="tgC"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              class="inp"
-              placeholder="0"
-              oninput="previewTarget()"
-            />
-          </div>
-        </div>
-        <div>
-          <label class="lbl" for="tgD">Tenggat (opsional)</label
-          ><input id="tgD" type="date" class="inp" />
-        </div>
-        <div>
-          <div
-            class="flex justify-between text-xs font-semibold text-slate-500 mb-1"
-          >
-            <span>Progres</span><span id="tgPct">0%</span>
-          </div>
-          <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              id="tgBar"
-              class="h-full rounded-full transition-all duration-500"
-              style="width: 0%; background: #4f46e5"
-            ></div>
-          </div>
-        </div>
-        <div class="flex gap-2 pt-1">
-          <button
-            id="tgDel"
-            onclick="hapusDariForm()"
-            class="hidden px-4 py-3 rounded-2xl text-sm font-semibold bg-rose-50 text-rose-600 hover:bg-rose-100 active:scale-95 transition"
-          >
-            Hapus
-          </button>
-          <button onclick="saveTarget()" class="btn flex-1 !py-3">
-            Simpan target
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal setoran ke target -->
-    <div
-      id="mSetor"
-      class="hidden fixed inset-0 z-50 bg-slate-900/50 flex items-end md:items-center justify-center"
-      onclick="if (event.target === this) closeSetor();"
-    >
-      <div
-        class="bg-white w-full md:max-w-sm rounded-t-3xl md:rounded-3xl p-5 space-y-3"
-      >
-        <div class="flex justify-between items-center">
-          <h3 id="sgTitle" class="font-extrabold text-lg truncate"></h3>
-          <button
-            onclick="closeSetor()"
-            class="text-slate-400 text-2xl leading-none"
-            aria-label="Tutup"
-          >
-            ×
-          </button>
-        </div>
-        <p id="sgInfo" class="text-xs text-slate-500"></p>
-        <div>
-          <label class="lbl" for="sgJml">Jumlah setoran (Rp)</label
-          ><input
-            id="sgJml"
-            type="number"
-            inputmode="numeric"
-            min="0"
-            class="inp"
-            placeholder="0"
-          />
-        </div>
-        <button onclick="isiSisa()" class="act pri">Isi sisa target</button>
-        <button onclick="saveSetor()" class="btn w-full !py-3">
-          Simpan setoran
-        </button>
-      </div>
-    </div>
-
-    <!-- Modal catat transaksi dengan suara -->
-    <div
-      id="mVoice"
-      class="hidden fixed inset-0 z-[70] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
-      onclick="if (event.target === this) closeVoice();"
-    >
-      <div
-        class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl relative overflow-y-auto max-h-[92vh]"
-      >
-        <button
-          onclick="closeVoice()"
-          class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xl leading-none transition z-10"
-          aria-label="Tutup"
-        >
-          ×
-        </button>
-
-        <!-- State: mendengarkan -->
-        <div id="voiceListen" class="flex flex-col items-center text-center pt-2">
-          <h3 class="font-extrabold text-lg text-slate-800 mb-1">
-            Catat dengan Suara
-          </h3>
-          <p class="text-xs text-slate-400 mb-5">
-            Bicara natural saja, contoh: "makan siang 25 ribu karena lapar"
-          </p>
-          <p class="text-[11px] text-indigo-500 font-semibold -mt-3 mb-4 bg-indigo-50 rounded-xl px-3 py-2">
-            💡 Bisa lebih dari 1 transaksi: sebut "lalu" di antaranya. Contoh: "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
-          </p>
-
-          <div class="relative w-32 h-32 flex items-center justify-center mb-5">
-            <span class="voice-ring"></span>
-            <span class="voice-ring" style="animation-delay: 0.6s"></span>
-            <span class="voice-ring" style="animation-delay: 1.2s"></span>
-            <div
-              id="voiceMicWrap"
-              class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40"
-            >
-              🎙️
-            </div>
-          </div>
-
-          <div id="voiceBars" class="flex items-end justify-center gap-1 h-8 mb-4">
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-            <span class="voice-bar"></span>
-          </div>
-
-          <p id="voiceStatus" class="text-xs font-semibold text-indigo-600 mb-2">
-            Menyiapkan mikrofon...
-          </p>
-          <div
-            class="w-full min-h-[3rem] rounded-2xl bg-slate-50 border border-slate-100 px-4 py-3 text-sm text-slate-700"
-          >
-            <span id="voiceTranscript" class="italic text-slate-400"
-              >Silakan bicara...</span
-            >
-          </div>
           <button
             onclick="voiceStop()"
-            class="btn !py-3 mt-4 w-full"
+            class="btn !py-3 mt-4 w-full inline-flex items-center justify-center gap-1.5"
           >
-            ✓ Selesai
+            <svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <span>Selesai</span>
           </button>
         </div>
 
@@ -1853,15 +776,17 @@
           <div class="flex gap-2 pt-1">
             <button
               onclick="voiceRetry()"
-              class="px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition shrink-0"
+              class="px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition shrink-0 inline-flex items-center gap-1.5"
             >
-              🎙️ Ulangi
+              <svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Ulangi</span>
             </button>
             <button
               onclick="voiceMore()"
-              class="flex-1 px-4 py-3 rounded-2xl text-sm font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:scale-95 transition"
+              class="flex-1 px-4 py-3 rounded-2xl text-sm font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:scale-95 transition inline-flex items-center justify-center gap-1.5"
             >
-              ➕ Tambah data lagi
+              <svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              <span>Tambah data lagi</span>
             </button>
           </div>
           <button id="voiceSaveBtn" onclick="voiceSave()" class="btn w-full !py-3">
@@ -1907,12 +832,31 @@
         selMode: false,
         sel: new Set(),
       };
+      /* ---------- SVG Icons Koleksi Modern & Tren (Lucide/Heroicons) ---------- */
+      const SVG_ICONS = {
+        home: '<svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+        receipt: '<svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"/></svg>',
+        trending: '<svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+        sparkles: '<svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>',
+        settings: '<svg class="w-5 h-5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+        edit: '<svg class="w-3.5 h-3.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>',
+        trash: '<svg class="w-3.5 h-3.5 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>',
+        plus: '<svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>',
+        check: '<svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>',
+        close: '<svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>',
+        danger: '<svg class="w-4 h-4 inline-block text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        warn: '<svg class="w-4 h-4 inline-block text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>',
+        info: '<svg class="w-4 h-4 inline-block text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        ok: '<svg class="w-4 h-4 inline-block text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+        bulb: '<svg class="w-4 h-4 inline-block text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>'
+      };
+
       const TABS = [
-        ["Dashboard", "🏠"],
-        ["Transaksi", "🧾"],
-        ["Laporan", "📈"],
-        ["Pintar", "💡"],
-        ["Pengaturan", "⚙️"],
+        ["Dashboard", "home"],
+        ["Transaksi", "receipt"],
+        ["Laporan", "trending"],
+        ["Pintar", "sparkles"],
+        ["Pengaturan", "settings"],
       ];
       const PAL = [
         "#4F46E5",
@@ -2253,20 +1197,20 @@
 
       /* ---------- Navigasi ---------- */
       function renderNav() {
-        const t = (on, tab, ic) =>
-          on
-            ? `<button onclick="tabTo('${tab}')" class="px-3 py-1.5 rounded-full text-sm font-semibold ${S.tab === tab ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}">${tab}</button>`
-            : `<button onclick="tabTo('${tab}')" class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-2xl text-[10px] font-bold transition ${S.tab === tab ? "text-indigo-600" : "text-slate-400"}">
+        const t = (top, tab, icKey) =>
+          top
+            ? `<button onclick="tabTo('${tab}')" class="px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center gap-1.5 ${S.tab === tab ? "bg-white text-indigo-900 shadow-sm" : "text-white/80 hover:text-white hover:bg-white/10"}">
+                <span>${SVG_ICONS[icKey] || ""}</span>
+                <span>${tab}</span>
+              </button>`
+            : `<button onclick="tabTo('${tab}')" class="relative flex flex-col items-center gap-0.5 text-[10px] font-bold transition py-1 px-2.5 rounded-2xl ${S.tab === tab ? "text-indigo-600 font-extrabold" : "text-slate-400 hover:text-slate-600"}">
                 ${S.tab === tab ? '<span class="absolute top-0.5 w-1.5 h-1.5 rounded-full bg-indigo-600"></span>' : ""}
-                <span class="flex items-center justify-center w-9 h-9 rounded-2xl text-lg transition ${S.tab === tab ? "bg-indigo-50" : ""}">${ic}</span>
+                <span class="flex items-center justify-center w-8 h-8 rounded-xl transition ${S.tab === tab ? "bg-indigo-50 text-indigo-600" : "text-slate-400"}">${SVG_ICONS[icKey] || ""}</span>
                 <span>${tab}</span>
               </button>`;
-        $("navTop").innerHTML = TABS.map((x) => t(true, x[0])).join("");
-        $("navBottom").innerHTML = TABS.map((x) => t(false, x[0], x[1])).join(
-          "",
-        );
-      }
-      function tabTo(t) {
+        $("navTop").innerHTML = TABS.map((x) => t(true, x[0], x[1])).join("");
+        $("navBottom").innerHTML = TABS.map((x) => t(false, x[0], x[1])).join("");
+      }function tabTo(t) {
         S.tab = t;
         TABS.forEach((x) =>
           $("v-" + x[0]).classList.toggle("hidden", x[0] !== t),
@@ -2540,7 +1484,7 @@
       <td class="p-2 hidden md:table-cell"><span class="chip">${esc(t.kategori)}</span></td>
       <td class="p-2 text-xs text-slate-500 hidden lg:table-cell">${esc(t.keterangan) || "-"}</td>
       <td class="p-2 text-right font-bold whitespace-nowrap ${c}">${inc ? "+" : "-"}${rp(t.nominal)}</td>
-      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5" aria-label="Edit">✏️</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5" aria-label="Hapus">🗑️</button></td></tr>`;
+      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5 text-slate-400 hover:text-indigo-600 transition inline-flex items-center" aria-label="Edit">${SVG_ICONS.edit}</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5 text-slate-400 hover:text-rose-600 transition inline-flex items-center" aria-label="Hapus">${SVG_ICONS.trash}</button></td></tr>`;
               })
               .join("")
           : `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada transaksi yang cocok. Tekan + untuk menambah.</td></tr>`;
@@ -2552,7 +1496,7 @@
         S.selMode = on;
         if (!on) S.sel.clear();
         $("thSel").classList.toggle("hidden", !on);
-        $("btnSelMode").textContent = on ? "✕ Batal pilih" : "☑️ Pilih";
+        $("btnSelMode").innerHTML = on ? `${SVG_ICONS.close} <span>Batal pilih</span>` : `${SVG_ICONS.check} <span>Pilih</span>`;
         $("btnSelMode").classList.toggle("pri", on);
         if (!on) $("chkAll").checked = false;
         renderList();
@@ -2756,6 +1700,160 @@
           .join("");
       }
 
+      
+      /* ---------- Helper Kategori Otomatis & Ghost Text Autocomplete ---------- */
+      function getCategoryType(catName) {
+        if (!catName) return null;
+        const name = String(catName).trim().toLowerCase();
+        const found = (S.data.kategori || []).find(
+          (k) => String(k.nama || "").trim().toLowerCase() === name
+        );
+        return found ? found.tipe : null;
+      }
+
+      function onCategoryChanged(val, mode) {
+        const t = getCategoryType(val);
+        if (!t) return;
+        if (mode === "single") {
+          setJenis(t);
+        } else if (typeof mode === "number") {
+          if (multiData[mode]) {
+            multiData[mode].jenis = t;
+            renderMulti();
+          }
+        } else if (typeof mode === "string" && mode.startsWith("voice_")) {
+          const idx = parseInt(mode.replace("voice_", ""), 10);
+          if (Vst.items[idx]) {
+            Vst.items[idx].jenis = t;
+            renderVoiceItems_();
+          }
+        }
+      }
+
+      let currentSuggestions = {};
+
+      function getBestPrediction(query) {
+        const q = String(query || "").trim().toLowerCase();
+        if (!q || q.length < 1) return null;
+
+        const history = [];
+        const seen = new Set();
+        (S.data.trx || []).forEach((t) => {
+          const name = String(t.nama || "").trim();
+          if (name && !seen.has(name.toLowerCase())) {
+            seen.add(name.toLowerCase());
+            history.push({
+              nama: name,
+              kategori: t.kategori || "",
+              jenis: t.jenis || ""
+            });
+          }
+        });
+
+        (S.data.kategori || []).forEach((k) => {
+          const kn = String(k.nama || "").trim();
+          if (kn && !seen.has(kn.toLowerCase())) {
+            seen.add(kn.toLowerCase());
+            history.push({
+              nama: kn,
+              kategori: kn,
+              jenis: k.tipe || "Pengeluaran"
+            });
+          }
+        });
+
+        const match = history.find(
+          (h) => h.nama.toLowerCase().startsWith(q) && h.nama.toLowerCase() !== q
+        );
+        if (match) return match;
+
+        const subMatch = history.find(
+          (h) => h.nama.toLowerCase().includes(q) && h.nama.toLowerCase() !== q
+        );
+        return subMatch || null;
+      }
+
+      function onNamaInput(el, mode) {
+        const val = el.value;
+        const ghostEl = $(mode === "single" ? "fNamaGhost" : "mNamaGhost_" + mode);
+        const chipEl = $(mode === "single" ? "fNamaChip" : "mNamaChip_" + mode);
+        const chipText = $(mode === "single" ? "fNamaChipText" : "mNamaChipText_" + mode);
+
+        if (!val || !val.trim()) {
+          if (ghostEl) ghostEl.classList.add("hidden");
+          if (chipEl) chipEl.classList.add("hidden");
+          currentSuggestions[mode] = null;
+          return;
+        }
+
+        const pred = getBestPrediction(val);
+        if (pred) {
+          currentSuggestions[mode] = pred;
+          if (ghostEl) {
+            ghostEl.classList.remove("hidden");
+            if (pred.nama.toLowerCase().startsWith(val.toLowerCase())) {
+              const typedPart = pred.nama.slice(0, val.length);
+              const restPart = pred.nama.slice(val.length);
+              ghostEl.innerHTML = `<span style="opacity:0;">${esc(typedPart)}</span><span class="text-slate-400 font-medium">${esc(restPart)}</span>`;
+            } else {
+              ghostEl.innerHTML = `<span style="opacity:0;">${esc(val)}</span> <span class="text-slate-400 font-medium">(${esc(pred.nama)})</span>`;
+            }
+          }
+          if (chipEl && chipText) {
+            chipEl.classList.remove("hidden");
+            chipText.textContent = pred.nama + (pred.kategori ? " (" + pred.kategori + ")" : "");
+          }
+        } else {
+          currentSuggestions[mode] = null;
+          if (ghostEl) ghostEl.classList.add("hidden");
+          if (chipEl) chipEl.classList.add("hidden");
+        }
+      }
+
+      function onNamaKeydown(e, el, mode) {
+        if (e.key === "Tab" || (e.key === "ArrowRight" && el.selectionStart === el.value.length)) {
+          if (currentSuggestions[mode]) {
+            e.preventDefault();
+            acceptGhost(mode);
+          }
+        }
+      }
+
+      function acceptGhost(mode) {
+        const pred = currentSuggestions[mode];
+        if (!pred) return;
+
+        if (mode === "single") {
+          $("fNama").value = pred.nama;
+          if (pred.kategori) {
+            $("fKat").value = pred.kategori;
+            const t = getCategoryType(pred.kategori) || pred.jenis;
+            if (t) setJenis(t);
+          }
+          onNamaInput($("fNama"), "single");
+          $("fNama").focus();
+        } else {
+          const i = mode;
+          const inp = $("mNama_" + i);
+          if (inp) {
+            inp.value = pred.nama;
+            multiData[i].nama = pred.nama;
+            if (pred.kategori) {
+              $("mKat_" + i).value = pred.kategori;
+              multiData[i].kategori = pred.kategori;
+              const t = getCategoryType(pred.kategori) || pred.jenis;
+              if (t) {
+                multiData[i].jenis = t;
+                renderMulti();
+              }
+            }
+            onNamaInput(inp, i);
+            const refInp = $("mNama_" + i);
+            if (refInp) refInp.focus();
+          }
+        }
+      }
+
       /* ---------- Form CRUD transaksi ---------- */
       function setJenis(j) {
         S.jf = j;
@@ -2850,19 +1948,28 @@
         $("multiWrap").innerHTML = multiData
           .map(
             (e, i) => `
-    <div id="entry_${i}" class="rounded-2xl border border-slate-100 p-3 space-y-2 scroll-mt-28 transition">
+    <div id="entry_${i}" class="rounded-2xl border border-slate-100 p-3 space-y-2 scroll-mt-28 transition bg-slate-50/50">
       <div class="flex items-center justify-between">
         <p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>
-        ${multiData.length > 1 ? `<button type="button" onclick="hapusEntry(${i})" class="text-xs font-semibold text-rose-500">Hapus</button>` : ""}
+        ${multiData.length > 1 ? `<button type="button" onclick="hapusEntry(${i})" class="text-xs font-semibold text-rose-500 inline-flex items-center gap-1">${SVG_ICONS.trash} Hapus</button>` : ""}
       </div>
       <div class="grid grid-cols-2 gap-2">
-        <button type="button" onclick="setMultiJenis(${i},'Pengeluaran')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pengeluaran" ? "bg-rose-500 text-white" : "bg-slate-100 text-slate-500"}">Pengeluaran</button>
-        <button type="button" onclick="setMultiJenis(${i},'Pemasukan')" class="py-2 rounded-xl text-xs font-bold ${e.jenis === "Pemasukan" ? "bg-emerald-500 text-white" : "bg-slate-100 text-slate-500"}">Pemasukan</button>
+        <button type="button" onclick="setMultiJenis(${i},'Pengeluaran')" class="py-2 rounded-xl text-xs font-bold transition ${e.jenis === "Pengeluaran" ? "bg-rose-500 text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}">Pengeluaran</button>
+        <button type="button" onclick="setMultiJenis(${i},'Pemasukan')" class="py-2 rounded-xl text-xs font-bold transition ${e.jenis === "Pemasukan" ? "bg-emerald-500 text-white shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}">Pemasukan</button>
       </div>
-      <input id="mNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(e.nama)}" oninput="multiData[${i}].nama=this.value">
+      <div class="relative">
+        <input id="mNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(e.nama)}" autocomplete="off" oninput="multiData[${i}].nama=this.value; onNamaInput(this, ${i})" onkeydown="onNamaKeydown(event, this, ${i})">
+        <div id="mNamaGhost_${i}" class="pointer-events-none absolute inset-0 p-3 text-sm font-normal text-slate-400/70 overflow-hidden whitespace-nowrap hidden" style="font-family: inherit;"></div>
+      </div>
+      <div id="mNamaChip_${i}" class="hidden mt-1 flex items-center gap-1.5">
+        <button type="button" onclick="acceptGhost(${i})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 border border-indigo-200/60 active:scale-95 transition">
+          <span class="opacity-70">⇥ Saran:</span>
+          <span id="mNamaChipText_${i}" class="font-bold"></span>
+        </button>
+      </div>
       <div class="grid grid-cols-2 gap-2">
         <input id="mNom_${i}" type="number" inputmode="numeric" class="inp" placeholder="Nominal (Rp)" value="${esc(e.nominal)}" oninput="multiData[${i}].nominal=this.value">
-        <input id="mKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(e.kategori)}" oninput="multiData[${i}].kategori=this.value">
+        <input id="mKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(e.kategori)}" oninput="multiData[${i}].kategori=this.value; onCategoryChanged(this.value, ${i})" onchange="onCategoryChanged(this.value, ${i})">
       </div>
       <input id="mTgl_${i}" type="datetime-local" class="inp" value="${esc(e.tanggal)}" oninput="multiData[${i}].tanggal=this.value">
       <input id="mKet_${i}" class="inp" placeholder="Catatan (opsional)" value="${esc(e.keterangan)}" oninput="multiData[${i}].keterangan=this.value">
@@ -3060,7 +2167,12 @@
         info: "bg-sky-50 text-sky-700",
         ok: "bg-emerald-50 text-emerald-700",
       };
-      const IC = { danger: "⛔", warn: "⚠️", info: "ℹ️", ok: "✅" };
+      const IC = {
+        danger: SVG_ICONS.danger,
+        warn: SVG_ICONS.warn,
+        info: SVG_ICONS.info,
+        ok: SVG_ICONS.ok,
+      };
       const G = (k) => {
         const v = S.data.settings && S.data.settings[k];
         return v === undefined || v === "" || isNaN(v) ? DEF[k] : Number(v);
@@ -3388,13 +2500,13 @@
     </div></div>`;
       }
 
-      /** Kartu target tabungan dengan progress bar. */
+      /** Kartu target tabungan dengan progress bar dan tombol aksi SVG. */
       function targetRow(g) {
         const p = g.target ? (g.terkumpul / g.target) * 100 : 0,
           done = p >= 100,
           c = done ? "#10B981" : "#4F46E5";
         let info = done
-          ? "Target tercapai 🎉"
+          ? "Target tercapai"
           : "Kurang " + rp(g.target - g.terkumpul);
         if (g.tenggat && !done) {
           const d = Math.ceil(
@@ -3409,19 +2521,30 @@
                 ? " · tenggat hari ini"
                 : ` · ${d} hari lagi`;
         }
-        return `<div class="rounded-2xl border border-slate-100 p-3">
+        return `<div class="rounded-2xl border border-slate-100 p-3.5 bg-white shadow-sm space-y-2.5">
     <div class="flex items-start justify-between gap-2">
-      <div class="min-w-0"><p class="font-semibold text-sm truncate">${esc(g.nama)}</p><p class="text-xs text-slate-500">${rp(g.terkumpul)} dari ${rp(g.target)}</p></div>
-      <span class="text-sm font-extrabold" style="color:${c}">${Math.round(p)}%</span>
+      <div class="min-w-0">
+        <p class="font-bold text-sm text-slate-800 truncate">${esc(g.nama)}</p>
+        <p class="text-xs text-slate-500 font-medium">${rp(g.terkumpul)} dari ${rp(g.target)}</p>
+      </div>
+      <span class="text-sm font-extrabold px-2 py-0.5 rounded-lg bg-indigo-50" style="color:${c}">${Math.round(p)}%</span>
     </div>
-    <div class="h-2.5 bg-slate-100 rounded-full mt-2 overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div></div>
-    <div class="flex flex-wrap items-center justify-between gap-2 mt-2">
-      <span class="text-xs font-medium ${done ? "text-emerald-600" : "text-slate-500"}">${esc(info)}</span>
-      <span class="flex gap-1.5">
-        <button data-id="${esc(g.id)}" onclick="setor(this.dataset.id)" class="act pri">+ Setor</button>
-        <button data-id="${esc(g.id)}" onclick="formTarget(this.dataset.id)" class="act">Edit</button>
-        <button data-id="${esc(g.id)}" onclick="delItem('hapusTarget',this.dataset.id,'target')" class="act del">Hapus</button>
-      </span>
+    <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+      <div class="h-full rounded-full transition-all duration-700" style="width:${Math.min(100, p)}%;background:${c}"></div>
+    </div>
+    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+      <span class="text-xs font-semibold ${done ? "text-emerald-600" : "text-slate-500"}">${esc(info)}</span>
+      <div class="flex items-center gap-1.5">
+        <button type="button" data-id="${esc(g.id)}" onclick="setor(this.dataset.id)" class="act pri inline-flex items-center gap-1">
+          ${SVG_ICONS.plus} Setor
+        </button>
+        <button type="button" data-id="${esc(g.id)}" onclick="formTarget(this.dataset.id)" class="act inline-flex items-center gap-1">
+          ${SVG_ICONS.edit} Edit
+        </button>
+        <button type="button" data-id="${esc(g.id)}" onclick="hapusTargetAction(this.dataset.id)" class="act del inline-flex items-center gap-1">
+          ${SVG_ICONS.trash} Hapus
+        </button>
+      </div>
     </div></div>`;
       }
 
@@ -3467,7 +2590,7 @@
         $("pTips").innerHTML =
           R.T.map(
             (t) =>
-              `<li class="flex gap-2"><span>💡</span><span>${esc(t)}</span></li>`,
+              `<li class="flex items-start gap-2.5"><span class="shrink-0 mt-0.5">${SVG_ICONS.bulb}</span><span class="text-slate-600 font-medium">${esc(t)}</span></li>`,
           ).join("") ||
           '<li class="text-slate-400">Tambahkan lebih banyak transaksi agar saran muncul.</li>';
 
@@ -3502,7 +2625,7 @@
           S.data.anggaran
             .map(
               (b) =>
-                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5" aria-label="Edit">✏️</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5" aria-label="Hapus">🗑️</button></span></div>`,
+                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5 text-slate-400 hover:text-indigo-600 transition inline-flex items-center" aria-label="Edit">${SVG_ICONS.edit}</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5 text-slate-400 hover:text-rose-600 transition inline-flex items-center" aria-label="Hapus">${SVG_ICONS.trash}</button></span></div>`,
             )
             .join("") ||
           '<p class="text-sm text-slate-400">Belum ada anggaran kategori.</p>';
@@ -3536,7 +2659,7 @@
         $("tgBar").style.background = p >= 100 ? "#10B981" : "#4F46E5";
       }
       function formTarget(id) {
-        const g = id ? S.data.target.find((x) => x.id === id) : null;
+        const g = id ? S.data.target.find((x) => String(x.id).trim() === String(id).trim()) : null;
         if (id && !g)
           return Toast.fire({
             icon: "error",
@@ -3560,28 +2683,46 @@
       }
       async function saveTarget() {
         if (S.busy > 0) return;
-        const o = {
-          id: S.tEdit || "",
-          nama: $("tgN").value.trim(),
-          target: Number($("tgT").value),
-          terkumpul: Number($("tgC").value) || 0,
-          tenggat: $("tgD").value,
-        };
-        if (!o.nama || !(o.target > 0))
+        const nama = $("tgN").value.trim();
+        const target = Number($("tgT").value);
+        const terkumpul = Number($("tgC").value) || 0;
+        const tenggat = $("tgD").value;
+
+        if (!nama || !(target > 0))
           return Toast.fire({
             icon: "warning",
             title: "Nama dan nominal target wajib diisi",
           });
-        if (o.terkumpul < 0)
+        if (terkumpul < 0)
           return Toast.fire({
             icon: "warning",
             title: "Jumlah terkumpul tidak boleh negatif",
           });
-        if (await act("simpanTarget", [o], "Menyimpan target..."))
-          closeTarget();
+
+        const o = {
+          id: S.tEdit || "",
+          nama: nama,
+          target: target,
+          terkumpul: terkumpul,
+          tenggat: tenggat,
+        };
+
+        // Update lokal secara optimistik agar responsif di HP
+        if (!S.tEdit) {
+          o.id = "TGT-" + Date.now();
+          S.data.target.push(o);
+        } else {
+          const idx = S.data.target.findIndex((x) => String(x.id).trim() === String(S.tEdit).trim());
+          if (idx >= 0) S.data.target[idx] = { ...S.data.target[idx], ...o };
+        }
+        renderPintar();
+        closeTarget();
+
+        const ok = await act("simpanTarget", [o], "Menyimpan target...");
+        if (!ok) refresh(true);
       }
-      async function hapusDariForm() {
-        const g = S.data.target.find((x) => x.id === S.tEdit);
+      async function hapusTargetAction(id) {
+        const g = S.data.target.find((x) => String(x.id).trim() === String(id).trim());
         if (!g) return;
         const c = await Swal.fire({
           title: "Hapus target?",
@@ -3592,14 +2733,21 @@
           cancelButtonText: "Batal",
           confirmButtonColor: "#F43F5E",
         });
-        if (
-          c.isConfirmed &&
-          (await act("hapusTarget", [g.id], "Menghapus target..."))
-        )
+        if (c.isConfirmed) {
+          S.data.target = S.data.target.filter((x) => String(x.id).trim() !== String(id).trim());
+          renderPintar();
           closeTarget();
+          const ok = await act("hapusTarget", [id], "Menghapus target...");
+          if (!ok) refresh(true);
+        }
+      }
+      async function hapusDariForm() {
+        if (S.tEdit) {
+          await hapusTargetAction(S.tEdit);
+        }
       }
       function setor(id) {
-        const g = S.data.target.find((x) => x.id === id);
+        const g = S.data.target.find((x) => String(x.id).trim() === String(id).trim());
         if (!g) return;
         S.sId = id;
         $("sgTitle").textContent = "Setor ke " + g.nama;
@@ -3613,7 +2761,7 @@
         $("mSetor").classList.add("hidden");
       }
       function isiSisa() {
-        const g = S.data.target.find((x) => x.id === S.sId);
+        const g = S.data.target.find((x) => String(x.id).trim() === String(S.sId).trim());
         if (!g) return;
         $("sgJml").value = Math.max(0, g.target - g.terkumpul);
       }
@@ -3625,8 +2773,15 @@
             icon: "warning",
             title: "Isi jumlah setoran lebih dari 0",
           });
-        if (await act("setorTarget", [S.sId, n], "Menyimpan setoran..."))
-          closeSetor();
+        const id = S.sId;
+        const g = S.data.target.find((x) => String(x.id).trim() === String(id).trim());
+        if (g) {
+          g.terkumpul = (g.terkumpul || 0) + n;
+          renderPintar();
+        }
+        closeSetor();
+        const ok = await act("setorTarget", [id, n], "Menyimpan setoran...");
+        if (!ok) refresh(true);
       }
       /* ---------- FAB mobile gabungan (Tambah + Suara) ---------- */
       let fabOpen_ = false;
@@ -4112,6 +3267,8 @@
         // f) kategori (cocokkan dengan data yang ada)
         const ctx = nm.concat(alsW);
         const kat = resolveKat_(katW, nm, ctx, jenis);
+        const autoTipe = getCategoryType(kat.nama);
+        const finalJenis = autoTipe || jenis;
 
         // g) alasan: yang diucapkan setelah "alasan/karena"; kalau tidak disebut sama sekali,
         // pakai kalimat aslinya (nominal diganti format rupiah) sebagai alasan otomatis.
@@ -4130,7 +3287,7 @@
           while (parts.length && VLEAD_.test(parts[0])) parts.shift();
           alasan = parts.join(" ");
         }
-        return { jenis, nama: capV_(nama), nominal, kategori: kat.nama, kategoriBaru: kat.baru, keterangan: capV_(alasan || nama), raw };
+        return { jenis: finalJenis, nama: capV_(nama), nominal, kategori: kat.nama, kategoriBaru: kat.baru, keterangan: capV_(alasan || nama), raw };
       }
 
       /* ===== 4b) Banyak transaksi sekaligus dalam satu ucapan ===== */
@@ -4208,7 +3365,7 @@
         if (!kEl || !nEl) return;
         const k = kEl.value.trim().toLowerCase();
         const ada = katPoolV_().some((c) => c.nama.toLowerCase() === k);
-        $("vKatInfo_" + i).innerHTML = !k ? "" : ada ? "✓ Kategori sudah ada" : "✨ Akan dibuat sebagai kategori baru";
+        $("vKatInfo_" + i).innerHTML = !k ? "" : ada ? `${SVG_ICONS.check} Kategori sudah ada` : `${SVG_ICONS.sparkles} Akan dibuat sebagai kategori baru`;
         $("vKatInfo_" + i).className = "text-[11px] mt-1 font-semibold " + (ada ? "text-emerald-600" : "text-indigo-600");
         const n = Number(nEl.value) || 0;
         $("vNomInfo_" + i).innerHTML =
@@ -4218,11 +3375,11 @@
       }
       function voiceItemHtml_(it, i) {
         const btn = (j, on) =>
-          `<button type="button" onclick="setVoiceJenis(${i},'${j}')" class="py-2 rounded-xl text-xs font-bold ${on ? (j === "Pemasukan" ? "bg-emerald-500" : "bg-rose-500") + " text-white" : "bg-slate-100 text-slate-500"}">${j}</button>`;
-        return `<div class="rounded-2xl border border-slate-100 p-3 space-y-2">
+          `<button type="button" onclick="setVoiceJenis(${i},'${j}')" class="py-2 rounded-xl text-xs font-bold transition ${on ? (j === "Pemasukan" ? "bg-emerald-500 shadow-sm" : "bg-rose-500 shadow-sm") + " text-white" : "bg-slate-100 text-slate-500 hover:bg-slate-200"}">${j}</button>`;
+        return `<div class="rounded-2xl border border-slate-100 p-3 space-y-2 bg-slate-50/50">
           <div class="flex items-center justify-between">
             <p class="text-xs font-extrabold text-indigo-600">Data ${i + 1}</p>
-            ${Vst.items.length > 1 ? `<button type="button" onclick="voiceDel(${i})" class="text-xs font-semibold text-rose-500">Hapus</button>` : ""}
+            ${Vst.items.length > 1 ? `<button type="button" onclick="voiceDel(${i})" class="text-xs font-semibold text-rose-500 inline-flex items-center gap-1">${SVG_ICONS.trash} Hapus</button>` : ""}
           </div>
           <div class="grid grid-cols-2 gap-2">${btn("Pengeluaran", it.jenis === "Pengeluaran")}${btn("Pemasukan", it.jenis === "Pemasukan")}</div>
           <input id="vNama_${i}" class="inp" placeholder="Nama transaksi" value="${esc(it.nama)}" oninput="Vst.items[${i}].nama=this.value">
@@ -4232,7 +3389,7 @@
               <p id="vNomInfo_${i}" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
             </div>
             <div>
-              <input id="vKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(it.kategori)}" oninput="Vst.items[${i}].kategori=this.value;voiceHint_(${i})">
+              <input id="vKat_${i}" list="dlKat" class="inp" placeholder="Kategori" value="${esc(it.kategori)}" oninput="Vst.items[${i}].kategori=this.value;voiceHint_(${i});onCategoryChanged(this.value, 'voice_${i}')" onchange="onCategoryChanged(this.value, 'voice_${i}')">
               <p id="vKatInfo_${i}" class="text-[11px] mt-1 font-semibold text-indigo-600"></p>
             </div>
           </div>
@@ -4463,7 +3620,7 @@
       const cfg = getCfg();
       if (!cfg.url) {
         showLogin();
-        authErr("loginErr", "⚙️ Sambungkan ke Google Sheets terlebih dahulu");
+        authErr("loginErr", "Sambungkan ke Google Sheets terlebih dahulu");
         return;
       }
       try {
@@ -4663,7 +3820,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
       document.getElementById("loadingSubtitle").textContent = "Memeriksa PIN akun...";
-      document.getElementById("loadingIcon").textContent = "🔍";
+      document.getElementById("loadingIcon").innerHTML = '<svg class="w-7 h-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>';
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4706,12 +3863,12 @@
         await refresh(true);
 
         setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
+        document.getElementById("loadingIcon").innerHTML = '<svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
         await sleep(350);
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}!`, timer: 2000 });
 
         offerBiometric();
         await initApp();
@@ -4760,7 +3917,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Mendaftarkan Akun & Perangkat";
       document.getElementById("loadingSubtitle").textContent = "Menyimpan data akun Anda...";
-      document.getElementById("loadingIcon").textContent = "✨";
+      document.getElementById("loadingIcon").innerHTML = '<svg class="w-7 h-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>';
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4803,12 +3960,12 @@
         await refresh(true);
 
         setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
+        document.getElementById("loadingIcon").innerHTML = '<svg class="w-7 h-7 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
         await sleep(350);
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar! 🎉`, timer: 2500 });
+        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar!`, timer: 2500 });
 
         offerBiometric();
         await initApp();
@@ -4862,7 +4019,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
       document.getElementById("loadingSubtitle").textContent = "Tempelkan sidik jari pada sensor...";
-      document.getElementById("loadingIcon").textContent = "🫆";
+      document.getElementById("loadingIcon").innerHTML = '<svg class="w-7 h-7 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004.07 9m5.918 8d.014-.028"/></svg>';
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4920,7 +4077,7 @@
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}!`, timer: 2000 });
         await initApp();
       } catch(e) {
         document.getElementById("loginLoading").style.display = "none";
@@ -4942,7 +4099,7 @@
         html: `<div style="color:#64748b;font-size:0.875rem;line-height:1.6;">
           Masuk lebih cepat dengan sidik jari atau wajah tanpa perlu ketik PIN setiap saat.
           <br><br>
-          <span style="font-size:2.5rem">🫆</span>
+          <span style="display:inline-flex;align-items:center;justify-content:center;"><svg class="w-12 h-12 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 004.07 9m5.918 8d.014-.028"/></svg></span>
         </div>`,
         showCancelButton: true,
         confirmButtonText: "Ya, aktifkan",
@@ -4988,7 +4145,7 @@
         localStorage.setItem(KC_CRED_KEY, credentialIdB64);
         updateAkunUI();
 
-        Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan! 🫆" });
+        Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan!" });
       } catch(e) {
         if (e.name !== "NotAllowedError") {
           Toast.fire({ icon: "info", title: "Sidik jari tidak bisa didaftarkan sekarang" });
@@ -5330,7 +4487,7 @@
         document.getElementById("loginForm").style.display = "";
         await Swal.fire({
           icon: "success",
-          title: "PIN berhasil direset! 🎉",
+          title: "PIN berhasil direset!",
           text: "Silakan login dengan PIN baru kamu.",
           confirmButtonText: "Login sekarang",
           confirmButtonColor: "#6366f1",
@@ -5399,17 +4556,17 @@
       } else if (step === 2) {
         if (bar) bar.style.width = "75%";
         if (sub) sub.textContent = "Mengunduh transaksi & kalkulasi saldo...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;"><svg style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Terhubung</span>';
         if (c2) { c2.style.opacity = "1"; c2.style.borderColor = "rgba(99,102,241,0.4)"; }
         if (c2s) c2s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memuat...</span>';
         if (c3) c3.style.opacity = "0.45";
       } else if (step === 3) {
         if (bar) bar.style.width = "100%";
         if (sub) sub.textContent = "Dashboard siap! Membuka aplikasi...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
-        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;">✓ Selesai</span>';
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;"><svg style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Terhubung</span>';
+        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;"><svg style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Selesai</span>';
         if (c3) { c3.style.opacity = "1"; c3.style.borderColor = "rgba(74,222,128,0.4)"; }
-        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;">✓ Siap</span>';
+        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;"><svg style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:4px;" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>Siap</span>';
       }
     }
 
@@ -5433,11 +4590,15 @@
       setSheetLoaderStep(1);
       await sleep(200);
       setSheetLoaderStep(2);
-      await refresh(true);
+      const ok = await refresh(true);
       setSheetLoaderStep(3);
       await sleep(350);
       await hideSheetLoader();
-      Toast.fire({ icon: "success", title: "Data Spreadsheet tersinkronisasi! ✓", timer: 2000 });
+      Toast.fire({
+        icon: ok ? "success" : "error",
+        title: ok ? "Data Spreadsheet berhasil disegarkan!" : "Gagal menyegarkan data",
+        timer: 2000
+      });
     }
 
     /* ════════════════════════════════════════════════════════════
@@ -5464,7 +4625,7 @@
         logoutBtn.className = "w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition";
         logoutBtn.title = "Keluar dari akun";
         logoutBtn.setAttribute("aria-label", "Keluar dari akun");
-        logoutBtn.textContent = "🚪";
+        logoutBtn.innerHTML = '<svg class="w-4 h-4 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>';
         headerBtns.insertBefore(logoutBtn, headerBtns.firstChild);
       }
 
@@ -5514,7 +4675,7 @@
       showAuthPage("login");
       const cfgInit = await ensureCfg();
       if (!cfgInit.url) {
-        authErr("loginErr", "⚙️ Hubungkan ke Google Sheets terlebih dahulu");
+        authErr("loginErr", "Hubungkan ke Google Sheets terlebih dahulu");
         return;
       }
       await checkDeviceState();
