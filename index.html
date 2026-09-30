@@ -46,7 +46,12 @@
       .act.del {
         @apply bg-rose-50 text-rose-600 hover:bg-rose-100;
       }
-    </style>
+          .i { display: inline-block; vertical-align: -0.15em; flex-shrink: 0; }
+      .i-m { margin-right: 0.4em; }
+      .auth-logo svg { color: #fff; }
+      #loadingIcon { color: #a5b4fc; }
+      .keypad-btn.del svg { width: 1.3rem; height: 1.3rem; }
+</style>
     <style>
       /* ── Pengaman overflow: card/grid/flex tidak boleh lebih lebar dari kontainernya ── */
       .card {
@@ -725,7 +730,7 @@
       <div id="loginForm" class="auth-card auth-fade-in">
         <!-- Logo & judul -->
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">💰</div>
+          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></div>
           <div>
             <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Keuangan Cerdas</h1>
             <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Aplikasi Keuangan Pribadi</p>
@@ -734,7 +739,7 @@
 
         <!-- Badge Status Perangkat -->
         <div id="deviceBadgeLogin" class="device-badge" style="background:rgba(34,197,94,0.12);border:1px solid rgba(34,197,94,0.3);color:#86efac;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">📱</span>
+          <span style="font-size:1.3rem;flex-shrink:0;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg></span>
           <div style="min-width:0;">
             <strong style="display:block;font-size:0.82rem;color:#86efac;">Perangkat Terdaftar</strong>
             <span id="badgeDeviceDesc" style="font-size:0.75rem;color:rgba(255,255,255,0.7);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Perangkat dikenali di sistem</span>
@@ -751,7 +756,7 @@
         <!-- Tombol biometric jika ada -->
         <div id="bioSection" style="display:none;margin-bottom:12px;">
           <button class="auth-btn auth-btn-bio" onclick="loginBiometric()" id="bioBtn" type="button">
-            <span style="font-size:1.4rem;">🫆</span>
+            <span style="font-size:1.4rem;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg></span>
             <span id="bioBtnTxt">Masuk dengan Sidik Jari</span>
           </button>
         </div>
@@ -788,14 +793,14 @@
 
         <!-- Link konfigurasi sheet -->
         <p style="text-align:center;margin-top:10px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
+          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;"><svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Konfigurasi Google Sheets</button>
         </p>
       </div>
 
       <!-- Panel 2: Register Form (Jika perangkat belum terdaftar) -->
       <div id="registerPanel" class="auth-card auth-fade-in" style="display:none;">
         <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
-          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;">✨</div>
+          <div class="auth-logo" style="margin-bottom:0;flex-shrink:0;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></div>
           <div>
             <h1 style="font-size:1.35rem;font-weight:800;color:#fff;line-height:1.2;">Daftar Akun</h1>
             <p style="font-size:0.75rem;color:rgba(255,255,255,0.45);margin-top:2px;">Daftarkan email & perangkat Anda</p>
@@ -803,7 +808,7 @@
         </div>
 
         <div class="device-badge" style="background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.35);color:#c7d2fe;margin-bottom:16px;">
-          <span style="font-size:1.3rem;flex-shrink:0;">🛡️</span>
+          <span style="font-size:1.3rem;flex-shrink:0;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></span>
           <div>
             <strong style="display:block;font-size:0.82rem;color:#c7d2fe;">Pendaftaran Perangkat</strong>
             <span style="font-size:0.75rem;color:rgba(255,255,255,0.7);">Perangkat ini akan otomatis terhubung ke akun Anda.</span>
@@ -855,12 +860,12 @@
 
         <!-- Pindah ke Login -->
         <p style="text-align:center;margin-top:16px;">
-          <button onclick="showLogin()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;">← Sudah punya akun? Masuk di sini</button>
+          <button onclick="showLogin()" type="button" style="color:#818cf8;font-size:0.82rem;background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;"><svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Sudah punya akun? Masuk di sini</button>
         </p>
 
         <!-- Link konfigurasi sheet -->
         <p style="text-align:center;margin-top:8px;">
-          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;">⚙ Konfigurasi Google Sheets</button>
+          <button onclick="openSambungan(true)" type="button" style="color:rgba(255,255,255,0.25);font-size:0.72rem;background:none;border:none;cursor:pointer;font-family:inherit;"><svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>Konfigurasi Google Sheets</button>
         </p>
       </div>
 
@@ -869,7 +874,7 @@
         <!-- Step FP1: Masukkan email -->
         <div id="fpStep1">
           <div style="text-align:center;margin-bottom:20px;">
-            <div style="font-size:2rem;margin-bottom:6px;">🔑</div>
+            <div style="font-size:2rem;margin-bottom:6px;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg></div>
             <h2 style="color:#fff;font-size:1.05rem;font-weight:800;margin:0;">Lupa PIN?</h2>
             <p style="color:rgba(255,255,255,0.45);font-size:0.78rem;margin-top:6px;">Masukkan email akun kamu. Kami akan kirimkan kode OTP untuk reset PIN.</p>
           </div>
@@ -879,17 +884,17 @@
           </div>
           <div id="fpErr1" class="auth-error"></div>
           <button class="auth-btn auth-btn-primary" onclick="fpSendOtp()" style="margin-top:6px;" id="fpSendBtn" type="button">
-            Kirim Kode OTP →
+            Kirim Kode OTP <svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
           </button>
           <p style="text-align:center;margin-top:14px;">
-            <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;">← Kembali ke login</button>
+            <button onclick="showLogin()" type="button" style="color:rgba(255,255,255,0.35);font-size:0.8rem;background:none;border:none;cursor:pointer;font-family:inherit;"><svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Kembali ke login</button>
           </p>
         </div>
 
         <!-- Step FP2: Masukkan OTP -->
         <div id="fpStep2" style="display:none;">
           <div style="text-align:center;margin-bottom:16px;">
-            <div style="font-size:2rem;margin-bottom:6px;">📧</div>
+            <div style="font-size:2rem;margin-bottom:6px;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg></div>
             <p style="color:rgba(255,255,255,0.85);font-size:0.9rem;font-weight:700;">Masukkan Kode OTP</p>
             <p style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-top:4px;">Cek inbox / spam email <strong id="fpEmailHint" style="color:#a5b4fc;"></strong></p>
           </div>
@@ -941,12 +946,12 @@
         </div>
       </div>
 
-      <!-- State 5: Loading (Pengecekan device → Verifikasi identitas → Memuat data) -->
+      <!-- State 5: Loading (Pengecekan device -> Verifikasi identitas -> Memuat data) -->
       <div id="loginLoading" class="auth-card" style="display:none;">
         <div style="text-align:center;margin-bottom:24px;">
           <div style="position:relative;width:72px;height:72px;margin:0 auto 16px;">
             <div style="width:72px;height:72px;border-radius:50%;border:3px solid rgba(99,102,241,0.2);border-top-color:#6366f1;animation:spin 1s linear infinite;"></div>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon">💰</div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon"><svg class="i" width="1.6rem" height="1.6rem" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></div>
           </div>
           <h2 style="font-size:1.1rem;font-weight:800;color:#fff;" id="loadingTitle">Memverifikasi identitas</h2>
           <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-top:4px;" id="loadingSubtitle">Mohon tunggu sebentar...</p>
@@ -983,7 +988,7 @@
           <div style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
           <div style="position:absolute;inset:-4px;border-radius:26px;border:1.5px dashed rgba(129,140,248,0.5);animation:spin 12s linear infinite;"></div>
           <div class="shimmer-glow" style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(79,70,229,0.5);border:2px solid rgba(255,255,255,0.25);">
-            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);">💰</span>
+            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
           </div>
         </div>
 
@@ -1004,7 +1009,7 @@
         <div style="width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:0.78rem;">
           <div id="stepCloud" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">☁️</span>
+              <span style="font-size:1rem;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Sambungan Spreadsheet</span>
             </div>
             <span id="stepCloudStatus" style="font-weight:700;color:#818cf8;display:flex;align-items:center;gap:5px;">
@@ -1014,7 +1019,7 @@
 
           <div id="stepData" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">📊</span>
+              <span style="font-size:1rem;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Data Transaksi & Anggaran</span>
             </div>
             <span id="stepDataStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
@@ -1022,7 +1027,7 @@
 
           <div id="stepDash" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span style="font-size:1rem;">✨</span>
+              <span style="font-size:1rem;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Menyiapkan Dashboard</span>
             </div>
             <span id="stepDashStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
@@ -1065,7 +1070,7 @@
             aria-label="Pengaturan sambungan Google Sheets"
             title="Sambungan Google Sheets"
           >
-            ⚙️
+            <svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
           <button onclick="openForm()" class="hidden md:block btn">
             + Tambah transaksi
@@ -1136,10 +1141,10 @@
             </h2>
             <div class="flex gap-2">
               <button id="btnSelMode" onclick="toggleSelMode()" class="act">
-                ☑️ Pilih
+                <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Pilih
               </button>
               <button onclick="printReport()" class="btn !py-2">
-                🖨️ Cetak PDF
+                <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Cetak PDF
               </button>
             </div>
           </div>
@@ -1205,7 +1210,7 @@
               class="rangeSel inp !w-auto !py-2 !rounded-full font-semibold"
             ></select>
             <button onclick="printReport()" class="btn !py-2">
-              🖨️ Cetak / Simpan PDF
+              <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6"/><rect x="6" y="14" width="12" height="8" rx="1"/></svg>Cetak / Simpan PDF
             </button>
           </div>
         </div>
@@ -1357,7 +1362,7 @@
             <div class="card space-y-3">
               <h3 class="font-bold">Akun</h3>
               <div id="akunInfo" class="text-sm text-slate-600 space-y-1">
-                <p>👤 <span id="akunNama" class="font-semibold">-</span></p>
+                <p><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> <span id="akunNama" class="font-semibold">-</span></p>
                 <p class="text-slate-400 text-xs" id="akunEmail">-</p>
               </div>
               <div class="flex flex-col gap-2">
@@ -1365,27 +1370,27 @@
                   onclick="ubahPin()"
                   class="btn !bg-indigo-50 !text-indigo-700 hover:!bg-indigo-100 !shadow-none"
                 >
-                  🔑 Ubah PIN
+                  <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>Ubah PIN
                 </button>
                 <button
                   onclick="doLogout()"
                   class="btn !bg-rose-50 !text-rose-600 hover:!bg-rose-100 !shadow-none"
                 >
-                  🚪 Keluar dari akun
+                  <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>Keluar dari akun
                 </button>
                 <button
                   id="btnHapusBio"
                   onclick="hapusBiometric()"
                   class="btn !bg-slate-100 !text-slate-600 hover:!bg-slate-200 !shadow-none hidden"
                 >
-                  🫆 Hapus sidik jari tersimpan
+                  <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>Hapus sidik jari tersimpan
                 </button>
                 <button
                   onclick="offerBiometric()"
                   id="btnDaftarBio"
                   class="btn !bg-indigo-50 !text-indigo-600 hover:!bg-indigo-100 !shadow-none"
                 >
-                  🫆 Daftarkan sidik jari
+                  <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg>Daftarkan sidik jari
                 </button>
               </div>
             </div>
@@ -1426,7 +1431,7 @@
         class="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 text-white text-lg shadow-xl shadow-indigo-400/50 active:scale-90 transition-all duration-200 flex items-center justify-center opacity-0 scale-0 translate-y-2 pointer-events-none"
         aria-label="Catat dengan suara"
       >
-        🎙️
+        <svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
       </button>
       <button
         id="fabMain"
@@ -1457,7 +1462,7 @@
       aria-label="Catat dengan suara"
       title="Catat dengan suara"
     >
-      🎙️
+      <svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
     </button>
     <nav
       id="navBottom"
@@ -1506,13 +1511,13 @@
           onclick="bulkEdit()"
           class="px-3 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold transition"
         >
-          ✏️ Edit
+          <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></svg>Edit
         </button>
         <button
           onclick="bulkDelete()"
           class="px-3 py-1.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-xs font-bold transition"
         >
-          🗑️ Hapus
+          <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>Hapus
         </button>
       </div>
     </div>
@@ -1799,7 +1804,7 @@
             Bicara natural saja, contoh: "makan siang 25 ribu karena lapar"
           </p>
           <p class="text-[11px] text-indigo-500 font-semibold -mt-3 mb-4 bg-indigo-50 rounded-xl px-3 py-2">
-            💡 Bisa lebih dari 1 transaksi: sebut "lalu" di antaranya. Contoh: "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
+            <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>Bisa lebih dari 1 transaksi: sebut "lalu" di antaranya. Contoh: "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
           </p>
 
           <div class="relative w-32 h-32 flex items-center justify-center mb-5">
@@ -1810,7 +1815,7 @@
               id="voiceMicWrap"
               class="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-600 to-violet-600 flex items-center justify-center text-3xl shadow-lg shadow-indigo-500/40"
             >
-              🎙️
+              <svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
             </div>
           </div>
 
@@ -1836,7 +1841,7 @@
             onclick="voiceStop()"
             class="btn !py-3 mt-4 w-full"
           >
-            ✓ Selesai
+            <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Selesai
           </button>
         </div>
 
@@ -1855,13 +1860,13 @@
               onclick="voiceRetry()"
               class="px-4 py-3 rounded-2xl text-sm font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 active:scale-95 transition shrink-0"
             >
-              🎙️ Ulangi
+              <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>Ulangi
             </button>
             <button
               onclick="voiceMore()"
               class="flex-1 px-4 py-3 rounded-2xl text-sm font-semibold bg-indigo-50 text-indigo-600 hover:bg-indigo-100 active:scale-95 transition"
             >
-              ➕ Tambah data lagi
+              <svg class="i i-m" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Tambah data lagi
             </button>
           </div>
           <button id="voiceSaveBtn" onclick="voiceSave()" class="btn w-full !py-3">
@@ -1891,6 +1896,14 @@
     <div id="printArea"></div>
 
     <script>
+      /* Ikon SVG (menggantikan emoji) */
+      const SVG_ICONS = {"wallet": "<path d=\"M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1\"/><path d=\"M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4\"/>", "smartphone": "<rect width=\"14\" height=\"20\" x=\"5\" y=\"2\" rx=\"2\" ry=\"2\"/><path d=\"M12 18h.01\"/>", "fingerprint": "<path d=\"M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4\"/><path d=\"M14 13.12c0 2.38 0 6.38-1 8.88\"/><path d=\"M17.29 21.02c.12-.6.43-2.3.5-3.02\"/><path d=\"M2 12a10 10 0 0 1 18-6\"/><path d=\"M2 16h.01\"/><path d=\"M21.8 16c.2-2 .131-5.354 0-6\"/><path d=\"M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2\"/><path d=\"M8.65 22c.21-.66.45-1.32.57-2\"/><path d=\"M9 6.8a6 6 0 0 1 9 5.2v2\"/>", "settings": "<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\"/><circle cx=\"12\" cy=\"12\" r=\"3\"/>", "sparkles": "<path d=\"M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z\"/><path d=\"M20 3v4\"/><path d=\"M22 5h-4\"/><path d=\"M4 17v2\"/><path d=\"M5 18H3\"/>", "shield": "<path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"/>", "key": "<path d=\"m21 2-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0 3 3L22 7l-3-3m-3.5 3.5L19 4\"/>", "mail": "<rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\"/><path d=\"m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7\"/>", "mic": "<path d=\"M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z\"/><path d=\"M19 10v2a7 7 0 0 1-14 0v-2\"/><line x1=\"12\" x2=\"12\" y1=\"19\" y2=\"22\"/>", "pencil": "<path d=\"M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z\"/><path d=\"m15 5 4 4\"/>", "trash": "<path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/><line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\"/><line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\"/>", "lightbulb": "<path d=\"M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5\"/><path d=\"M9 18h6\"/><path d=\"M10 22h4\"/>", "check-circle": "<path d=\"M22 11.08V12a10 10 0 1 1-5.93-9.14\"/><path d=\"m9 11 3 3L22 4\"/>", "printer": "<path d=\"M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2\"/><path d=\"M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6\"/><rect x=\"6\" y=\"14\" width=\"12\" height=\"8\" rx=\"1\"/>", "log-out": "<path d=\"M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4\"/><polyline points=\"16 17 21 12 16 7\"/><line x1=\"21\" x2=\"9\" y1=\"12\" y2=\"12\"/>", "user": "<path d=\"M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2\"/><circle cx=\"12\" cy=\"7\" r=\"4\"/>", "plus": "<path d=\"M5 12h14\"/><path d=\"M12 5v14\"/>", "cloud": "<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\"/>", "bar-chart": "<line x1=\"12\" x2=\"12\" y1=\"20\" y2=\"10\"/><line x1=\"18\" x2=\"18\" y1=\"20\" y2=\"4\"/><line x1=\"6\" x2=\"6\" y1=\"20\" y2=\"16\"/>", "home": "<path d=\"m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\"/><polyline points=\"9 22 9 12 15 12 15 22\"/>", "receipt": "<path d=\"M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z\"/><path d=\"M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8\"/><path d=\"M12 17.5v-11\"/>", "trending-up": "<polyline points=\"22 7 13.5 15.5 8.5 10.5 2 17\"/><polyline points=\"16 7 22 7 22 13\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"8\"/><path d=\"m21 21-4.3-4.3\"/>", "alert-triangle": "<path d=\"m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3\"/><path d=\"M12 9v4\"/><path d=\"M12 17h.01\"/>", "octagon-alert": "<path d=\"M12 16h.01\"/><path d=\"M12 8v4\"/><path d=\"M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z\"/>", "info": "<circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"M12 16v-4\"/><path d=\"M12 8h.01\"/>", "x": "<path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/>", "check": "<path d=\"M20 6 9 17l-5-5\"/>", "check-square": "<path d=\"m9 11 3 3L22 4\"/><path d=\"M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11\"/>", "arrow-right": "<path d=\"M5 12h14\"/><path d=\"m12 5 7 7-7 7\"/>", "arrow-left": "<path d=\"m12 19-7-7 7-7\"/><path d=\"M19 12H5\"/>", "chevron-up": "<path d=\"m18 15-6-6-6 6\"/>", "chevron-down": "<path d=\"m6 9 6 6 6-6\"/>", "delete": "<path d=\"M20 5H9l-7 7 7 7h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Z\"/><line x1=\"18\" x2=\"12\" y1=\"9\" y2=\"15\"/><line x1=\"12\" x2=\"18\" y1=\"9\" y2=\"15\"/>"};
+      function svgIc(n, sz, mr) {
+        var d = SVG_ICONS[n] || "";
+        return '<svg class="i' + (mr ? " i-m" : "") + '" width="' + (sz || "1.1em") + '" height="' + (sz || "1.1em") + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>";
+      }
+    </script>
+<script>
       const S = {
         data: { trx: [], kategori: [], anggaran: [], target: [], settings: {} },
         seen: new Set(),
@@ -1908,11 +1921,11 @@
         sel: new Set(),
       };
       const TABS = [
-        ["Dashboard", "🏠"],
-        ["Transaksi", "🧾"],
-        ["Laporan", "📈"],
-        ["Pintar", "💡"],
-        ["Pengaturan", "⚙️"],
+        ["Dashboard", "home"],
+        ["Transaksi", "receipt"],
+        ["Laporan", "trending-up"],
+        ["Pintar", "lightbulb"],
+        ["Pengaturan", "settings"],
       ];
       const PAL = [
         "#4F46E5",
@@ -1960,7 +1973,7 @@
             box = $("katList_" + j);
           if (!btn || !box) return;
           btn.classList.toggle("hidden", g.n <= KAT_TOP);
-          btn.textContent = g.open ? "Sembunyikan ▲" : `Lihat semua (${g.n}) ▼`;
+          btn.innerHTML = g.open ? "Sembunyikan " + svgIc("chevron-up") : `Lihat semua (${g.n}) ` + svgIc("chevron-down");
           box.classList.toggle("hidden", !g.open);
           box.innerHTML = g.open
             ? g.items
@@ -2258,7 +2271,7 @@
             ? `<button onclick="tabTo('${tab}')" class="px-3 py-1.5 rounded-full text-sm font-semibold ${S.tab === tab ? "bg-white/15 text-white" : "text-slate-400 hover:text-white"}">${tab}</button>`
             : `<button onclick="tabTo('${tab}')" class="relative flex-1 flex flex-col items-center justify-center gap-0.5 py-1.5 rounded-2xl text-[10px] font-bold transition ${S.tab === tab ? "text-indigo-600" : "text-slate-400"}">
                 ${S.tab === tab ? '<span class="absolute top-0.5 w-1.5 h-1.5 rounded-full bg-indigo-600"></span>' : ""}
-                <span class="flex items-center justify-center w-9 h-9 rounded-2xl text-lg transition ${S.tab === tab ? "bg-indigo-50" : ""}">${ic}</span>
+                <span class="flex items-center justify-center w-9 h-9 rounded-2xl text-lg transition ${S.tab === tab ? "bg-indigo-50" : ""}">${svgIc(ic, "1.25rem")}</span>
                 <span>${tab}</span>
               </button>`;
         $("navTop").innerHTML = TABS.map((x) => t(true, x[0])).join("");
@@ -2540,7 +2553,7 @@
       <td class="p-2 hidden md:table-cell"><span class="chip">${esc(t.kategori)}</span></td>
       <td class="p-2 text-xs text-slate-500 hidden lg:table-cell">${esc(t.keterangan) || "-"}</td>
       <td class="p-2 text-right font-bold whitespace-nowrap ${c}">${inc ? "+" : "-"}${rp(t.nominal)}</td>
-      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5" aria-label="Edit">✏️</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5" aria-label="Hapus">🗑️</button></td></tr>`;
+      <td class="p-2 text-right whitespace-nowrap"><button data-id="${esc(t.id)}" onclick="openForm(this.dataset.id)" class="p-1.5" aria-label="Edit">${svgIc("pencil","1.1em")}</button><button data-id="${esc(t.id)}" onclick="del(this.dataset.id)" class="p-1.5" aria-label="Hapus">${svgIc("trash","1.1em")}</button></td></tr>`;
               })
               .join("")
           : `<tr><td colspan="7" class="p-8 text-center text-slate-400">Belum ada transaksi yang cocok. Tekan + untuk menambah.</td></tr>`;
@@ -2552,7 +2565,7 @@
         S.selMode = on;
         if (!on) S.sel.clear();
         $("thSel").classList.toggle("hidden", !on);
-        $("btnSelMode").textContent = on ? "✕ Batal pilih" : "☑️ Pilih";
+        $("btnSelMode").innerHTML = on ? svgIc("x", "1.1em", true) + "Batal pilih" : svgIc("check-square", "1.1em", true) + "Pilih";
         $("btnSelMode").classList.toggle("pri", on);
         if (!on) $("chkAll").checked = false;
         renderList();
@@ -3060,7 +3073,7 @@
         info: "bg-sky-50 text-sky-700",
         ok: "bg-emerald-50 text-emerald-700",
       };
-      const IC = { danger: "⛔", warn: "⚠️", info: "ℹ️", ok: "✅" };
+      const IC = { danger: svgIc("octagon-alert", "1.15em"), warn: svgIc("alert-triangle", "1.15em"), info: svgIc("info", "1.15em"), ok: svgIc("check-circle", "1.15em") };
       const G = (k) => {
         const v = S.data.settings && S.data.settings[k];
         return v === undefined || v === "" || isNaN(v) ? DEF[k] : Number(v);
@@ -3394,7 +3407,7 @@
           done = p >= 100,
           c = done ? "#10B981" : "#4F46E5";
         let info = done
-          ? "Target tercapai 🎉"
+          ? "Target tercapai"
           : "Kurang " + rp(g.target - g.terkumpul);
         if (g.tenggat && !done) {
           const d = Math.ceil(
@@ -3467,7 +3480,7 @@
         $("pTips").innerHTML =
           R.T.map(
             (t) =>
-              `<li class="flex gap-2"><span>💡</span><span>${esc(t)}</span></li>`,
+              `<li class="flex gap-2"><span>${svgIc("lightbulb")}</span><span>${esc(t)}</span></li>`,
           ).join("") ||
           '<li class="text-slate-400">Tambahkan lebih banyak transaksi agar saran muncul.</li>';
 
@@ -3502,7 +3515,7 @@
           S.data.anggaran
             .map(
               (b) =>
-                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5" aria-label="Edit">✏️</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5" aria-label="Hapus">🗑️</button></span></div>`,
+                `<div class="flex items-center justify-between text-sm"><span class="font-semibold">${esc(b.kategori)}</span><span class="text-slate-500 whitespace-nowrap">${rp(b.batas)}<button data-k="${esc(b.kategori)}" onclick="formAnggaran(this.dataset.k)" class="p-1.5" aria-label="Edit">${svgIc("pencil","1.1em")}</button><button data-k="${esc(b.kategori)}" onclick="delItem('hapusAnggaran',this.dataset.k,'anggaran')" class="p-1.5" aria-label="Hapus">${svgIc("trash","1.1em")}</button></span></div>`,
             )
             .join("") ||
           '<p class="text-sm text-slate-400">Belum ada anggaran kategori.</p>';
@@ -3860,7 +3873,7 @@
         return null;
       }
 
-      /** Sinonim → nama kategori umum (dipakai bila kategori tidak disebut / tidak ada yang cocok). */
+      /** Sinonim -> nama kategori umum (dipakai bila kategori tidak disebut / tidak ada yang cocok). */
       const VSYN_ = {
         Makanan: "makan minum sarapan kopi teh nasi ayam bakso mie soto sate roti kue jajan snack jus susu kuliner resto restoran warung cafe kafe bubur gorengan lauk",
         Transportasi: "bensin solar bbm parkir tol ojek ojol gojek grab taksi bus kereta angkot tiket pesawat travel bengkel servis oli ban",
@@ -3924,7 +3937,7 @@
           if (isDig_(t)) {
             const v = digitVal_(t);
             if (dec) { cur += v / Math.pow(10, t.length); dec = false; continue; }
-            // "25.000 ribu" → angkanya sudah ribuan, jangan dikali lagi
+            // "25.000 ribu" -> angkanya sudah ribuan, jangan dikali lagi
             if ((v >= 1000 && /^(ribu|rb|k)$/.test(nx)) || (v >= 1e6 && /^(juta|jt)$/.test(nx))) i++;
             group += cur; cur = v; continue;
           }
@@ -4016,7 +4029,7 @@
         });
         return bs >= minScore ? best : null;
       }
-      /** Kategori dari riwayat: transaksi lama dengan nama yang mirip → pakai kategorinya. */
+      /** Kategori dari riwayat: transaksi lama dengan nama yang mirip -> pakai kategorinya. */
       function katRiwayat_(namaWords, jenis) {
         const ws = namaWords.filter((w) => w.length >= 3 && !VSTOP_.test(w));
         if (!ws.length) return null;
@@ -4157,7 +4170,7 @@
           cur.push(t);
         }
         flush();
-        // Cadangan: "makan 25 ribu bensin 20 ribu" (tanpa kata pemisah) → pecah setelah nominal yang jelas
+        // Cadangan: "makan 25 ribu bensin 20 ribu" (tanpa kata pemisah) -> pecah setelah nominal yang jelas
         const out = [];
         segs.forEach((sg) => splitByNominal_(sg).forEach((x) => out.push(x)));
         return out;
@@ -4208,7 +4221,7 @@
         if (!kEl || !nEl) return;
         const k = kEl.value.trim().toLowerCase();
         const ada = katPoolV_().some((c) => c.nama.toLowerCase() === k);
-        $("vKatInfo_" + i).innerHTML = !k ? "" : ada ? "✓ Kategori sudah ada" : "✨ Akan dibuat sebagai kategori baru";
+        $("vKatInfo_" + i).innerHTML = !k ? "" : ada ? svgIc("check", "1em", true) + "Kategori sudah ada" : svgIc("sparkles", "1em", true) + "Akan dibuat sebagai kategori baru";
         $("vKatInfo_" + i).className = "text-[11px] mt-1 font-semibold " + (ada ? "text-emerald-600" : "text-indigo-600");
         const n = Number(nEl.value) || 0;
         $("vNomInfo_" + i).innerHTML =
@@ -4291,7 +4304,7 @@
           Vst.raw = acc;
           $("voiceTranscript").textContent = acc;
           clearTimeout(Vst.timer);
-          Vst.timer = setTimeout(() => { try { r.stop(); } catch (_) {} }, 2200); // diam 2,2 dtk → selesai
+          Vst.timer = setTimeout(() => { try { r.stop(); } catch (_) {} }, 2200); // diam 2,2 dtk -> selesai
         };
         r.onerror = (e) => {
           Vst.listening = false;
@@ -4463,7 +4476,7 @@
       const cfg = getCfg();
       if (!cfg.url) {
         showLogin();
-        authErr("loginErr", "⚙️ Sambungkan ke Google Sheets terlebih dahulu");
+        authErr("loginErr", "Sambungkan ke Google Sheets terlebih dahulu");
         return;
       }
       try {
@@ -4545,19 +4558,19 @@
       const container = document.getElementById(containerId);
       if (!container) return;
       container.innerHTML = "";
-      const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+      const keys = ["1","2","3","4","5","6","7","8","9","","0","DEL"];
       keys.forEach(k => {
         const btn = document.createElement("button");
         btn.type = "button";
-        btn.className = "keypad-btn" + (k === "" ? " empty" : "") + (k === "⌫" ? " del" : "");
-        btn.textContent = k;
-        if (k && k !== "⌫") {
+        btn.className = "keypad-btn" + (k === "" ? " empty" : "") + (k === "DEL" ? " del" : "");
+        if (k === "DEL") btn.innerHTML = svgIc("delete", "1.4rem"); else btn.textContent = k;
+        if (k && k !== "DEL") {
           btn.addEventListener("click", () => {
             btn.classList.add("pressed");
             setTimeout(() => btn.classList.remove("pressed"), 120);
             if (onComplete) onComplete(k, false);
           });
-        } else if (k === "⌫") {
+        } else if (k === "DEL") {
           btn.addEventListener("click", () => {
             if (onDel) onDel();
           });
@@ -4663,7 +4676,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Memverifikasi identitas";
       document.getElementById("loadingSubtitle").textContent = "Memeriksa PIN akun...";
-      document.getElementById("loadingIcon").textContent = "🔍";
+      document.getElementById("loadingIcon").innerHTML = svgIc("search", "1.6rem");
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4677,7 +4690,7 @@
           throw new Error((res && res.message) || "PIN salah atau email belum terdaftar");
         }
 
-        setStep("step1", "done", "✓");
+        setStep("step1", "done", svgIc("check", "14px"));
         setStep("step2", "active");
         document.getElementById("step2").style.opacity = "1";
 
@@ -4698,20 +4711,20 @@
           email: AUTH.email, expiresAt: res.expiresAt
         }));
 
-        setStep("step2", "done", "✓");
+        setStep("step2", "done", svgIc("check", "14px"));
         setStep("step3", "active");
         document.getElementById("step3").style.opacity = "1";
         document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
 
         await refresh(true);
 
-        setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
+        setStep("step3", "done", svgIc("check", "14px"));
+        document.getElementById("loadingIcon").innerHTML = svgIc("check-circle", "1.6rem");
         await sleep(350);
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}!`, timer: 2000 });
 
         offerBiometric();
         await initApp();
@@ -4760,7 +4773,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Mendaftarkan Akun & Perangkat";
       document.getElementById("loadingSubtitle").textContent = "Menyimpan data akun Anda...";
-      document.getElementById("loadingIcon").textContent = "✨";
+      document.getElementById("loadingIcon").innerHTML = svgIc("sparkles", "1.6rem");
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4774,7 +4787,7 @@
           throw new Error((res && res.message) || "Gagal mendaftarkan akun");
         }
 
-        setStep("step1", "done", "✓");
+        setStep("step1", "done", svgIc("check", "14px"));
         setStep("step2", "active");
         document.getElementById("step2").style.opacity = "1";
 
@@ -4795,20 +4808,20 @@
           email: AUTH.email, expiresAt: res.expiresAt
         }));
 
-        setStep("step2", "done", "✓");
+        setStep("step2", "done", svgIc("check", "14px"));
         setStep("step3", "active");
         document.getElementById("step3").style.opacity = "1";
         document.getElementById("loadingTitle").textContent = "Memuat data keuangan";
 
         await refresh(true);
 
-        setStep("step3", "done", "✓");
-        document.getElementById("loadingIcon").textContent = "✅";
+        setStep("step3", "done", svgIc("check", "14px"));
+        document.getElementById("loadingIcon").innerHTML = svgIc("check-circle", "1.6rem");
         await sleep(350);
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar! 🎉`, timer: 2500 });
+        Toast.fire({ icon: "success", title: `Akun & Perangkat berhasil terdaftar!`, timer: 2500 });
 
         offerBiometric();
         await initApp();
@@ -4862,7 +4875,7 @@
       document.getElementById("loginLoading").style.display = "";
       document.getElementById("loadingTitle").textContent = "Verifikasi Sidik Jari";
       document.getElementById("loadingSubtitle").textContent = "Tempelkan sidik jari pada sensor...";
-      document.getElementById("loadingIcon").textContent = "🫆";
+      document.getElementById("loadingIcon").innerHTML = svgIc("fingerprint", "1.6rem");
 
       ["step1","step2","step3"].forEach((s,i) => {
         const el = document.getElementById(s);
@@ -4886,7 +4899,7 @@
         });
         if (!assertion) throw new Error("Verifikasi dibatalkan");
 
-        setStep("step1", "done", "✓");
+        setStep("step1", "done", svgIc("check", "14px"));
         setStep("step2", "active");
 
         const credentialIdB64 = base64urlEncode(new Uint8Array(assertion.rawId));
@@ -4895,7 +4908,7 @@
           throw new Error((res && res.message) || "Sidik jari tidak dikenali");
         }
 
-        setStep("step2", "done", "✓");
+        setStep("step2", "done", svgIc("check", "14px"));
         setStep("step3", "active");
 
         localStorage.setItem(KC_LOGGED_IN, "true");
@@ -4915,12 +4928,12 @@
 
         await refresh(true);
 
-        setStep("step3", "done", "✓");
+        setStep("step3", "done", svgIc("check", "14px"));
         await sleep(350);
 
         showAuthPage("app");
         updateHeaderUser(AUTH.nama);
-        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}! 👋`, timer: 2000 });
+        Toast.fire({ icon: "success", title: `Halo, ${AUTH.nama || ""}!`, timer: 2000 });
         await initApp();
       } catch(e) {
         document.getElementById("loginLoading").style.display = "none";
@@ -4942,7 +4955,7 @@
         html: `<div style="color:#64748b;font-size:0.875rem;line-height:1.6;">
           Masuk lebih cepat dengan sidik jari atau wajah tanpa perlu ketik PIN setiap saat.
           <br><br>
-          <span style="font-size:2.5rem">🫆</span>
+          <span style="font-size:2.5rem;color:#a5b4fc;"><svg class="i" width="1.1em" height="1.1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/><path d="M14 13.12c0 2.38 0 6.38-1 8.88"/><path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/><path d="M2 12a10 10 0 0 1 18-6"/><path d="M2 16h.01"/><path d="M21.8 16c.2-2 .131-5.354 0-6"/><path d="M5 19.5C5.5 18 6 15 6 12a6 6 0 0 1 .34-2"/><path d="M8.65 22c.21-.66.45-1.32.57-2"/><path d="M9 6.8a6 6 0 0 1 9 5.2v2"/></svg></span>
         </div>`,
         showCancelButton: true,
         confirmButtonText: "Ya, aktifkan",
@@ -4988,7 +5001,7 @@
         localStorage.setItem(KC_CRED_KEY, credentialIdB64);
         updateAkunUI();
 
-        Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan! 🫆" });
+        Toast.fire({ icon: "success", title: "Sidik jari berhasil didaftarkan!" });
       } catch(e) {
         if (e.name !== "NotAllowedError") {
           Toast.fire({ icon: "info", title: "Sidik jari tidak bisa didaftarkan sekarang" });
@@ -5015,7 +5028,7 @@
       Toast.fire({ icon: "success", title: "Sidik jari dihapus dari perangkat ini" });
     }
 
-    /* Ubah PIN dari halaman Pengaturan → arahkan ke forgot PIN flow */
+    /* Ubah PIN dari halaman Pengaturan -> arahkan ke forgot PIN flow */
     async function ubahPin() {
       const r = await Swal.fire({
         title: "Ubah PIN?",
@@ -5211,10 +5224,10 @@
       try {
         const res = await rawAuthCall("sendOtpEmail", [email, "reset"]);
         if (!res || res.status === "error") {
-          if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+          if (btn) { btn.disabled = false; btn.innerHTML = "Kirim Kode OTP " + svgIc("arrow-right"); }
           return authErr("fpErr1", (res && res.message) || "Gagal mengirim OTP");
         }
-        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+        if (btn) { btn.disabled = false; btn.innerHTML = "Kirim Kode OTP " + svgIc("arrow-right"); }
 
         document.getElementById("fpEmailHint").textContent = email;
         authErr("fpErr2","");
@@ -5222,7 +5235,7 @@
         buildFpOtpBoxes();
         startOtpCountdown("fpResendSec","fpResendCountdown","fpResendBtn",60);
       } catch(e) {
-        if (btn) { btn.disabled = false; btn.textContent = "Kirim Kode OTP →"; }
+        if (btn) { btn.disabled = false; btn.innerHTML = "Kirim Kode OTP " + svgIc("arrow-right"); }
         authErr("fpErr1", e.message || "Gagal mengirim OTP");
       }
     }
@@ -5330,7 +5343,7 @@
         document.getElementById("loginForm").style.display = "";
         await Swal.fire({
           icon: "success",
-          title: "PIN berhasil direset! 🎉",
+          title: "PIN berhasil direset!",
           text: "Silakan login dengan PIN baru kamu.",
           confirmButtonText: "Login sekarang",
           confirmButtonColor: "#6366f1",
@@ -5399,17 +5412,17 @@
       } else if (step === 2) {
         if (bar) bar.style.width = "75%";
         if (sub) sub.textContent = "Mengunduh transaksi & kalkulasi saldo...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">' + svgIc('check', '12px', true) + 'Terhubung</span>';
         if (c2) { c2.style.opacity = "1"; c2.style.borderColor = "rgba(99,102,241,0.4)"; }
         if (c2s) c2s.innerHTML = '<span style="color:#818cf8;display:flex;align-items:center;gap:5px;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#818cf8;animation:pulse 1s infinite;"></span> Memuat...</span>';
         if (c3) c3.style.opacity = "0.45";
       } else if (step === 3) {
         if (bar) bar.style.width = "100%";
         if (sub) sub.textContent = "Dashboard siap! Membuka aplikasi...";
-        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">✓ Terhubung</span>';
-        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;">✓ Selesai</span>';
+        if (c1s) c1s.innerHTML = '<span style="color:#4ade80;">' + svgIc('check', '12px', true) + 'Terhubung</span>';
+        if (c2s) c2s.innerHTML = '<span style="color:#4ade80;">' + svgIc('check', '12px', true) + 'Selesai</span>';
         if (c3) { c3.style.opacity = "1"; c3.style.borderColor = "rgba(74,222,128,0.4)"; }
-        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;">✓ Siap</span>';
+        if (c3s) c3s.innerHTML = '<span style="color:#4ade80;">' + svgIc('check', '12px', true) + 'Siap</span>';
       }
     }
 
@@ -5437,7 +5450,7 @@
       setSheetLoaderStep(3);
       await sleep(350);
       await hideSheetLoader();
-      Toast.fire({ icon: "success", title: "Data Spreadsheet tersinkronisasi! ✓", timer: 2000 });
+      Toast.fire({ icon: "success", title: "Data Spreadsheet tersinkronisasi!", timer: 2000 });
     }
 
     /* ════════════════════════════════════════════════════════════
@@ -5464,7 +5477,7 @@
         logoutBtn.className = "w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition";
         logoutBtn.title = "Keluar dari akun";
         logoutBtn.setAttribute("aria-label", "Keluar dari akun");
-        logoutBtn.textContent = "🚪";
+        logoutBtn.innerHTML = svgIc("log-out", "1.1rem");
         headerBtns.insertBefore(logoutBtn, headerBtns.firstChild);
       }
 
@@ -5514,7 +5527,7 @@
       showAuthPage("login");
       const cfgInit = await ensureCfg();
       if (!cfgInit.url) {
-        authErr("loginErr", "⚙️ Hubungkan ke Google Sheets terlebih dahulu");
+        authErr("loginErr", "Hubungkan ke Google Sheets terlebih dahulu");
         return;
       }
       await checkDeviceState();
@@ -5593,7 +5606,7 @@
     };
   }
 
-  /* ---- rentang & pengelompokan waktu (harian → mingguan → bulanan) ---- */
+  /* ---- rentang & pengelompokan waktu (harian -> mingguan -> bulanan) ---- */
   function span(r) {
     var today = ymd(new Date()), ds = r.map(function (t) { return t.tanggal.slice(0, 10); }).sort();
     var s = ds[0] || today, e = ds[ds.length - 1] || today;
