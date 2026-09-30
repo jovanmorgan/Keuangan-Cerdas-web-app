@@ -969,19 +969,11 @@
       </div>
 
       <!-- State 5: Loading (Pengecekan device -> Verifikasi identitas -> Memuat data) -->
-      <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
-      <linearGradient id="gAmber" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde047"/><stop offset="1" stop-color="#f97316"/></linearGradient>
-      <linearGradient id="gGreen" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a3e635"/><stop offset="1" stop-color="#10b981"/></linearGradient>
-      <linearGradient id="gCyan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#67e8f9"/><stop offset="1" stop-color="#3b82f6"/></linearGradient>
-      <linearGradient id="gPink" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f9a8d4"/><stop offset="1" stop-color="#a855f7"/></linearGradient>
-      <linearGradient id="gSky" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient>
-      <linearGradient id="gRainbow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fde047"/><stop offset=".35" stop-color="#f472b6"/><stop offset=".7" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient>
-    </defs></svg>
-      <div id="loginLoading" class="auth-card" style="display:none;">
+            <div id="loginLoading" class="auth-card" style="display:none;">
         <div style="text-align:center;margin-bottom:24px;">
           <div style="position:relative;width:72px;height:72px;margin:0 auto 16px;">
             <div class="cglow"></div><div class="cring"></div>
-            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon"><svg class="i cico" width="1.8rem" height="1.8rem" viewBox="0 0 24 24" fill="none" stroke="url(#gRainbow)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></div>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem;" id="loadingIcon"><svg class="i cico" width="1.8rem" height="1.8rem" viewBox="0 0 24 24" fill="none" stroke="url(#gRainbow_s1)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="gRainbow_s1" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#fde047"/><stop offset=".35" stop-color="#f472b6"/><stop offset=".7" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></div>
           </div>
           <h2 style="font-size:1.1rem;font-weight:800;color:#fff;" id="loadingTitle">Memverifikasi identitas</h2>
           <p style="font-size:0.8rem;color:rgba(255,255,255,0.45);margin-top:4px;" id="loadingSubtitle">Mohon tunggu sebentar...</p>
@@ -1018,7 +1010,7 @@
           <div style="position:absolute;inset:-8px;border-radius:50%;background:radial-gradient(circle, rgba(99,102,241,0.35) 0%, transparent 70%);animation:pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;"></div>
           <div style="position:absolute;inset:-4px;border-radius:26px;border:1.5px dashed rgba(129,140,248,0.5);animation:spin 12s linear infinite;"></div>
           <div class="shimmer-glow" style="width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg, #1e1b4b 0%, #4c1d95 55%, #831843 100%);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 30px rgba(168,85,247,0.55);border:2px solid rgba(255,255,255,0.25);">
-            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);"><svg class="i cico" width="2.4rem" height="2.4rem" viewBox="0 0 24 24" fill="none" stroke="url(#gRainbow)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
+            <span style="font-size:2.4rem;display:inline-block;transform:scale(1);"><svg class="i cico" width="2.4rem" height="2.4rem" viewBox="0 0 24 24" fill="none" stroke="url(#gRainbow_s2)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="gRainbow_s2" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#fde047"/><stop offset=".35" stop-color="#f472b6"/><stop offset=".7" stop-color="#a78bfa"/><stop offset="1" stop-color="#22d3ee"/></linearGradient></defs><path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/><path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/></svg></span>
           </div>
         </div>
 
@@ -1039,7 +1031,7 @@
         <div style="width:100%;display:flex;flex-direction:column;gap:9px;text-align:left;font-size:0.78rem;">
           <div id="stepCloud" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span class="ctile sky"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gSky)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
+              <span class="ctile sky"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gSky_s3)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="gSky_s3" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#7dd3fc"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Sambungan Spreadsheet</span>
             </div>
             <span id="stepCloudStatus" style="font-weight:700;color:#818cf8;display:flex;align-items:center;gap:5px;">
@@ -1049,7 +1041,7 @@
 
           <div id="stepData" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span class="ctile amber"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gGreen)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span>
+              <span class="ctile amber"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gGreen_s4)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="gGreen_s4" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#a3e635"/><stop offset="1" stop-color="#10b981"/></linearGradient></defs><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Data Transaksi & Anggaran</span>
             </div>
             <span id="stepDataStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
@@ -1057,7 +1049,7 @@
 
           <div id="stepDash" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:14px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);opacity:0.45;transition:all 0.3s;">
             <div style="display:flex;align-items:center;gap:10px;">
-              <span class="ctile pink"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gPink)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></span>
+              <span class="ctile pink"><svg class="i cico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="url(#gPink_s5)" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="gPink_s5" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22"><stop offset="0" stop-color="#f9a8d4"/><stop offset="1" stop-color="#a855f7"/></linearGradient></defs><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg></span>
               <span style="color:#e2e8f0;font-weight:600;">Menyiapkan Dashboard</span>
             </div>
             <span id="stepDashStatus" style="font-weight:700;color:#64748b;">Menunggu</span>
@@ -1908,10 +1900,20 @@
 
       /* Ikon berwarna (gradien) untuk layar loading */
       var CIC_COLOR = { "search":"gAmber", "check-circle":"gGreen", "sparkles":"gPink", "fingerprint":"gCyan", "wallet":"gRainbow", "cloud":"gSky", "bar-chart":"gGreen", "shield":"gCyan", "key":"gAmber" };
+      var CIC_GRAD = {"gAmber":[["0","#fde047"],["1","#f97316"]],"gGreen":[["0","#a3e635"],["1","#10b981"]],"gCyan":[["0","#67e8f9"],["1","#3b82f6"]],"gPink":[["0","#f9a8d4"],["1","#a855f7"]],"gSky":[["0","#7dd3fc"],["1","#6366f1"]],"gRainbow":[["0","#fde047"],[".35","#f472b6"],[".7","#a78bfa"],["1","#22d3ee"]]};
+      var CIC_FALLBACK = {"gAmber":"#fbbf24","gGreen":"#34d399","gCyan":"#38bdf8","gPink":"#c084fc","gSky":"#818cf8","gRainbow":"#f472b6"};
+      var CIC_SEQ = 0;
       function cIc(n, sz, grad) {
         var d = SVG_ICONS[n] || "";
         var g = grad || CIC_COLOR[n] || "gRainbow";
-        return '<svg class="i cico" width="' + (sz || "1.6rem") + '" height="' + (sz || "1.6rem") + '" viewBox="0 0 24 24" fill="none" stroke="url(#' + g + ')" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + "</svg>";
+        var uid = g + "_d" + (++CIC_SEQ);
+        var stops = (CIC_GRAD[g] || CIC_GRAD.gRainbow).map(function (s) {
+          return '<stop offset="' + s[0] + '" stop-color="' + s[1] + '"/>';
+        }).join("");
+        var size = sz || "1.6rem";
+        return '<svg class="i cico" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" fill="none" stroke="' + (CIC_FALLBACK[g] || "#a5b4fc") + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+          '<defs><linearGradient id="' + uid + '" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22">' + stops + '</linearGradient></defs>' +
+          '<g stroke="url(#' + uid + ')">' + d + '</g></svg>';
       }
       function svgIc(n, sz, mr) {
         var d = SVG_ICONS[n] || "";
