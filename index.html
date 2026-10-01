@@ -2133,6 +2133,23 @@
               <circle cx="12" cy="12" r="3" /></svg
             >Konfigurasi Google Sheets
           </button>
+        <br/>
+          <button
+            onclick="cekKoneksi()"
+            type="button"
+            style="
+              color: rgba(255, 255, 255, 0.55);
+              font-size: 0.78rem;
+              background: none;
+              border: none;
+              cursor: pointer;
+              font-family: inherit;
+              margin-top: 6px;
+              text-decoration: underline;
+            "
+          >
+            Cek koneksi ke Google Sheets
+          </button>
         </p>
       </div>
 
@@ -3685,6 +3702,12 @@
                 >
                   Segarkan data
                 </button>
+                <button
+                  onclick="cekKoneksi()"
+                  class="btn !bg-slate-200 !text-slate-700 hover:!bg-slate-300"
+                >
+                  Cek koneksi &amp; diagnosa data
+                </button>
               </div>
               <div class="card space-y-3">
                 <h3 class="font-bold">Akun</h3>
@@ -4741,7 +4764,7 @@
           },
           seen: new Set(),
           tab: "Dashboard",
-          range: "month",
+          range: "all",
           q: "",
           jenis: "all",
           jf: "Pengeluaran",
@@ -4975,20 +4998,31 @@
          * dari /api/config (Environment Variables di Vercel: API_URL, API_TOKEN).
          * Jika gagal, pakai DEFAULT_GAS_URL yang sudah ditanam di kode. */
         async function ensureCfg() {
-          let cfg = getCfg();
-          if (cfg.url) return cfg; // sudah ada (dari localStorage atau default)
+          /* URL yang diisi manual lewat dialog Sambungan selalu dipakai. */
+          if (localStorage.getItem("kc_apiManual") === "1") return getCfg();
+          /* Selain itu, utamakan /api/config (Environment Variables Vercel) agar
+           * browser tidak tersangkut pada URL lama yang tersimpan di localStorage. */
           try {
-            const res = await fetch("/api/config", { cache: "no-store" });
+            const ctrl = new AbortController();
+            const tm = setTimeout(() => ctrl.abort(), 4000);
+            const res = await fetch("/api/config", {
+              cache: "no-store",
+              signal: ctrl.signal,
+            });
+            clearTimeout(tm);
             if (res.ok) {
               const j = await res.json();
-              if (j && j.url) {
+              if (
+                j &&
+                /^https:\/\/script\.google(usercontent)?\.com\/macros\/s\/.+\/exec$/.test(
+                  String(j.url || "").trim(),
+                )
+              ) {
                 setCfg(j.url, j.token || "");
-                return getCfg();
               }
             }
           } catch (_) {}
-          // Fallback ke URL default bawaan
-          return { url: DEFAULT_GAS_URL, token: "" };
+          return getCfg();
         }
         const API_TIMEOUT = 20000;
         const _wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -5006,6 +5040,45 @@
           "resetPin",
           "registerBiometric",
         ]);
+        const READ_ONLY = new Set(["ping", "getAllData", "getVersion", "diagnosa"]);
+        function explainBadResponse(txt) {
+          const t = String(txt || "");
+          if (/accounts\.google\.com|ServiceLogin|Sign in|Masuk/i.test(t))
+            return "Web App Apps Script meminta login Google. Deploy ulang dengan 'Who has access' = Anyone (Siapa saja).";
+          if (/Script function not found|doPost|doGet/i.test(t))
+            return "Fungsi doGet/doPost tidak ditemukan di deployment. Pastikan Code.gs terbaru sudah di-deploy sebagai versi baru.";
+          if (/Anda tidak memiliki akses|You do not have access|Authorization required|Otorisasi/i.test(t))
+            return "Deployment belum diotorisasi / aksesnya dibatasi. Deploy ulang dengan 'Execute as: Me' dan 'Who has access: Anyone'.";
+          if (/Error|Kesalahan/i.test(t) && /<html/i.test(t))
+            return "Apps Script mengembalikan halaman error: " + t.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim().slice(0, 160);
+          return "Respons server bukan JSON (" + t.replace(/\s+/g, " ").trim().slice(0, 120) + ")";
+        }
+        async function getFallback(url, fn, args, token, uTok, opt) {
+          const q = new URLSearchParams({
+            fn,
+            args: JSON.stringify(args || []),
+            token: token || "",
+            userToken: uTok || "",
+            rid: _rid(),
+          });
+          const ctrl = new AbortController();
+          const tm = setTimeout(() => ctrl.abort(), (opt && opt.timeout) || API_TIMEOUT);
+          try {
+            const res = await fetch(url + "?" + q.toString(), { signal: ctrl.signal });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const txt = await res.text();
+            let j;
+            try {
+              j = JSON.parse(txt);
+            } catch (_) {
+              throw new ApiError(explainBadResponse(txt));
+            }
+            if (j && j.status === "error") throw new ApiError(j.message);
+            return j;
+          } finally {
+            clearTimeout(tm);
+          }
+        }
         async function rawCall(url, fn, args, token, userToken, opt) {
           opt = opt || {};
           const uTok =
@@ -5043,7 +5116,7 @@
               try {
                 j = JSON.parse(txt);
               } catch (_) {
-                throw new Error("Respons server tidak valid");
+                throw new ApiError(explainBadResponse(txt));
               }
               clearTimeout(timer);
               if (j && j.status === "error") throw new ApiError(j.message);
@@ -5051,6 +5124,14 @@
             } catch (e) {
               clearTimeout(timer);
               if (e instanceof ApiError) throw e;
+              /* Cadangan: fungsi baca-saja dicoba lewat GET jika POST gagal di jaringan/CORS */
+              if (READ_ONLY.has(fn) && !opt._get) {
+                try {
+                  return await getFallback(url, fn, args, token, uTok, opt);
+                } catch (e2) {
+                  if (e2 instanceof ApiError) throw e2;
+                }
+              }
               lastErr =
                 e && e.name === "AbortError"
                   ? new Error("Server terlalu lama merespons")
@@ -5118,6 +5199,7 @@
           });
           if (r.isConfirmed) {
             setCfg(r.value.url, r.value.token);
+            localStorage.setItem("kc_apiManual", "1");
             Toast.fire({
               icon: "success",
               title: "Berhasil tersambung ke Google Sheets",
@@ -5127,6 +5209,65 @@
           }
           return false;
         }
+
+        /* ---------- Cek koneksi & diagnosa data (tombol "Cek koneksi") ---------- */
+        async function cekKoneksi() {
+          const cfg = getCfg();
+          const row = (ok, t, d) =>
+            `<div style="display:flex;gap:8px;margin:6px 0;text-align:left"><span style="flex:none">${ok === true ? "✅" : ok === false ? "❌" : "ℹ️"}</span><div><b>${esc(t)}</b>${d ? `<div style="font-size:12px;opacity:.8;word-break:break-word">${d}</div>` : ""}</div></div>`;
+          let html = row(null, "URL yang dipakai", esc(cfg.url || "(kosong)"));
+          Swal.fire({ title: "Memeriksa koneksi...", html: html, showConfirmButton: false, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          const upd = (extra) => {
+            html += extra;
+            Swal.update({ html: html });
+          };
+          let ping = null;
+          try {
+            ping = await rawCall(cfg.url, "ping", [], cfg.token, "", { retries: 1, timeout: 30000 });
+            upd(row(true, "Terhubung ke Apps Script", "Spreadsheet: <b>" + esc(ping.spreadsheet || "(tidak diketahui — deploy Code.gs terbaru)") + "</b>"));
+          } catch (e) {
+            upd(row(false, "Tidak bisa terhubung ke Apps Script", esc(e.message || String(e))));
+            Swal.hideLoading();
+            Swal.update({ title: "Koneksi gagal", showConfirmButton: true, confirmButtonText: "Tutup" });
+            return;
+          }
+          try {
+            const g = await rawCall(cfg.url, "diagnosa", [], cfg.token, "", { retries: 1, timeout: 60000 });
+            const sh = (g.sheets || [])
+              .map((x) => `• <b>${esc(x.nama)}</b>: ${x.baris} baris`)
+              .join("<br>");
+            upd(row(null, "Sheet di spreadsheet ini", sh));
+            upd(
+              row(
+                g.transaksiTerbaca > 0,
+                "Transaksi terbaca: " + g.transaksiTerbaca,
+                "Dari sheet: <b>" + esc(g.sheetTransaksiDipakai || "-") + "</b>" +
+                  (g.tanggalTakTerbaca ? "<br>⚠️ " + g.tanggalTakTerbaca + " baris tanggalnya tidak terbaca" : "") +
+                  (g.nominalNol ? "<br>⚠️ " + g.nominalNol + " baris nominalnya 0/kosong" : "") +
+                  (g.transaksiTerbaca === 0
+                    ? "<br><b>Spreadsheet yang terhubung berisi 0 transaksi.</b> Pastikan data Anda ada di spreadsheet bernama di atas, atau jalankan setSheetId('ID_SPREADSHEET_ANDA') di editor Apps Script."
+                    : ""),
+              ),
+            );
+            upd(row(null, "Lainnya", `Kategori ${g.kategori}, Anggaran ${g.anggaran}, Target ${g.target}`));
+            if (g.errorMembaca) upd(row(false, "Error saat membaca sheet", esc(g.errorMembaca)));
+            try {
+              const d = await rawCall(cfg.url, "getAllData", [], cfg.token, "", { retries: 1, timeout: 60000 });
+              upd(row(d && d.trx && d.trx.length === g.transaksiTerbaca, "Unduh data ke aplikasi: " + ((d && d.trx && d.trx.length) || 0) + " transaksi"));
+            } catch (e) {
+              upd(row(false, "Gagal mengunduh data", esc(e.message || String(e))));
+            }
+          } catch (e) {
+            upd(row(false, "Diagnosa gagal", esc(e.message || String(e)) + "<br>Kemungkinan Code.gs terbaru belum di-deploy sebagai versi baru."));
+          }
+          Swal.hideLoading();
+          Swal.update({ title: "Hasil pemeriksaan", showConfirmButton: true, confirmButtonText: "Tutup", showDenyButton: true, denyButtonText: "Muat ulang data", denyButtonColor: "#4F46E5" });
+          Swal.getDenyButton().onclick = async () => {
+            Swal.close();
+            await refresh(true);
+          };
+        }
+        window.cekKoneksi = cekKoneksi;
 
         async function act(fn, args, txt) {
           loading(true, txt);
@@ -5175,7 +5316,7 @@
          - Cek versi (ringan) dulu; data penuh diunduh hanya jika berubah.
          - Data terakhir disimpan di perangkat -> aplikasi langsung tampil saat dibuka.
          - Otomatis menyambung ulang (backoff) + langsung sinkron saat online/fokus. */
-        const LS_CACHE = "kc_data_cache_v2";
+        const LS_CACHE = "kc_data_cache_v3";
         function saveLocal(d) {
           try {
             localStorage.setItem(
@@ -5194,8 +5335,70 @@
           } catch (_) {}
           return null;
         }
+        /* ---------- Normalisasi data (pengaman jika format di Sheet tidak seragam) ---------- */
+        function _pad2(n) {
+          return ("0" + n).slice(-2);
+        }
+        function normTgl(v) {
+          const t = String(v == null ? "" : v).trim();
+          const mk = (y, mo, d, h, mi, sc) =>
+            mo >= 1 && mo <= 12 && d >= 1 && d <= 31
+              ? y + "-" + _pad2(mo) + "-" + _pad2(d) + " " +
+                _pad2(h || 0) + ":" + _pad2(mi || 0) + ":" + _pad2(sc || 0)
+              : null;
+          let m = /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[T\s]+(\d{1,2})[:.](\d{2})(?::(\d{2}))?)?/.exec(t);
+          if (m) {
+            const r = mk(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6]);
+            if (r) return r;
+          }
+          m = /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})(?:[,T\s]+(\d{1,2})[:.](\d{2})(?::(\d{2}))?)?/.exec(t);
+          if (m) {
+            let d = +m[1], mo = +m[2];
+            if (mo > 12 && d <= 12) { const x = d; d = mo; mo = x; }
+            const r = mk(+m[3], mo, d, +m[4], +m[5], +m[6]);
+            if (r) return r;
+          }
+          const dt = new Date(t);
+          if (t && !isNaN(dt) && dt.getFullYear() > 1900 && dt.getFullYear() < 2200)
+            return mk(dt.getFullYear(), dt.getMonth() + 1, dt.getDate(), dt.getHours(), dt.getMinutes(), dt.getSeconds());
+          return "1970-01-01 00:00:00";
+        }
+        function normNum(v) {
+          if (typeof v === "number") return isFinite(v) ? v : 0;
+          let t = String(v == null ? "" : v).replace(/[^\d.,]/g, "");
+          if (!t) return 0;
+          const ld = t.lastIndexOf("."), lc = t.lastIndexOf(",");
+          if (ld > -1 && lc > -1)
+            t = lc > ld ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+          else if (ld > -1 || lc > -1) {
+            const p = t.split(ld > -1 ? "." : ",");
+            const ribu = p.length > 2 || (p.length === 2 && p[1].length === 3 && p[0] !== "0" && p[0] !== "");
+            t = ribu ? p.join("") : p[0] + "." + p[1];
+          }
+          const n = parseFloat(t);
+          return isNaN(n) ? 0 : n;
+        }
+        function sanitizeData(d) {
+          const out = Object.assign({}, d);
+          out.trx = (d.trx || []).map((t, i) => ({
+            id: String(t.id == null || t.id === "" ? "TMP-" + i : t.id),
+            tanggal: normTgl(t.tanggal),
+            nama: String(t.nama || t.kategori || "-"),
+            jenis: /masuk|income|kredit/i.test(String(t.jenis || "")) ? "Pemasukan" : "Pengeluaran",
+            kategori: String(t.kategori || "Umum"),
+            nominal: Math.abs(normNum(t.nominal)),
+            keterangan: String(t.keterangan || ""),
+          }));
+          out.trx.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+          out.kategori = d.kategori || [];
+          out.anggaran = d.anggaran || [];
+          out.target = d.target || [];
+          out.settings = d.settings || {};
+          return out;
+        }
         function applyData(d, force) {
           if (!d || !d.trx) return false;
+          d = sanitizeData(d);
           const key = d.v || JSON.stringify(d);
           const changed = !!force || key !== S.hash;
           S.hash = key;
@@ -5227,14 +5430,35 @@
                   if (!(e instanceof ApiError)) throw e;
                 }
               }
-              const d = await call("getAllData");
+              const d = await callWith(
+                { timeout: 60000, retries: 2 },
+                "getAllData",
+              );
+              if (!d || !d.trx)
+                throw new Error("Respons data dari server tidak valid");
               applyData(d, force);
+              if (force && d.trx.length === 0 && typeof Toast !== "undefined")
+                Toast.fire({
+                  icon: "info",
+                  title:
+                    "Terhubung ke spreadsheet \"" + ((d.meta && d.meta.spreadsheet) || "?") +
+                    "\" tetapi sheet transaksi kosong. Ketuk untuk cek koneksi.",
+                  timer: 9000,
+                  didOpen: (t) => t.addEventListener("click", () => { Swal.close(); cekKoneksi(); }),
+                });
               _fails = 0;
               setSync(true);
               return true;
             } catch (e) {
               _fails++;
               setSync(false);
+              S.lastErr = (e && e.message) || "Gagal memuat data";
+              if (force && typeof Toast !== "undefined")
+                Toast.fire({
+                  icon: "error",
+                  title: "Data transaksi gagal dimuat: " + S.lastErr,
+                  timer: 7000,
+                });
               return false;
             } finally {
               _inflight = null;
@@ -5314,13 +5538,21 @@
 
         /* ---------- Render ---------- */
         function render() {
-          renderFilter();
-          renderDash();
-          renderList();
-          renderLaporan();
-          renderKategori();
-          renderPintar();
-          renderSet();
+          [
+            renderFilter,
+            renderDash,
+            renderList,
+            renderLaporan,
+            renderKategori,
+            renderPintar,
+            renderSet,
+          ].forEach((fn) => {
+            try {
+              fn();
+            } catch (e) {
+              console.error("Gagal merender " + fn.name, e);
+            }
+          });
         }
         function inRange(t) {
           const d = t.tanggal.slice(0, 10);
