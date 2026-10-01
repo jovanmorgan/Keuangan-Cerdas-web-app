@@ -1,0 +1,1764 @@
+/**
+ * KEUANGAN CERDAS - Backend (Google Apps Script, container-bound ke Spreadsheet)
+ * Versi Terbaru: Google Identity Auth, Multi-User Data Isolation, Device Security & WebAuthn
+ */
+
+const SH_TRX = "Transaksi",
+  SH_KAT = "Kategori",
+  SH_SET = "Pengaturan",
+  SH_ANG = "Anggaran",
+  SH_TGT = "Target",
+  SH_USERS = "Users",
+  SH_SESSIONS = "UserSessions",
+  SH_OTP = "OtpStore";
+
+const DEF_SET_ = {
+  MIN_SALDO_WARNING: 50000,
+  TARGET_TABUNGAN: 20,
+  BUDGET_TOTAL: 0,
+  ALERT_BUDGET_PCT: 80,
+  LONJAKAN_PCT: 30,
+  BATAS_TRX_BESAR: 500000,
+  HARI_TANPA_CATAT: 3,
+  DANA_DARURAT_BULAN: 3,
+  ALERT_POPUP: 1,
+};
+
+const DEFAULT_CATEGORIES = [
+  { nama: "Gaji", tipe: "Pemasukan" },
+  { nama: "Bonus", tipe: "Pemasukan" },
+  { nama: "Investasi", tipe: "Pemasukan" },
+  { nama: "Pemasukan Lain", tipe: "Pemasukan" },
+  { nama: "Makanan & Minuman", tipe: "Pengeluaran" },
+  { nama: "Transportasi", tipe: "Pengeluaran" },
+  { nama: "Belanja", tipe: "Pengeluaran" },
+  { nama: "Tagihan & Utilitas", tipe: "Pengeluaran" },
+  { nama: "Hiburan", tipe: "Pengeluaran" },
+  { nama: "Kesehatan", tipe: "Pengeluaran" },
+  { nama: "Pendidikan", tipe: "Pengeluaran" },
+  { nama: "Lainnya", tipe: "Pengeluaran" },
+];
+
+/* Fungsi yang MENULIS data. Hasilnya otomatis dikirim balik bersama data terbaru
+ * (1 round-trip, tidak perlu getAllData lagi dari browser). */
+const WRITE_FNS_ = {
+  simpanDataTransaksi: 1,
+  simpanBanyakTransaksi: 1,
+  hapusTransaksi: 1,
+  hapusTransaksiBanyak: 1,
+  editTransaksiBanyak: 1,
+  simpanKategori: 1,
+  hapusKategori: 1,
+  simpanPengaturan: 1,
+  simpanAnggaran: 1,
+  hapusAnggaran: 1,
+  simpanTarget: 1,
+  hapusTarget: 1,
+  setorTarget: 1,
+  analisisSuaraPintar: 1,
+};
+
+let CUR_RID_ = ""; // id permintaan (anti-dobel saat browser mengulang request)
+let _SS = null;
+function getSS_() {
+  return _SS || (_SS = SpreadsheetApp.getActiveSpreadsheet());
+}
+
+function doGet(e) {
+  const p = (e && e.parameter) || {};
+  if (p.fn) {
+    let args = [];
+    try {
+      args = p.args ? JSON.parse(p.args) : [];
+    } catch (_) {
+      args = [];
+    }
+    return handleApi_(p.fn, args, p.token, p.userToken, p.rid);
+  }
+  try {
+    ensureDb_();
+    return HtmlService.createHtmlOutputFromFile("index")
+      .setTitle("Keuangan Cerdas")
+      .addMetaTag("viewport", "width=device-width, initial-scale=1")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (_) {
+    return jsonOutput_(ping());
+  }
+}
+
+function doPost(e) {
+  try {
+    const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
+    return handleApi_(body.fn, body.args, body.token, body.userToken, body.rid);
+  } catch (err) {
+    return jsonOutput_(err_("Permintaan tidak valid: " + err.message));
+  }
+}
+
+/**
+ * Whitelist fungsi API publik
+ */
+const API_FUNCTIONS_ = {
+  getAllData: getAllData,
+  getVersion: getVersion,
+  simpanDataTransaksi: simpanDataTransaksi,
+  simpanBanyakTransaksi: simpanBanyakTransaksi,
+  hapusTransaksi: hapusTransaksi,
+  hapusTransaksiBanyak: hapusTransaksiBanyak,
+  editTransaksiBanyak: editTransaksiBanyak,
+  simpanKategori: simpanKategori,
+  hapusKategori: hapusKategori,
+  simpanPengaturan: simpanPengaturan,
+  simpanAnggaran: simpanAnggaran,
+  hapusAnggaran: hapusAnggaran,
+  simpanTarget: simpanTarget,
+  hapusTarget: hapusTarget,
+  setorTarget: setorTarget,
+  analisisSuaraPintar: analisisSuaraPintar,
+  prefetchData: prefetchData,
+
+  googleAuthCheck: googleAuthCheck,
+  googleRegisterWithPin: googleRegisterWithPin,
+  verifyNewDeviceWithPin: verifyNewDeviceWithPin,
+  registerUser: registerUser,
+  loginWithPin: loginWithPin,
+  loginWithBiometric: loginWithBiometric,
+  checkDeviceBiometric: checkDeviceBiometric,
+  registerBiometric: registerBiometric,
+  validateSession: validateSession,
+  logoutSession: logoutSession,
+  sendOtpEmail: sendOtpEmail,
+  verifyOtp: verifyOtp,
+  resetPin: resetPin,
+  ping: ping,
+  getActiveGoogleUser: getActiveGoogleUser,
+  checkDevice: checkDevice,
+};
+
+function checkDevice(deviceId) {
+  deviceId = String(deviceId || "").trim();
+  if (!deviceId) return { status: "success", isRegistered: false };
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", isRegistered: false };
+  const data = s.getRange(2, 1, last - 1, 10).getValues();
+  for (let i = 0; i < data.length; i++) {
+    let devices = [];
+    try {
+      devices = JSON.parse(data[i][4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (devices.includes(deviceId)) {
+      return {
+        status: "success",
+        isRegistered: true,
+        email: String(data[i][2]),
+        nama: String(data[i][1]),
+      };
+    }
+  }
+  return { status: "success", isRegistered: false };
+}
+
+function ping() {
+  return {
+    status: "success",
+    message: "pong",
+    timestamp: new Date().toISOString(),
+  };
+}
+
+function getActiveGoogleUser() {
+  var email = "";
+  try {
+    email = Session.getActiveUser().getEmail();
+  } catch (_) {}
+  return {
+    status: "success",
+    email: email || "",
+    isAvailable: !!email,
+  };
+}
+
+function checkToken_(token) {
+  const required =
+    PropertiesService.getScriptProperties().getProperty("APP_TOKEN");
+  if (!required) return true;
+  return String(token || "") === String(required);
+}
+
+function jsonOutput_(obj) {
+  return rawJson_(JSON.stringify(obj));
+}
+function rawJson_(str) {
+  return ContentService.createTextOutput(str).setMimeType(
+    ContentService.MimeType.JSON,
+  );
+}
+
+/**
+ * Dispatcher API utama.
+ *  - setupDatabase TIDAK lagi dipanggil di tiap request (hanya sekali / 6 jam).
+ *  - getAllData dilayani dari cache (CacheService), tidak membaca sheet tiap kali.
+ *  - Fungsi tulis mengembalikan data terbaru di field "data".
+ */
+function handleApi_(fn, args, token, userToken, rid) {
+  if (!checkToken_(token)) return jsonOutput_(err_("Token server tidak valid"));
+  if (!fn || !API_FUNCTIONS_.hasOwnProperty(fn))
+    return jsonOutput_(err_("Fungsi tidak dikenali: " + fn));
+
+  try {
+    ensureDb_();
+    if (fn === "getAllData" || fn === "prefetchData")
+      return rawJson_(dataJson_());
+
+    const isWrite = WRITE_FNS_[fn] === 1;
+    CUR_RID_ = isWrite && rid ? String(rid).slice(0, 64) : "";
+    const argList = Array.isArray(args) ? args.slice() : [];
+    const result = API_FUNCTIONS_[fn].apply(null, argList);
+    const out = result === undefined ? ok_("") : result;
+
+    if (isWrite && out && out.status === "success") {
+      invalidate_();
+      const head = JSON.stringify(out);
+      return rawJson_(head.slice(0, -1) + ',"data":' + dataJson_() + "}");
+    }
+    return jsonOutput_(out);
+  } catch (err) {
+    return jsonOutput_(err_("Gagal memproses permintaan: " + err.message));
+  }
+}
+
+/* ---------- Helper Database ---------- */
+function getSheet_(name) {
+  const ss = getSS_();
+  let s = ss.getSheetByName(name);
+  if (!s) {
+    setupDatabase();
+    s = ss.getSheetByName(name);
+  }
+  return s;
+}
+
+const ok_ = (m) => ({ status: "success", message: m });
+const err_ = (m) => ({ status: "error", message: m });
+
+function tx_(fn) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(20000);
+    // Anti-dobel: bila request yang sama (rid sama) sudah sukses, kembalikan hasilnya
+    const c = CUR_RID_ ? CacheService.getScriptCache() : null;
+    if (c) {
+      const hit = c.get("rid:" + CUR_RID_);
+      if (hit) return JSON.parse(hit);
+    }
+    const r = fn();
+    SpreadsheetApp.flush();
+    if (c && r && r.status === "success")
+      c.put("rid:" + CUR_RID_, JSON.stringify(r), 900);
+    return r;
+  } catch (e) {
+    return err_("Gagal: " + e.message);
+  } finally {
+    try {
+      lock.releaseLock();
+    } catch (_) {}
+  }
+}
+
+function fmtTanggal_(v) {
+  return v instanceof Date
+    ? Utilities.formatDate(
+        v,
+        Session.getScriptTimeZone(),
+        "yyyy-MM-dd HH:mm:ss",
+      )
+    : String(v || "");
+}
+
+/* Hapus banyak baris sekaligus (baris berurutan digabung jadi 1 panggilan). */
+function deleteRows_(sheet, rowNums) {
+  const r = rowNums.slice().sort((a, b) => b - a);
+  let i = 0;
+  while (i < r.length) {
+    const top = r[i];
+    let cnt = 1;
+    while (i + 1 < r.length && r[i + 1] === top - cnt) {
+      cnt++;
+      i++;
+    }
+    sheet.deleteRows(top - cnt + 1, cnt);
+    i++;
+  }
+}
+
+/* ============================================================
+ * CACHE & VERSI DATA (kunci kecepatan)
+ * ============================================================ */
+
+/** Setup sheet hanya sekali per 6 jam, bukan di setiap request. */
+function ensureDb_() {
+  const c = CacheService.getScriptCache();
+  if (c.get("kc:dbok")) return;
+  setupDatabase();
+  c.put("kc:dbok", "1", 21600);
+}
+
+/** Dengan trigger terpasang -> cache 5 menit (di-invalidate instan saat sheet diedit).
+ *  Tanpa trigger -> cache cuma 45 detik supaya edit manual di sheet tetap cepat terbaca. */
+function cacheTtl_() {
+  return PropertiesService.getScriptProperties().getProperty("TRIG_OK")
+    ? 300
+    : 45;
+}
+
+const CH_ = 90000;
+function cachePutBig_(key, str, ttl) {
+  try {
+    const b64 = Utilities.base64Encode(
+      Utilities.gzip(Utilities.newBlob(str, "text/plain", "d.txt")).getBytes(),
+    );
+    const n = Math.ceil(b64.length / CH_);
+    const o = {};
+    for (let i = 0; i < n; i++) o[key + ":" + i] = b64.substr(i * CH_, CH_);
+    o[key + ":n"] = String(n);
+    CacheService.getScriptCache().putAll(o, ttl);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function cacheGetBig_(key) {
+  try {
+    const c = CacheService.getScriptCache();
+    const n = Number(c.get(key + ":n"));
+    if (!n) return null;
+    const keys = [];
+    for (let i = 0; i < n; i++) keys.push(key + ":" + i);
+    const got = c.getAll(keys);
+    let b64 = "";
+    for (let i = 0; i < n; i++) {
+      const part = got[key + ":" + i];
+      if (part == null) return null;
+      b64 += part;
+    }
+    return Utilities.ungzip(
+      Utilities.newBlob(Utilities.base64Decode(b64), "application/x-gzip"),
+    ).getDataAsString("UTF-8");
+  } catch (_) {
+    return null;
+  }
+}
+
+function md5_(str) {
+  return Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5,
+    str,
+    Utilities.Charset.UTF_8,
+  )
+    .map((b) => ("0" + (b & 0xff).toString(16)).slice(-2))
+    .join("");
+}
+
+/** Hapus cache data -> pembacaan berikutnya membaca sheet lagi. */
+function invalidate_() {
+  const c = CacheService.getScriptCache();
+  c.remove("kc:d:n");
+  c.remove("kc:v");
+}
+
+/** JSON data lengkap (string). "v" = sidik jari isi data; berubah hanya jika data berubah. */
+function dataJson_(force) {
+  if (!force) {
+    const hit = cacheGetBig_("kc:d");
+    if (hit) return hit;
+  }
+  const lock = LockService.getScriptLock();
+  let locked = false;
+  try {
+    lock.waitLock(10000);
+    locked = true;
+  } catch (_) {}
+  try {
+    if (!force && locked) {
+      const again = cacheGetBig_("kc:d"); // request lain mungkin sudah membangun cache
+      if (again) return again;
+    }
+    const base = JSON.stringify(buildData_());
+    const v = md5_(base);
+    const json = base.slice(0, -1) + ',"v":"' + v + '"}';
+    if (locked) {
+      const ttl = cacheTtl_();
+      cachePutBig_("kc:d", json, ttl);
+      CacheService.getScriptCache().put("kc:v", v, ttl);
+    }
+    return json;
+  } finally {
+    if (locked)
+      try {
+        lock.releaseLock();
+      } catch (_) {}
+  }
+}
+
+/** Sangat ringan: browser cukup menanyakan versi; data diunduh hanya jika versi berubah. */
+function getVersion() {
+  const c = CacheService.getScriptCache();
+  let v = c.get("kc:v");
+  if (!v || !c.get("kc:d:n")) {
+    const j = dataJson_();
+    const m = /"v":"([0-9a-f]{32})"\}$/.exec(j.slice(-60));
+    v = m ? m[1] : String(Date.now());
+  }
+  return { status: "success", v: v };
+}
+
+/* ---------- Trigger (dipasang SEKALI lewat installTriggers) ---------- */
+function onSheetChange(e) {
+  try {
+    invalidate_();
+  } catch (_) {}
+}
+
+function warmUp() {
+  try {
+    dataJson_(true); // paksa baca ulang sheet & segarkan cache tiap 5 menit
+  } catch (_) {}
+}
+
+function cleanupExpired() {
+  return tx_(() => {
+    const now = new Date();
+    const a = compactSheet_(
+      SH_SESSIONS,
+      6,
+      (r) => r[5] === true && new Date(r[4]) > now,
+    );
+    const b = compactSheet_(SH_OTP, 4, (r) => !r[3] && new Date(r[2]) > now);
+    return ok_("Dibersihkan: " + a + " sesi, " + b + " OTP");
+  });
+}
+
+function compactSheet_(name, cols, keepFn) {
+  const s = getSheet_(name);
+  const last = s.getLastRow();
+  if (last < 2) return 0;
+  const data = s.getRange(2, 1, last - 1, cols).getValues();
+  const keep = data.filter(keepFn);
+  if (keep.length === data.length) return 0;
+  s.getRange(2, 1, data.length, cols).clearContent();
+  if (keep.length) s.getRange(2, 1, keep.length, cols).setValues(keep);
+  return data.length - keep.length;
+}
+
+/**
+ * JALANKAN SEKALI dari editor Apps Script (pilih fungsi ini lalu klik Run).
+ * Memasang: invalidasi cache instan saat sheet diedit, pemanasan cache tiap 5 menit,
+ * dan pembersihan sesi/OTP kedaluwarsa tiap hari.
+ */
+function installTriggers() {
+  const mine = { onSheetChange: 1, warmUp: 1, cleanupExpired: 1 };
+  ScriptApp.getProjectTriggers().forEach((t) => {
+    if (mine[t.getHandlerFunction()]) ScriptApp.deleteTrigger(t);
+  });
+  const ss = getSS_();
+  ScriptApp.newTrigger("onSheetChange").forSpreadsheet(ss).onEdit().create();
+  ScriptApp.newTrigger("onSheetChange").forSpreadsheet(ss).onChange().create();
+  ScriptApp.newTrigger("warmUp").timeBased().everyMinutes(5).create();
+  ScriptApp.newTrigger("cleanupExpired")
+    .timeBased()
+    .everyDays(1)
+    .atHour(3)
+    .create();
+  PropertiesService.getScriptProperties().setProperty("TRIG_OK", "1");
+  setupDatabase();
+  dataJson_(true);
+  return "Trigger terpasang";
+}
+
+/**
+ * Setup Database. Hanya MEMBUAT sheet yang belum ada; tidak mengubah data/format yang sudah ada.
+ * (Ini satu-satunya setupDatabase — hapus file data.gs agar tidak bentrok.)
+ */
+function setupDatabase() {
+  const ss = getSS_();
+  const sheets = {
+    [SH_TRX]: [
+      "ID",
+      "Tanggal",
+      "Nama_Transaksi",
+      "Jenis",
+      "Kategori",
+      "Nominal",
+      "Keterangan",
+      "UserId",
+    ],
+    [SH_KAT]: ["ID_Kategori", "Nama_Kategori", "Tipe_Transaksi", "UserId"],
+    [SH_SET]: ["Parameter_Key", "Parameter_Value"],
+    [SH_ANG]: ["Kategori", "Batas_Bulanan", "UserId"],
+    [SH_TGT]: [
+      "ID",
+      "Nama_Target",
+      "Target_Nominal",
+      "Terkumpul",
+      "Tenggat",
+      "UserId",
+    ],
+    [SH_USERS]: [
+      "UserId",
+      "Nama",
+      "Email",
+      "PinHash",
+      "DeviceIds",
+      "BiometricCreds",
+      "Picture",
+      "CreatedAt",
+      "LastLogin",
+      "GoogleSub",
+    ],
+    [SH_SESSIONS]: [
+      "Token",
+      "UserId",
+      "DeviceId",
+      "CreatedAt",
+      "ExpiresAt",
+      "IsValid",
+    ],
+    [SH_OTP]: ["Email", "Otp", "ExpiresAt", "Used"],
+  };
+
+  for (const [name, headers] of Object.entries(sheets)) {
+    let s = ss.getSheetByName(name);
+    if (!s) {
+      s = ss.insertSheet(name);
+      s.getRange(1, 1, 1, headers.length).setValues([headers]);
+      styleHeader_(s, headers.length);
+      if (name === SH_TRX) s.getRange("B:B").setNumberFormat("@");
+      if (name === SH_TGT) s.getRange("E:E").setNumberFormat("@");
+    } else {
+      // Isi header "UserId" hanya jika selnya kosong (tidak menimpa apa pun)
+      const ui = headers.indexOf("UserId");
+      if (ui > 0 && !String(s.getRange(1, ui + 1).getValue()).trim())
+        s.getRange(1, ui + 1).setValue("UserId");
+    }
+  }
+
+  // Isi kategori default jika Kategori masih kosong
+  const katSheet = ss.getSheetByName(SH_KAT);
+  if (katSheet && katSheet.getLastRow() < 2) {
+    const defaultRows = DEFAULT_CATEGORIES.map((c, i) => [
+      i + 1,
+      c.nama,
+      c.tipe,
+      "SYSTEM",
+    ]);
+    katSheet.getRange(2, 1, defaultRows.length, 4).setValues(defaultRows);
+  }
+}
+
+function styleHeader_(sheet, numCols) {
+  sheet
+    .getRange(1, 1, 1, numCols)
+    .setBackground("#4F46E5")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold");
+  sheet.setFrozenRows(1);
+}
+
+/* ============================================================
+ * OPERASI DATA
+ * ============================================================ */
+
+/** Baris pengaturan. Mendukung 2 kolom (Key, Value) maupun 3 kolom lama (UserId, Key, Value). */
+function settingsRows_() {
+  const s = getSheet_(SH_SET);
+  const last = s.getLastRow();
+  const out = [];
+  if (last < 2) return out;
+  const data = s.getRange(2, 1, last - 1, 3).getValues();
+  data.forEach((r, i) => {
+    if (DEF_SET_.hasOwnProperty(String(r[0])))
+      out.push({ row: i + 2, key: String(r[0]), val: r[1], col: 2 });
+    else if (DEF_SET_.hasOwnProperty(String(r[1])))
+      out.push({ row: i + 2, key: String(r[1]), val: r[2], col: 3 });
+  });
+  return out;
+}
+
+function getSettings_() {
+  const o = Object.assign({}, DEF_SET_);
+  settingsRows_().forEach((r) => {
+    if (r.val !== "" && !isNaN(r.val)) o[r.key] = Number(r.val);
+  });
+  return o;
+}
+
+/** Baca semua data dari sheet (dipakai saat cache kosong). */
+function buildData_() {
+  const sTrx = getSheet_(SH_TRX);
+  const lastTrx = sTrx.getLastRow();
+  let trx = [];
+  if (lastTrx > 1) {
+    const rows = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
+    trx = rows
+      .filter((r) => r[0] !== "" || r[2] !== "")
+      .map((r) => ({
+        id: String(r[0]),
+        tanggal: fmtTanggal_(r[1]),
+        nama: String(r[2] || "-"),
+        jenis: r[3] === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+        kategori: String(r[4] || "Umum"),
+        nominal: Number(r[5]) || 0,
+        keterangan: String(r[6] || ""),
+      }));
+    trx.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  }
+
+  const sKat = getSheet_(SH_KAT);
+  const lastKat = sKat.getLastRow();
+  let kategori = [];
+  if (lastKat > 1) {
+    const rows = sKat.getRange(2, 1, lastKat - 1, 4).getValues();
+    kategori = rows
+      .map((r) => ({ id: r[0], nama: String(r[1]), tipe: String(r[2]) }))
+      .filter((k) => k.nama);
+  }
+
+  const sAng = getSheet_(SH_ANG);
+  const lastAng = sAng.getLastRow();
+  let anggaran = [];
+  if (lastAng > 1) {
+    const rows = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
+    anggaran = rows
+      .filter((r) => String(r[0]).trim())
+      .map((r) => ({
+        kategori: String(r[0]),
+        batas: Number(r[1]) || 0,
+      }));
+  }
+
+  const sTgt = getSheet_(SH_TGT);
+  const lastTgt = sTgt.getLastRow();
+  let target = [];
+  if (lastTgt > 1) {
+    const rows = sTgt.getRange(2, 1, lastTgt - 1, 6).getValues();
+    target = rows
+      .filter((r) => String(r[1]).trim())
+      .map((r) => ({
+        id: String(r[0]),
+        nama: String(r[1]),
+        target: Number(r[2]) || 0,
+        terkumpul: Number(r[3]) || 0,
+        tenggat: fmtTanggal_(r[4]).slice(0, 10),
+      }));
+  }
+
+  return {
+    trx: trx,
+    kategori: kategori,
+    anggaran: anggaran,
+    target: target,
+    settings: getSettings_(),
+  };
+}
+
+/** Versi objek (kompatibel dengan kode lama). */
+function getAllData() {
+  return JSON.parse(dataJson_());
+}
+
+function prefetchData() {
+  return getAllData();
+}
+
+/* ---------- Transaksi ---------- */
+function simpanDataTransaksi(f) {
+  return tx_(() => {
+    const nama = String(f.nama || "").trim(),
+      nominal = Number(f.nominal);
+    if (!nama || !(nominal > 0))
+      return err_("Nama dan nominal (lebih dari 0) wajib diisi");
+    const jenis = f.jenis === "Pemasukan" ? "Pemasukan" : "Pengeluaran";
+    const kategori = String(f.kategori || "").trim() || "Umum";
+    const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
+      ? f.tanggal
+      : Utilities.formatDate(
+          new Date(),
+          Session.getScriptTimeZone(),
+          "yyyy-MM-dd HH:mm:ss",
+        );
+
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    let row = 0;
+    if (f.id && last > 1) {
+      const ids = s.getRange(2, 1, last - 1, 1).getValues();
+      for (let i = 0; i < ids.length; i++) {
+        if (String(ids[i][0]) === String(f.id)) {
+          row = i + 2;
+          break;
+        }
+      }
+    }
+
+    const isEdit = row > 0;
+    if (!isEdit) row = s.getLastRow() + 1;
+    s.getRange(row, 2).setNumberFormat("@");
+    s.getRange(row, 1, 1, 8).setValues([
+      [
+        isEdit ? f.id : "TRX-" + Date.now(),
+        tgl,
+        nama,
+        jenis,
+        kategori,
+        nominal,
+        String(f.keterangan || ""),
+        "GLOBAL",
+      ],
+    ]);
+    return ok_(
+      isEdit ? "Transaksi berhasil diperbarui" : "Transaksi berhasil disimpan",
+    );
+  });
+}
+
+function simpanBanyakTransaksi(list) {
+  return tx_(() => {
+    if (!Array.isArray(list) || !list.length)
+      return err_("Tidak ada data yang dikirim");
+    if (list.length > 50) return err_("Maksimal 50 data sekaligus");
+
+    const rows = [];
+    const now = Date.now();
+    for (let i = 0; i < list.length; i++) {
+      const f = list[i] || {};
+      const nama = String(f.nama || "").trim(),
+        nominal = Number(f.nominal);
+      if (!nama || !(nominal > 0))
+        return err_("Data " + (i + 1) + ": nama dan nominal wajib diisi");
+      const jenis = f.jenis === "Pemasukan" ? "Pemasukan" : "Pengeluaran";
+      const kategori = String(f.kategori || "").trim() || "Umum";
+      const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
+        ? f.tanggal
+        : Utilities.formatDate(
+            new Date(),
+            Session.getScriptTimeZone(),
+            "yyyy-MM-dd HH:mm:ss",
+          );
+
+      rows.push([
+        "TRX-" + now + "-" + i,
+        tgl,
+        nama,
+        jenis,
+        kategori,
+        nominal,
+        String(f.keterangan || ""),
+        "GLOBAL",
+      ]);
+    }
+
+    const s = getSheet_(SH_TRX);
+    const start = s.getLastRow() + 1;
+    s.getRange(start, 2, rows.length, 1).setNumberFormat("@");
+    s.getRange(start, 1, rows.length, 8).setValues(rows);
+
+    return ok_(rows.length + " transaksi berhasil disimpan");
+  });
+}
+
+function hapusTransaksi(id) {
+  return tx_(() => {
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(id)) {
+        s.deleteRow(i + 2);
+        return ok_("Transaksi berhasil dihapus");
+      }
+    }
+    return err_("Data tidak ditemukan");
+  });
+}
+
+function hapusTransaksiBanyak(ids) {
+  return tx_(() => {
+    if (!Array.isArray(ids) || !ids.length)
+      return err_("Tidak ada data yang dipilih");
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const idSet = new Set(ids.map(String));
+    const data = s.getRange(2, 1, last - 1, 1).getValues();
+    const rows = [];
+    for (let i = 0; i < data.length; i++) {
+      if (idSet.has(String(data[i][0]))) rows.push(i + 2);
+    }
+    if (rows.length) deleteRows_(s, rows);
+    return ok_(rows.length + " transaksi berhasil dihapus");
+  });
+}
+
+function editTransaksiBanyak(ids, patch) {
+  return tx_(() => {
+    if (!Array.isArray(ids) || !ids.length)
+      return err_("Tidak ada data yang dipilih");
+    patch = patch || {};
+    const jenisBaru =
+      patch.jenis === "Pemasukan" || patch.jenis === "Pengeluaran"
+        ? patch.jenis
+        : "";
+    const katBaru = String(patch.kategori || "").trim();
+    if (!jenisBaru && !katBaru) return err_("Tidak ada perubahan yang dipilih");
+
+    const s = getSheet_(SH_TRX);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Data tidak ditemukan");
+    const idSet = new Set(ids.map(String));
+    const range = s.getRange(2, 1, last - 1, 8);
+    const data = range.getValues();
+    let jml = 0;
+    for (let i = 0; i < data.length; i++) {
+      if (idSet.has(String(data[i][0]))) {
+        if (jenisBaru) data[i][3] = jenisBaru;
+        if (katBaru) data[i][4] = katBaru;
+        jml++;
+      }
+    }
+    range.setValues(data);
+    return ok_(jml + " transaksi berhasil diperbarui");
+  });
+}
+
+/* ---------- Kategori ---------- */
+function simpanKategori(nama, tipe) {
+  return tx_(() => {
+    nama = String(nama || "").trim();
+    if (!nama) return err_("Nama kategori wajib diisi");
+    const s = getSheet_(SH_KAT);
+    const last = s.getLastRow();
+    if (last > 1) {
+      const data = s.getRange(2, 1, last - 1, 4).getValues();
+      const exists = data.some(
+        (r) => String(r[1]).toLowerCase() === nama.toLowerCase(),
+      );
+      if (exists) return err_('Kategori "' + nama + '" sudah ada');
+    }
+    s.appendRow([
+      Math.max(0, s.getLastRow() - 1) + 1,
+      nama,
+      tipe === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+      "GLOBAL",
+    ]);
+    return ok_("Kategori berhasil ditambahkan");
+  });
+}
+
+function hapusKategori(nama) {
+  return tx_(() => {
+    nama = String(nama || "").trim();
+    if (!nama) return err_("Nama kategori wajib diisi");
+    const sKat = getSheet_(SH_KAT);
+    const lastKat = sKat.getLastRow();
+    if (lastKat < 2) return err_("Kategori tidak ditemukan");
+    const dataKat = sKat.getRange(2, 1, lastKat - 1, 4).getValues();
+    let rowKat = 0;
+    for (let i = 0; i < dataKat.length; i++) {
+      if (String(dataKat[i][1]).toLowerCase() === nama.toLowerCase()) {
+        rowKat = i + 2;
+        break;
+      }
+    }
+    if (!rowKat) return err_("Kategori tidak ditemukan");
+
+    // Hapus transaksi dengan kategori ini
+    const sTrx = getSheet_(SH_TRX);
+    const lastTrx = sTrx.getLastRow();
+    if (lastTrx > 1) {
+      const dataTrx = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
+      const rowsTrx = [];
+      for (let i = 0; i < dataTrx.length; i++) {
+        if (String(dataTrx[i][4]).toLowerCase() === nama.toLowerCase())
+          rowsTrx.push(i + 2);
+      }
+      if (rowsTrx.length) deleteRows_(sTrx, rowsTrx);
+    }
+
+    // Hapus anggaran untuk kategori ini
+    const sAng = getSheet_(SH_ANG);
+    const lastAng = sAng.getLastRow();
+    if (lastAng > 1) {
+      const dataAng = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
+      const rowsAng = [];
+      for (let i = 0; i < dataAng.length; i++) {
+        if (String(dataAng[i][0]).toLowerCase() === nama.toLowerCase())
+          rowsAng.push(i + 2);
+      }
+      if (rowsAng.length) deleteRows_(sAng, rowsAng);
+    }
+
+    sKat.deleteRow(rowKat);
+    return ok_("Kategori berhasil dihapus");
+  });
+}
+
+/* ---------- Pengaturan ---------- */
+function simpanPengaturan(o) {
+  return tx_(() => {
+    o = o || {};
+    const s = getSheet_(SH_SET);
+    const existing = {};
+    settingsRows_().forEach((r) => {
+      existing[r.key] = r;
+    });
+
+    for (const k in DEF_SET_) {
+      if (!(k in o)) continue;
+      const n = Number(o[k]);
+      if (isNaN(n) || n < 0) return err_('Nilai "' + k + '" tidak valid');
+      if (existing[k]) {
+        s.getRange(existing[k].row, existing[k].col).setValue(n);
+      } else {
+        s.appendRow([k, n]);
+      }
+    }
+    return ok_("Pengaturan berhasil disimpan");
+  });
+}
+
+/* ---------- Anggaran ---------- */
+function simpanAnggaran(kategori, batas) {
+  return tx_(() => {
+    kategori = String(kategori || "").trim();
+    batas = Number(batas);
+    if (!kategori || !(batas > 0))
+      return err_("Kategori dan batas anggaran wajib diisi");
+
+    const s = getSheet_(SH_ANG);
+    const last = s.getLastRow();
+    let row = 0;
+    if (last > 1) {
+      const data = s.getRange(2, 1, last - 1, 3).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]).toLowerCase() === kategori.toLowerCase()) {
+          row = i + 2;
+          break;
+        }
+      }
+    }
+
+    if (row) s.getRange(row, 2).setValue(batas);
+    else s.appendRow([kategori, batas, "GLOBAL"]);
+    return ok_("Anggaran berhasil disimpan");
+  });
+}
+
+function hapusAnggaran(kategori) {
+  return tx_(() => {
+    const s = getSheet_(SH_ANG);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Anggaran tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 3).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]).toLowerCase() === String(kategori).toLowerCase()) {
+        s.deleteRow(i + 2);
+        return ok_("Anggaran dihapus");
+      }
+    }
+    return err_("Anggaran tidak ditemukan");
+  });
+}
+
+/* ---------- Target Tabungan ---------- */
+function simpanTarget(o) {
+  return tx_(() => {
+    if (typeof o === "string") {
+      try {
+        o = JSON.parse(o);
+      } catch (_) {}
+    }
+    o = o || {};
+    const nama = String(o.nama || "").trim(),
+      target = Number(o.target),
+      terkumpul = Number(o.terkumpul) || 0;
+    if (!nama || !(target > 0) || terkumpul < 0)
+      return err_("Nama dan nominal target wajib diisi");
+    const tenggat = /^\d{4}-\d{2}-\d{2}$/.test(o.tenggat || "")
+      ? o.tenggat
+      : "";
+
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    let row = 0;
+    const tgtId = String(o.id || "").trim();
+    if (tgtId && last > 1) {
+      const data = s.getRange(2, 1, last - 1, 6).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]).trim() === tgtId) {
+          row = i + 2;
+          break;
+        }
+      }
+      if (!row) {
+        for (let i = 0; i < data.length; i++) {
+          if (String(data[i][1]).trim().toLowerCase() === nama.toLowerCase()) {
+            row = i + 2;
+            break;
+          }
+        }
+      }
+    }
+
+    const isEdit = row > 0;
+    if (!isEdit) row = s.getLastRow() + 1;
+    s.getRange(row, 5).setNumberFormat("@");
+    s.getRange(row, 1, 1, 6).setValues([
+      [
+        isEdit ? tgtId || "TGT-" + Date.now() : "TGT-" + Date.now(),
+        nama,
+        target,
+        terkumpul,
+        tenggat,
+        "GLOBAL",
+      ],
+    ]);
+    return ok_(
+      isEdit ? "Target berhasil diperbarui" : "Target berhasil dibuat",
+    );
+  });
+}
+
+function hapusTarget(id) {
+  return tx_(() => {
+    id = String(id || "").trim();
+    if (!id) return err_("ID target wajib diisi");
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Target tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (
+        String(data[i][0]).trim() === id ||
+        String(data[i][1]).trim().toLowerCase() === id.toLowerCase()
+      ) {
+        s.deleteRow(i + 2);
+        return ok_("Target berhasil dihapus");
+      }
+    }
+    return err_("Target tidak ditemukan");
+  });
+}
+
+function setorTarget(id, jumlah) {
+  return tx_(() => {
+    id = String(id || "").trim();
+    jumlah = Number(jumlah);
+    if (!(jumlah > 0)) return err_("Jumlah setoran harus lebih dari 0");
+    const s = getSheet_(SH_TGT);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Target tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (
+        String(data[i][0]).trim() === id ||
+        String(data[i][1]).trim().toLowerCase() === id.toLowerCase()
+      ) {
+        const target = Number(data[i][2]) || 0;
+        const baru = (Number(data[i][3]) || 0) + jumlah;
+        s.getRange(i + 2, 4).setValue(baru);
+        return ok_(
+          baru >= target
+            ? "Selamat, target tabungan tercapai!"
+            : "Setoran berhasil ditambahkan",
+        );
+      }
+    }
+    return err_("Target tidak ditemukan");
+  });
+}
+
+/**
+ * Analisis teks suara. Mendukung 1 atau BANYAK transaksi sekaligus.
+ * Pisahkan transaksi dengan koma / titik koma / kata "lalu", "kemudian", "selanjutnya",
+ * "berikutnya", "terus", "setelah itu". Contoh:
+ *   "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
+ */
+function parseSuaraSegmen_(teks) {
+  const t = String(teks || "")
+    .trim()
+    .toLowerCase();
+  if (!t) return null;
+  const m = t.match(
+    /(\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?)\s*(ribu|rb|k|juta|jt)?/,
+  );
+  if (!m) return null;
+  let n = /\.\d{3}/.test(m[1])
+    ? parseFloat(m[1].replace(/\./g, ""))
+    : parseFloat(m[1].replace(",", "."));
+  if (/^(ribu|rb|k)$/.test(m[2] || "")) n *= 1000;
+  else if (/^(juta|jt)$/.test(m[2] || "")) n *= 1000000;
+
+  // Cek kategori di Sheet Kategori
+  let katList = [];
+  try {
+    const sKat = getSheet_(SH_KAT);
+    if (sKat.getLastRow() > 1) {
+      katList = sKat
+        .getRange(2, 1, sKat.getLastRow() - 1, 3)
+        .getValues()
+        .map((r) => ({
+          nama: String(r[1]).trim(),
+          tipe:
+            String(r[2]).trim() === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+        }));
+    }
+  } catch (_) {}
+
+  // Cari kategori yang cocok dengan teks
+  let matchedKat = null;
+  for (let i = 0; i < katList.length; i++) {
+    const kn = katList[i].nama.toLowerCase();
+    if (t.includes(kn)) {
+      matchedKat = katList[i];
+      break;
+    }
+  }
+
+  let masuk = /terima|gaji|masuk|bonus|dapat|untung/.test(t);
+  let kat = "Lainnya";
+  let jenis = masuk ? "Pemasukan" : "Pengeluaran";
+
+  if (matchedKat) {
+    kat = matchedKat.nama;
+    jenis = matchedKat.tipe; // Mengikuti jenis transaksi kategori secara otomatis
+  } else {
+    if (masuk) {
+      kat = /gaji/.test(t) ? "Gaji" : "Pemasukan Lain";
+      jenis = "Pemasukan";
+    } else {
+      kat = /makan|minum|kopi|jajan/.test(t)
+        ? "Makanan & Minuman"
+        : /bensin|ojek|grab|gojek|parkir|tol|bus|kereta/.test(t)
+          ? "Transportasi"
+          : "Lainnya";
+      jenis = "Pengeluaran";
+    }
+  }
+
+  const teksAsli = String(teks).trim();
+  return {
+    nama: teksAsli.charAt(0).toUpperCase() + teksAsli.slice(1),
+    jenis: jenis,
+    kategori: kat,
+    nominal: Math.round(n),
+    keterangan: "Dicatat via suara",
+  };
+}
+
+function analisisSuaraPintar(teks) {
+  try {
+    const bagian = String(teks || "")
+      .split(
+        /\s*(?:[,;]|\blalu\b|\bkemudian\b|\bselanjutnya\b|\bberikutnya\b|\bterus\b|\bsetelah itu\b|\bsesudah itu\b)\s*/i,
+      )
+      .map((x) => x.trim())
+      .filter(Boolean);
+    const list = bagian.map(parseSuaraSegmen_).filter(Boolean);
+    if (!list.length)
+      return err_("Nominal tidak terdeteksi, coba sebutkan angkanya");
+    if (list.length === 1) return simpanDataTransaksi(list[0]);
+    return simpanBanyakTransaksi(list);
+  } catch (e) {
+    return err_("Gagal memproses suara: " + e.message);
+  }
+}
+
+/* ============================================================
+ * AUTENTIKASI GOOGLE, DEVICE SECURITY & WEBAUTHN
+ * ============================================================ */
+
+function findUserByEmail_(email) {
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return null;
+  const data = s.getRange(2, 1, last - 1, 10).getValues();
+  const emailLow = String(email || "")
+    .toLowerCase()
+    .trim();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][2]).toLowerCase().trim() === emailLow) {
+      return { row: i + 2, data: data[i] };
+    }
+  }
+  return null;
+}
+
+function generateToken_() {
+  const bytes = [];
+  for (let i = 0; i < 32; i++) bytes.push(Math.floor(Math.random() * 256));
+  return bytes.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function createSession_(userId, deviceId) {
+  const token = generateToken_();
+  const now = new Date();
+  const expiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Sesi 12 jam
+  const s = getSheet_(SH_SESSIONS);
+  s.appendRow([
+    token,
+    userId,
+    deviceId,
+    now.toISOString(),
+    expiry.toISOString(),
+    true,
+  ]);
+
+  // Update LastLogin di Users sheet
+  const uSheet = getSheet_(SH_USERS);
+  const last = uSheet.getLastRow();
+  if (last >= 2) {
+    const data = uSheet.getRange(2, 1, last - 1, 1).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(userId)) {
+        uSheet.getRange(i + 2, 9).setValue(now.toISOString());
+        break;
+      }
+    }
+  }
+  return { token, expiresAt: expiry.toISOString() };
+}
+
+function validateSession_(token) {
+  if (!token) return null;
+  const s = getSheet_(SH_SESSIONS);
+  const last = s.getLastRow();
+  if (last < 2) return null;
+  const data = s.getRange(2, 1, last - 1, 6).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][0]) === String(token) && data[i][5] === true) {
+      const expiry = new Date(data[i][4]);
+      if (expiry > new Date()) {
+        return { userId: String(data[i][1]), deviceId: String(data[i][2]) };
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * 1. GOOGLE AUTH CHECK:
+ * Dipanggil saat user memilih akun Google / One Tap di browser.
+ * Cek apakah user baru atau sudah terdaftar, dan apakah perangkat ini terotorisasi.
+ */
+function googleAuthCheck(payload, deviceId) {
+  return tx_(() => {
+    payload = payload || {};
+    const email = String(payload.email || "")
+      .trim()
+      .toLowerCase();
+    const nama = String(payload.nama || payload.name || "").trim();
+    const picture = String(payload.picture || "").trim();
+    const googleSub = String(payload.googleSub || payload.sub || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email) return err_("Email Google tidak valid");
+
+    const user = findUserByEmail_(email);
+    if (!user) {
+      // User baru -> butuh setup PIN 6-digit
+      return {
+        status: "success",
+        isNewUser: true,
+        email: email,
+        nama: nama,
+        picture: picture,
+        googleSub: googleSub,
+      };
+    }
+
+    // User lama -> cek apakah deviceId ini sudah terdaftar
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    const isAuthorizedDevice = deviceId && devices.includes(deviceId);
+
+    // Cek apakah ada biometrik tersimpan untuk device ini
+    let creds = [];
+    try {
+      creds = JSON.parse(user.data[5] || "[]");
+    } catch (_) {
+      creds = [];
+    }
+    const hasBio = creds.some((c) => c.deviceId === deviceId);
+
+    if (isAuthorizedDevice) {
+      // Perangkat terdaftar -> buka sesi langsung atau minta PIN/Bio cepat
+      return {
+        status: "success",
+        isNewUser: false,
+        isAuthorizedDevice: true,
+        hasBio: hasBio,
+        userId: String(user.data[0]),
+        nama: String(user.data[1]),
+        email: String(user.data[2]),
+        picture: String(user.data[6] || picture),
+      };
+    } else {
+      // Perangkat baru/lain -> LARANG akses langsung, minta verifikasi PIN
+      return {
+        status: "success",
+        isNewUser: false,
+        isAuthorizedDevice: false,
+        requiresPinChallenge: true,
+        userId: String(user.data[0]),
+        nama: String(user.data[1]),
+        email: String(user.data[2]),
+        picture: String(user.data[6] || picture),
+        message:
+          "Perangkat baru terdeteksi! Masukkan PIN 6-digit untuk mendaftarkan perangkat ini.",
+      };
+    }
+  });
+}
+
+/**
+ * 2. REGISTRASI AKUN GOOGLE BARU:
+ * Menyimpan akun baru dengan Google payload, PIN hash, dan mendaftarkan deviceId pertama.
+ */
+function googleRegisterWithPin(googleData, pinHash, deviceId) {
+  return tx_(() => {
+    googleData = googleData || {};
+    const email = String(googleData.email || "")
+      .trim()
+      .toLowerCase();
+    const nama =
+      String(googleData.nama || googleData.name || "").trim() || "Pengguna";
+    const picture = String(googleData.picture || "").trim();
+    const googleSub = String(
+      googleData.googleSub || googleData.sub || "",
+    ).trim();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    if (findUserByEmail_(email))
+      return err_("Akun dengan email ini sudah terdaftar");
+
+    const userId = "USR-" + Date.now();
+    const now = new Date().toISOString();
+    const devices = deviceId ? [deviceId] : [];
+
+    const s = getSheet_(SH_USERS);
+    s.appendRow([
+      userId,
+      nama,
+      email,
+      pinHash,
+      JSON.stringify(devices),
+      "[]",
+      picture,
+      now,
+      now,
+      googleSub,
+    ]);
+
+    const session = createSession_(userId, deviceId);
+    return {
+      status: "success",
+      userId: userId,
+      nama: nama,
+      email: email,
+      picture: picture,
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  });
+}
+
+/**
+ * 3. VERIFIKASI PERANGKAT BARU DENGAN PIN:
+ * Jika user login dari perangkat lain, sistem meminta PIN. Jika PIN benar,
+ * perangkat tersebut langsung ditambahkan ke daftar DeviceIds user dan sesi dibuka.
+ */
+function verifyNewDeviceWithPin(email, pinHash, deviceId) {
+  return tx_(() => {
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    const user = findUserByEmail_(email);
+    if (!user) return err_("Akun tidak ditemukan");
+
+    if (String(user.data[3]) !== pinHash) {
+      return err_("PIN salah! Akses dari perangkat ini ditolak.");
+    }
+
+    // PIN Benar -> Daftarkan deviceId baru
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (deviceId && !devices.includes(deviceId)) {
+      devices.push(deviceId);
+      getSheet_(SH_USERS)
+        .getRange(user.row, 5)
+        .setValue(JSON.stringify(devices));
+    }
+
+    const session = createSession_(String(user.data[0]), deviceId);
+    return {
+      status: "success",
+      message: "Perangkat berhasil diverifikasi dan didaftarkan!",
+      userId: String(user.data[0]),
+      nama: String(user.data[1]),
+      email: String(user.data[2]),
+      picture: String(user.data[6] || ""),
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  });
+}
+
+/**
+ * Login konvensional dengan PIN
+ */
+function loginWithPin(email, pinHash, deviceId) {
+  return tx_(() => {
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    pinHash = String(pinHash || "").trim();
+    deviceId = String(deviceId || "").trim();
+
+    if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
+    const user = findUserByEmail_(email);
+    if (!user) return err_("Email tidak ditemukan");
+
+    if (String(user.data[3]) !== pinHash) return err_("PIN salah");
+
+    // Otomatis daftarkan device jika PIN benar
+    let devices = [];
+    try {
+      devices = JSON.parse(user.data[4] || "[]");
+    } catch (_) {
+      devices = [];
+    }
+    if (deviceId && !devices.includes(deviceId)) {
+      devices.push(deviceId);
+      getSheet_(SH_USERS)
+        .getRange(user.row, 5)
+        .setValue(JSON.stringify(devices));
+    }
+
+    const session = createSession_(String(user.data[0]), deviceId);
+    return {
+      status: "success",
+      userId: String(user.data[0]),
+      nama: String(user.data[1]),
+      email: String(user.data[2]),
+      picture: String(user.data[6] || ""),
+      token: session.token,
+      expiresAt: session.expiresAt,
+    };
+  });
+}
+
+function registerUser(email, nama, pinHash, deviceId) {
+  return googleRegisterWithPin(
+    { email, nama, picture: "", sub: "" },
+    pinHash,
+    deviceId,
+  );
+}
+
+/**
+ * Cek ketersediaan biometrik untuk deviceId
+ */
+function checkDeviceBiometric(deviceId, credentialId) {
+  deviceId = String(deviceId || "").trim();
+  credentialId = String(credentialId || "").trim();
+  if (!deviceId || !credentialId) return { status: "success", found: false };
+
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", found: false };
+  const data = s.getRange(2, 1, last - 1, 7).getValues();
+  for (let i = 0; i < data.length; i++) {
+    let creds = [];
+    try {
+      creds = JSON.parse(data[i][5] || "[]");
+    } catch (_) {
+      creds = [];
+    }
+    const found = creds.find(
+      (c) => c.credentialId === credentialId && c.deviceId === deviceId,
+    );
+    if (found) {
+      return {
+        status: "success",
+        found: true,
+        userId: String(data[i][0]),
+        nama: String(data[i][1]),
+        picture: String(data[i][6] || ""),
+      };
+    }
+  }
+  return { status: "success", found: false };
+}
+
+/**
+ * Login via WebAuthn Biometrik
+ */
+function loginWithBiometric(credentialId, deviceId) {
+  return tx_(() => {
+    credentialId = String(credentialId || "").trim();
+    deviceId = String(deviceId || "").trim();
+    if (!credentialId || !deviceId)
+      return err_("Credential biometrik tidak valid");
+
+    const s = getSheet_(SH_USERS);
+    const last = s.getLastRow();
+    if (last < 2) return err_("Tidak ada pengguna terdaftar");
+    const data = s.getRange(2, 1, last - 1, 7).getValues();
+    for (let i = 0; i < data.length; i++) {
+      let creds = [];
+      try {
+        creds = JSON.parse(data[i][5] || "[]");
+      } catch (_) {
+        creds = [];
+      }
+      const found = creds.find(
+        (c) => c.credentialId === credentialId && c.deviceId === deviceId,
+      );
+      if (found) {
+        const session = createSession_(String(data[i][0]), deviceId);
+        return {
+          status: "success",
+          userId: String(data[i][0]),
+          nama: String(data[i][1]),
+          email: String(data[i][2]),
+          picture: String(data[i][6] || ""),
+          token: session.token,
+          expiresAt: session.expiresAt,
+        };
+      }
+    }
+    return err_("Sidik jari tidak dikenali. Silakan login dengan PIN.");
+  });
+}
+
+function registerBiometric(token, credentialId, deviceId) {
+  return tx_(() => {
+    const sess = validateSession_(token);
+    if (!sess) return err_("Sesi tidak valid, silakan login ulang");
+    credentialId = String(credentialId || "").trim();
+    deviceId = String(deviceId || "").trim();
+    if (!credentialId || !deviceId) return err_("Data biometrik tidak valid");
+
+    const s = getSheet_(SH_USERS);
+    const last = s.getLastRow();
+    if (last < 2) return err_("User tidak ditemukan");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(sess.userId)) {
+        let creds = [];
+        try {
+          creds = JSON.parse(data[i][5] || "[]");
+        } catch (_) {
+          creds = [];
+        }
+        creds = creds.filter((c) => c.deviceId !== deviceId);
+        creds.push({
+          credentialId,
+          deviceId,
+          registeredAt: new Date().toISOString(),
+        });
+        s.getRange(i + 2, 6).setValue(JSON.stringify(creds));
+        return ok_("Sidik jari berhasil didaftarkan");
+      }
+    }
+    return err_("User tidak ditemukan");
+  });
+}
+
+function validateSession(token) {
+  const sess = validateSession_(token);
+  if (!sess) return { status: "success", valid: false };
+  const s = getSheet_(SH_USERS);
+  const last = s.getLastRow();
+  if (last < 2) return { status: "success", valid: false };
+  const data = s.getRange(2, 1, last - 1, 7).getValues();
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][0]) === sess.userId) {
+      return {
+        status: "success",
+        valid: true,
+        userId: sess.userId,
+        nama: String(data[i][1]),
+        email: String(data[i][2]),
+        picture: String(data[i][6] || ""),
+      };
+    }
+  }
+  return { status: "success", valid: false };
+}
+
+function logoutSession(token) {
+  return tx_(() => {
+    if (!token) return ok_("Berhasil logout");
+    const s = getSheet_(SH_SESSIONS);
+    const last = s.getLastRow();
+    if (last < 2) return ok_("Berhasil logout");
+    const data = s.getRange(2, 1, last - 1, 6).getValues();
+    for (let i = 0; i < data.length; i++) {
+      if (String(data[i][0]) === String(token)) {
+        s.getRange(i + 2, 6).setValue(false);
+        break;
+      }
+    }
+    return ok_("Berhasil logout");
+  });
+}
+
+/* ============================================================
+ * OTP & RESET PIN
+ * ============================================================ */
+
+function sendOtpEmail(email, context) {
+  return tx_(() => {
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    context = String(context || "register");
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email))
+      return err_("Format email tidak valid");
+
+    if (context === "reset") {
+      const user = findUserByEmail_(email);
+      if (!user) return err_("Email tidak terdaftar");
+    }
+
+    const otp = String(Math.floor(100000 + Math.random() * 900000));
+    const now = new Date();
+    const expiry = new Date(now.getTime() + 10 * 60 * 1000);
+
+    const s = getSheet_(SH_OTP);
+    const last = s.getLastRow();
+    if (last >= 2) {
+      const data = s.getRange(2, 1, last - 1, 4).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]).toLowerCase() === email && !data[i][3]) {
+          s.getRange(i + 2, 4).setValue(true);
+        }
+      }
+    }
+
+    s.appendRow([email, otp, expiry.toISOString(), false]);
+
+    const subject =
+      context === "reset"
+        ? "Reset PIN - Keuangan Cerdas"
+        : "Verifikasi Email - Keuangan Cerdas";
+    const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:16px">
+      <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px">
+        <h1 style="color:#fff;margin:0;font-size:24px">Keuangan Cerdas</h1>
+      </div>
+      <h2 style="color:#1e293b;margin:0 0 8px">${context === "reset" ? "Reset PIN" : "Verifikasi Email"}</h2>
+      <p style="color:#64748b;margin:0 0 24px">Masukkan kode OTP berikut di aplikasi:</p>
+      <div style="background:#fff;border:2px solid #6366f1;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
+        <span style="font-size:36px;font-weight:900;letter-spacing:8px;color:#6366f1">${otp}</span>
+      </div>
+      <p style="color:#94a3b8;font-size:12px">Kode berlaku selama <strong>10 menit</strong>. Jangan bagikan kode ini ke siapapun.</p>
+    </div>`;
+
+    MailApp.sendEmail(email, subject, "Kode OTP Anda: " + otp, {
+      htmlBody: htmlBody,
+    });
+    return {
+      status: "success",
+      message: "OTP dikirim ke email Anda",
+      expiresInMinutes: 10,
+    };
+  });
+}
+
+function verifyOtp(email, otp) {
+  return tx_(() => {
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    otp = String(otp || "").trim();
+    if (!email || !otp) return err_("Email dan OTP wajib diisi");
+
+    const s = getSheet_(SH_OTP);
+    const last = s.getLastRow();
+    if (last < 2) return err_("OTP tidak valid atau sudah kadaluarsa");
+    const data = s.getRange(2, 1, last - 1, 4).getValues();
+    let foundRow = -1;
+    for (let i = data.length - 1; i >= 0; i--) {
+      if (
+        String(data[i][0]).toLowerCase().trim() === email &&
+        String(data[i][1]).trim() === otp &&
+        !data[i][3]
+      ) {
+        const expiry = new Date(data[i][2]);
+        if (expiry < new Date())
+          return err_("OTP sudah kadaluarsa. Minta OTP baru.");
+        foundRow = i + 2;
+        break;
+      }
+    }
+    if (foundRow < 0) return err_("OTP salah. Coba lagi.");
+    s.getRange(foundRow, 4).setValue(true);
+    return { status: "success", message: "OTP valid", verified: true };
+  });
+}
+
+function resetPin(email, otp, newPinHash) {
+  return tx_(() => {
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
+    otp = String(otp || "").trim();
+    newPinHash = String(newPinHash || "").trim();
+    if (!email || !otp || !newPinHash) return err_("Semua field wajib diisi");
+
+    const otpResult = verifyOtp(email, otp);
+    if (otpResult.status !== "success" || !otpResult.verified) {
+      return err_(otpResult.message || "OTP tidak valid");
+    }
+
+    const user = findUserByEmail_(email);
+    if (!user) return err_("User tidak ditemukan");
+    getSheet_(SH_USERS).getRange(user.row, 4).setValue(newPinHash);
+
+    // Invalidasi sesi user
+    const sSheet = getSheet_(SH_SESSIONS);
+    const last = sSheet.getLastRow();
+    if (last >= 2) {
+      const data = sSheet.getRange(2, 1, last - 1, 6).getValues();
+      for (let i = 0; i < data.length; i++) {
+        if (String(data[i][1]) === String(user.data[0])) {
+          sSheet.getRange(i + 2, 6).setValue(false);
+        }
+      }
+    }
+    return {
+      status: "success",
+      message: "PIN berhasil direset. Silakan login dengan PIN baru.",
+    };
+  });
+}
