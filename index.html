@@ -300,36 +300,44 @@
         opacity: 0.35;
       }
 
-      /* ── SweetAlert2 Toast & Close Button ── */
+      /* ── SweetAlert2 Toast (Kecil, tanpa tombol OK & Close, PC: kanan bawah, Mobile: kanan atas) ── */
       .swal2-Popup.swal2-toast,
       .swal2-popup.swal2-toast {
-        border-radius: 16px !important;
+        border-radius: 14px !important;
         box-shadow: 0 10px 28px rgba(15, 23, 42, 0.16) !important;
-        padding: 0.65rem 0.85rem !important;
+        padding: 0.55rem 0.85rem !important;
+        width: auto !important;
+        max-width: min(92vw, 340px) !important;
+        font-size: 0.82rem !important;
         align-items: center !important;
       }
-      .swal2-popup.swal2-toast .swal2-close {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 1.6rem !important;
-        height: 1.6rem !important;
-        font-size: 1.25rem !important;
-        color: #94a3b8 !important;
-        margin-left: 0.35rem !important;
-        border-radius: 9999px;
-        transition: background 0.15s, color 0.15s;
-        align-self: center !important;
+      .swal2-popup.swal2-toast .swal2-title {
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        line-height: 1.35 !important;
+        margin: 0 0.4rem !important;
       }
-      .swal2-popup.swal2-toast .swal2-close:hover {
-        color: #0f172a !important;
-        background: #f1f5f9 !important;
+      .swal2-popup.swal2-toast .swal2-icon {
+        width: 1.5rem !important;
+        height: 1.5rem !important;
+        min-width: 1.5rem !important;
+        margin: 0 0.35rem 0 0 !important;
+      }
+      .swal2-popup.swal2-toast .swal2-close,
+      .swal2-popup.swal2-toast .swal2-actions {
+        display: none !important;
       }
       @media (max-width: 767px) {
         .swal2-container.swal2-top-end {
           padding-top: max(0.6rem, env(safe-area-inset-top)) !important;
           padding-right: 0.6rem !important;
           padding-left: 0.6rem !important;
+        }
+      }
+      @media (min-width: 768px) {
+        .swal2-container.swal2-bottom-end {
+          padding-bottom: 1rem !important;
+          padding-right: 1rem !important;
         }
       }
     </style>
@@ -4902,19 +4910,22 @@
         const _BaseToast = Swal.mixin({
           toast: true,
           showConfirmButton: false,
-          showCloseButton: true,
+          showCloseButton: false,
           timer: 2800,
           timerProgressBar: true,
         });
         const Toast = {
           fire(opts) {
-            const o = Object.assign({}, opts);
+            const o = Object.assign({}, opts, {
+              toast: true,
+              showConfirmButton: false,
+              showCloseButton: false,
+            });
             if (!o.position) {
               o.position = window.matchMedia("(max-width: 767px)").matches
                 ? "top-end"
                 : "bottom-end";
             }
-            if (o.showCloseButton === undefined) o.showCloseButton = true;
             const userDidOpen = o.didOpen;
             o.didOpen = (toast) => {
               toast.addEventListener("mouseenter", Swal.stopTimer);
@@ -4923,26 +4934,6 @@
             };
             return _BaseToast.fire(o);
           },
-        };
-        /* Pastikan semua dialog Swal.fire juga punya tombol close (×) kecuali dipaksa tidak boleh ditutup */
-        const _origSwalFire = Swal.fire.bind(Swal);
-        Swal.fire = function (...args) {
-          if (
-            args.length === 1 &&
-            args[0] &&
-            typeof args[0] === "object" &&
-            !args[0].toast
-          ) {
-            const cfg = Object.assign({}, args[0]);
-            if (
-              cfg.showCloseButton === undefined &&
-              cfg.allowOutsideClick !== false
-            ) {
-              cfg.showCloseButton = true;
-            }
-            return _origSwalFire(cfg);
-          }
-          return _origSwalFire(...args);
         };
         const $ = (id) => document.getElementById(id);
         const rp = (n) =>
@@ -5663,8 +5654,7 @@
                     '" tetapi sheet transaksi kosong. Ketuk untuk cek koneksi.',
                   timer: 9000,
                   didOpen: (t) =>
-                    t.addEventListener("click", (e) => {
-                      if (e.target && e.target.closest(".swal2-close")) return;
+                    t.addEventListener("click", () => {
                       Swal.close();
                       cekKoneksi();
                     }),
@@ -8294,8 +8284,7 @@
               title: `${w.length} peringatan keuangan. Ketuk untuk melihat.`,
               timer: 6000,
               didOpen: (t) =>
-                t.addEventListener("click", (e) => {
-                  if (e.target && e.target.closest(".swal2-close")) return;
+                t.addEventListener("click", () => {
                   tabTo("Pintar");
                   Swal.close();
                 }),
@@ -9480,13 +9469,10 @@
           }
           document.getElementById("forgotPinPanel").style.display = "none";
           document.getElementById("loginForm").style.display = "";
-          await Swal.fire({
+          Toast.fire({
             icon: "success",
-            title: "PIN berhasil direset!",
-            text: "Silakan login dengan PIN baru kamu.",
-            confirmButtonText: "Login sekarang",
-            confirmButtonColor: "#6366f1",
-            customClass: { popup: "rounded-3xl" },
+            title: "PIN berhasil direset! Silakan login dengan PIN baru kamu.",
+            timer: 3000,
           });
           showLogin();
         } catch (e) {
