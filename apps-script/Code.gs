@@ -39,6 +39,54 @@ const DEFAULT_CATEGORIES = [
   { nama: "Lainnya", tipe: "Pengeluaran" },
 ];
 
+/* Fungsi yang MENULIS data. Hasilnya otomatis dikirim balik bersama data terbaru
+ * (1 round-trip, tidak perlu getAllData lagi dari browser). */
+const WRITE_FNS_ = {
+  simpanDataTransaksi: 1,
+  simpanBanyakTransaksi: 1,
+  hapusTransaksi: 1,
+  hapusTransaksiBanyak: 1,
+  editTransaksiBanyak: 1,
+  simpanKategori: 1,
+  hapusKategori: 1,
+  simpanPengaturan: 1,
+  simpanAnggaran: 1,
+  hapusAnggaran: 1,
+  simpanTarget: 1,
+  hapusTarget: 1,
+  setorTarget: 1,
+  analisisSuaraPintar: 1,
+};
+
+let CUR_RID_ = ""; // id permintaan (anti-dobel saat browser mengulang request)
+let _SS = null;
+function getSS_() {
+  if (_SS) return _SS;
+  let ss = null;
+  const id = PropertiesService.getScriptProperties().getProperty("SHEET_ID");
+  if (id) ss = SpreadsheetApp.openById(id);
+  if (!ss) ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss)
+    throw new Error(
+      "Script tidak terikat ke Spreadsheet. Buka Spreadsheet > Extensions > Apps Script, atau jalankan setSheetId('ID_SPREADSHEET') di editor.",
+    );
+  return (_SS = ss);
+}
+
+/** OPSIONAL: jalankan dari editor bila data Anda ada di spreadsheet LAIN / script tidak terikat.
+ *  Contoh: setSheetId("1AbC...xyz")  (ID = bagian antara /d/ dan /edit di URL spreadsheet). */
+function setSheetId(id) {
+  id = String(id || "").trim();
+  if (!id) {
+    PropertiesService.getScriptProperties().deleteProperty("SHEET_ID");
+    return "SHEET_ID dihapus; memakai spreadsheet tempat script ini terpasang.";
+  }
+  const ss = SpreadsheetApp.openById(id);
+  PropertiesService.getScriptProperties().setProperty("SHEET_ID", id);
+  CacheService.getScriptCache().removeAll(["kc:dbok", "kc3:d:n", "kc3:v"]);
+  return "OK, memakai spreadsheet: " + ss.getName();
+}
+
 function doGet(e) {
   const p = (e && e.parameter) || {};
   if (p.fn) {
@@ -48,19 +96,23 @@ function doGet(e) {
     } catch (_) {
       args = [];
     }
-    return handleApi_(p.fn, args, p.token, p.userToken);
+    return handleApi_(p.fn, args, p.token, p.userToken, p.rid);
   }
-  setupDatabase();
-  return HtmlService.createHtmlOutputFromFile("index")
-    .setTitle("Keuangan Cerdas")
-    .addMetaTag("viewport", "width=device-width, initial-scale=1")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  try {
+    ensureDb_();
+    return HtmlService.createHtmlOutputFromFile("index")
+      .setTitle("Keuangan Cerdas")
+      .addMetaTag("viewport", "width=device-width, initial-scale=1")
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (_) {
+    return jsonOutput_(ping());
+  }
 }
 
 function doPost(e) {
   try {
     const body = JSON.parse((e && e.postData && e.postData.contents) || "{}");
-    return handleApi_(body.fn, body.args, body.token, body.userToken);
+    return handleApi_(body.fn, body.args, body.token, body.userToken, body.rid);
   } catch (err) {
     return jsonOutput_(err_("Permintaan tidak valid: " + err.message));
   }
@@ -70,8 +122,8 @@ function doPost(e) {
  * Whitelist fungsi API publik
  */
 const API_FUNCTIONS_ = {
-  // Data user functions (memerlukan activeUserId)
   getAllData: getAllData,
+  getVersion: getVersion,
   simpanDataTransaksi: simpanDataTransaksi,
   simpanBanyakTransaksi: simpanBanyakTransaksi,
   hapusTransaksi: hapusTransaksi,
@@ -88,7 +140,6 @@ const API_FUNCTIONS_ = {
   analisisSuaraPintar: analisisSuaraPintar,
   prefetchData: prefetchData,
 
-  // Google & Auth functions
   googleAuthCheck: googleAuthCheck,
   googleRegisterWithPin: googleRegisterWithPin,
   verifyNewDeviceWithPin: verifyNewDeviceWithPin,
@@ -103,12 +154,12 @@ const API_FUNCTIONS_ = {
   verifyOtp: verifyOtp,
   resetPin: resetPin,
   ping: ping,
+  diagnosa: diagnosa,
   getActiveGoogleUser: getActiveGoogleUser,
   checkDevice: checkDevice,
 };
 
 function checkDevice(deviceId) {
-  setupDatabase();
   deviceId = String(deviceId || "").trim();
   if (!deviceId) return { status: "success", isRegistered: false };
   const s = getSheet_(SH_USERS);
@@ -135,7 +186,18 @@ function checkDevice(deviceId) {
 }
 
 function ping() {
-  return { status: "success", message: "pong", timestamp: new Date().toISOString() };
+  return {
+    status: "success",
+    message: "pong",
+    timestamp: new Date().toISOString(),
+    spreadsheet: (function () {
+      try {
+        return getSS_().getName();
+      } catch (_) {
+        return "";
+      }
+    })(),
+  };
 }
 
 function getActiveGoogleUser() {
@@ -146,47 +208,95 @@ function getActiveGoogleUser() {
   return {
     status: "success",
     email: email || "",
-    isAvailable: !!email
+    isAvailable: !!email,
   };
 }
 
 function checkToken_(token) {
-  const required = PropertiesService.getScriptProperties().getProperty("APP_TOKEN");
+  const required =
+    PropertiesService.getScriptProperties().getProperty("APP_TOKEN");
   if (!required) return true;
   return String(token || "") === String(required);
 }
 
 function jsonOutput_(obj) {
-  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(
+  return rawJson_(JSON.stringify(obj));
+}
+function rawJson_(str) {
+  return ContentService.createTextOutput(str).setMimeType(
     ContentService.MimeType.JSON,
   );
 }
 
 /**
- * Dispatcher API utama
+ * Dispatcher API utama.
+ *  - setupDatabase TIDAK lagi dipanggil di tiap request (hanya sekali / 6 jam).
+ *  - getAllData dilayani dari cache (CacheService), tidak membaca sheet tiap kali.
+ *  - Fungsi tulis mengembalikan data terbaru di field "data".
  */
-function handleApi_(fn, args, token, userToken) {
+function handleApi_(fn, args, token, userToken, rid) {
   if (!checkToken_(token)) return jsonOutput_(err_("Token server tidak valid"));
   if (!fn || !API_FUNCTIONS_.hasOwnProperty(fn))
     return jsonOutput_(err_("Fungsi tidak dikenali: " + fn));
 
   try {
-    setupDatabase();
-    let argList = Array.isArray(args) ? args.slice() : [];
+    ensureDb_();
+    if (fn === "getAllData" || fn === "prefetchData")
+      return rawJson_(dataJson_());
+
+    const isWrite = WRITE_FNS_[fn] === 1;
+    CUR_RID_ = isWrite && rid ? String(rid).slice(0, 64) : "";
+    const argList = Array.isArray(args) ? args.slice() : [];
     const result = API_FUNCTIONS_[fn].apply(null, argList);
-    return jsonOutput_(result === undefined ? ok_("") : result);
+    const out = result === undefined ? ok_("") : result;
+
+    if (isWrite && out && out.status === "success") {
+      invalidate_();
+      const head = JSON.stringify(out);
+      return rawJson_(head.slice(0, -1) + ',"data":' + dataJson_() + "}");
+    }
+    return jsonOutput_(out);
   } catch (err) {
     return jsonOutput_(err_("Gagal memproses permintaan: " + err.message));
   }
 }
 
 /* ---------- Helper Database ---------- */
-function getSheet_(name) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+const ALIAS_SHEET_ = {
+  Transaksi: [
+    "transaksi",
+    "transaction",
+    "transactions",
+    "data transaksi",
+    "transaksi keuangan",
+    "keuangan",
+    "data",
+  ],
+  Kategori: ["kategori", "category", "categories", "data kategori"],
+  Pengaturan: ["pengaturan", "settings", "setting", "config"],
+  Anggaran: ["anggaran", "budget", "budgets", "data anggaran"],
+  Target: ["target", "targets", "target tabungan", "tabungan"],
+};
+/** Cari sheet: nama persis -> nama tanpa peduli huruf besar/kecil/spasi -> alias umum. */
+function findSheet_(name) {
+  const ss = getSS_();
   let s = ss.getSheetByName(name);
+  if (s) return s;
+  const all = ss.getSheets();
+  const want = [String(name).trim().toLowerCase()].concat(
+    ALIAS_SHEET_[name] || [],
+  );
+  for (let w = 0; w < want.length; w++)
+    for (let i = 0; i < all.length; i++)
+      if (all[i].getName().trim().toLowerCase() === want[w]) return all[i];
+  return null;
+}
+
+function getSheet_(name) {
+  let s = findSheet_(name);
   if (!s) {
     setupDatabase();
-    s = ss.getSheetByName(name);
+    s = findSheet_(name);
   }
   return s;
 }
@@ -198,8 +308,16 @@ function tx_(fn) {
   const lock = LockService.getScriptLock();
   try {
     lock.waitLock(20000);
+    // Anti-dobel: bila request yang sama (rid sama) sudah sukses, kembalikan hasilnya
+    const c = CUR_RID_ ? CacheService.getScriptCache() : null;
+    if (c) {
+      const hit = c.get("rid:" + CUR_RID_);
+      if (hit) return JSON.parse(hit);
+    }
     const r = fn();
     SpreadsheetApp.flush();
+    if (c && r && r.status === "success")
+      c.put("rid:" + CUR_RID_, JSON.stringify(r), 900);
     return r;
   } catch (e) {
     return err_("Gagal: " + e.message);
@@ -210,132 +328,599 @@ function tx_(fn) {
   }
 }
 
-function fmtTanggal_(v) {
-  return v instanceof Date
-    ? Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss")
-    : String(v || "");
+/* ============================================================
+ * HELPER NORMALISASI DATA (agar semua isi Sheet terbaca akurat,
+ * apa pun format tanggal / nominal / jenis yang diketik di Sheet)
+ * ============================================================ */
+function tz_() {
+  try {
+    return getSS_().getSpreadsheetTimeZone() || Session.getScriptTimeZone();
+  } catch (_) {
+    return Session.getScriptTimeZone();
+  }
 }
 
-/**
- * Setup Database dengan skema Multi-User (kolom UserId)
- * Mendukung migrasi otomatis jika sheet sudah ada sebelumnya.
- */
-function setupDatabase() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheets = {
-    [SH_TRX]: ["Id", "Tanggal", "Nama", "Jenis", "Kategori", "Nominal", "Keterangan", "UserId"],
-    [SH_KAT]: ["Id", "Nama", "Tipe", "UserId"],
-    [SH_SET]: ["UserId", "Key", "Value"],
-    [SH_ANG]: ["Kategori", "Batas", "UserId"],
-    [SH_TGT]: ["Id", "Nama", "Target", "Terkumpul", "Tenggat", "UserId"],
-    [SH_USERS]: ["UserId", "Nama", "Email", "PinHash", "DeviceIds", "BiometricCreds", "Picture", "CreatedAt", "LastLogin", "GoogleSub"],
-    [SH_SESSIONS]: ["Token", "UserId", "DeviceId", "CreatedAt", "ExpiresAt", "IsValid"],
-    [SH_OTP]: ["Email", "Otp", "ExpiresAt", "Used"]
+/** Ubah apa pun (Date, serial angka, teks dd/MM/yyyy, yyyy-MM-dd, ISO) -> "yyyy-MM-dd HH:mm:ss".
+ *  fb = nilai bila tidak bisa dibaca. */
+function normTgl_(v, fb) {
+  if (fb === undefined) fb = "1970-01-01 00:00:00";
+  const pad = (n) => ("0" + n).slice(-2);
+  const build = (y, mo, d, h, mi, sc) => {
+    if (!(mo >= 1 && mo <= 12 && d >= 1 && d <= 31)) return null;
+    return (
+      y +
+      "-" +
+      pad(mo) +
+      "-" +
+      pad(d) +
+      " " +
+      pad(h || 0) +
+      ":" +
+      pad(mi || 0) +
+      ":" +
+      pad(sc || 0)
+    );
   };
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return fb;
+    return Utilities.formatDate(v, tz_(), "yyyy-MM-dd HH:mm:ss");
+  }
+  if (typeof v === "number" && isFinite(v)) {
+    if (v > 20000 && v < 80000)
+      return Utilities.formatDate(
+        new Date(Math.round((v - 25569) * 86400000)),
+        "UTC",
+        "yyyy-MM-dd HH:mm:ss",
+      );
+    if (v > 1e11)
+      return Utilities.formatDate(new Date(v), tz_(), "yyyy-MM-dd HH:mm:ss");
+    return fb;
+  }
+  const t = String(v == null ? "" : v).trim();
+  if (!t) return fb;
+  if (/^\d+(\.\d+)?$/.test(t)) return normTgl_(parseFloat(t), fb); // angka dalam bentuk teks
+  let m =
+    /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})(?:[T\s]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?/.exec(
+      t,
+    );
+  if (m) {
+    const r = build(+m[1], +m[2], +m[3], +m[4], +m[5], +m[6]);
+    if (r) return r;
+  }
+  m =
+    /^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})(?:[,T\s]+(\d{1,2})[:.](\d{2})(?:[:.](\d{2}))?)?/.exec(
+      t,
+    );
+  if (m) {
+    let d = +m[1],
+      mo = +m[2];
+    if (mo > 12 && d <= 12) {
+      const x = d;
+      d = mo;
+      mo = x;
+    } // format MM/dd/yyyy
+    const r = build(+m[3], mo, d, +m[4], +m[5], +m[6]);
+    if (r) return r;
+  }
+  const dt = new Date(t);
+  if (
+    !isNaN(dt.getTime()) &&
+    dt.getFullYear() > 1900 &&
+    dt.getFullYear() < 2200
+  )
+    return Utilities.formatDate(dt, tz_(), "yyyy-MM-dd HH:mm:ss");
+  return fb;
+}
 
-  for (const [name, headers] of Object.entries(sheets)) {
-    let s = ss.getSheetByName(name);
-    if (!s) {
-      s = ss.insertSheet(name);
-      s.getRange(1, 1, 1, headers.length).setValues([headers]);
-      s.setFrozenRows(1);
-    } else {
-      // Auto-migration: Cek jika kolom UserId belum ada di sheet data
-      const lastCol = s.getLastColumn();
-      if (lastCol > 0) {
-        const curHeaders = s.getRange(1, 1, 1, lastCol).getValues()[0].map(String);
-        if (headers.includes("UserId") && !curHeaders.includes("UserId")) {
-          s.getRange(1, lastCol + 1).setValue("UserId");
-        }
+/** Kompatibilitas kode lama. */
+function fmtTanggal_(v) {
+  return normTgl_(v, String(v == null ? "" : v));
+}
+
+/** Angka dari sel: 25000, "25000", "Rp 25.000", "25,000", "1.250.000,50" -> Number. */
+function normNum_(v) {
+  if (typeof v === "number") return isFinite(v) ? v : 0;
+  let t = String(v == null ? "" : v).trim();
+  if (!t) return 0;
+  t = t.replace(/[^\d.,]/g, "");
+  if (!t) return 0;
+  const lastDot = t.lastIndexOf("."),
+    lastCom = t.lastIndexOf(",");
+  if (lastDot > -1 && lastCom > -1) {
+    t =
+      lastCom > lastDot
+        ? t.replace(/\./g, "").replace(",", ".")
+        : t.replace(/,/g, "");
+  } else if (lastDot > -1 || lastCom > -1) {
+    const sep = lastDot > -1 ? "." : ",";
+    const p = t.split(sep);
+    const ribuan =
+      p.length > 2 ||
+      (p.length === 2 && p[1].length === 3 && p[0] !== "0" && p[0] !== "");
+    t = ribuan ? p.join("") : p[0] + "." + p[1];
+  }
+  const n = parseFloat(t);
+  return isNaN(n) ? 0 : n;
+}
+
+function normJenis_(j) {
+  return /pemasukan|masuk|income|kredit|credit/.test(
+    String(j || "").toLowerCase(),
+  )
+    ? "Pemasukan"
+    : "Pengeluaran";
+}
+
+/** Baca semua baris data (tanpa header) dengan aman, meski jumlah kolom sheet lebih sedikit. */
+function readRows_(sheet, ncols) {
+  const last = sheet.getLastRow();
+  if (last < 2) return [];
+  const cols = Math.min(ncols, Math.max(1, sheet.getMaxColumns()));
+  const rows = sheet.getRange(2, 1, last - 1, cols).getValues();
+  if (cols < ncols)
+    rows.forEach((r) => {
+      while (r.length < ncols) r.push("");
+    });
+  return rows;
+}
+
+/** Petakan kolom berdasarkan JUDUL kolom di baris 1 (urutan kolom bebas). Jika judul tidak dikenali,
+ *  dipakai urutan standar. Mengembalikan indeks kolom (0-based) tiap field. */
+const TRX_COLS_ = {
+  id: ["id", "idtransaksi", "kode", "kodetransaksi"],
+  tanggal: ["tanggal", "tgl", "date", "waktu", "tanggaltransaksi"],
+  nama: [
+    "namatransaksi",
+    "nama",
+    "transaksi",
+    "deskripsi",
+    "uraian",
+    "description",
+    "judul",
+  ],
+  jenis: ["jenis", "jenistransaksi", "tipe", "tipetransaksi", "type"],
+  kategori: ["kategori", "category"],
+  nominal: ["nominal", "jumlah", "amount", "nilai", "total", "harga"],
+  keterangan: ["keterangan", "catatan", "note", "notes", "memo", "ket"],
+};
+function trxColMap_(sheet) {
+  const def = {
+    id: 0,
+    tanggal: 1,
+    nama: 2,
+    jenis: 3,
+    kategori: 4,
+    nominal: 5,
+    keterangan: 6,
+  };
+  const lc = Math.max(1, sheet.getLastColumn());
+  const head = sheet
+    .getRange(1, 1, 1, lc)
+    .getValues()[0]
+    .map((h) =>
+      String(h == null ? "" : h)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, ""),
+    );
+  const map = {};
+  let hit = 0;
+  const used = {};
+  Object.keys(TRX_COLS_).forEach((f) => {
+    for (let a = 0; a < TRX_COLS_[f].length; a++) {
+      const ix = head.indexOf(TRX_COLS_[f][a]);
+      if (ix > -1 && !used[ix]) {
+        map[f] = ix;
+        used[ix] = 1;
+        hit++;
+        return;
       }
     }
-  }
+  });
+  if (hit < 3 || map.tanggal == null || map.nominal == null)
+    return { map: def, width: Math.max(8, lc), byHeader: false };
+  Object.keys(def).forEach((f) => {
+    if (map[f] == null)
+      map[f] = f === "id" || f === "keterangan" || f === "jenis" ? -1 : def[f];
+  });
+  return { map: map, width: Math.max(8, lc), byHeader: true };
+}
 
-  // Isi kategori default sistem jika Kategori masih kosong
-  const katSheet = ss.getSheetByName(SH_KAT);
-  if (katSheet && katSheet.getLastRow() < 2) {
-    const defaultRows = DEFAULT_CATEGORIES.map((c, i) => [i + 1, c.nama, c.tipe, "SYSTEM"]);
-    katSheet.getRange(2, 1, defaultRows.length, 4).setValues(defaultRows);
+const blank_ = (v) => String(v == null ? "" : v).trim() === "";
+
+/* Hapus banyak baris sekaligus (baris berurutan digabung jadi 1 panggilan). */
+function deleteRows_(sheet, rowNums) {
+  const r = rowNums.slice().sort((a, b) => b - a);
+  let i = 0;
+  while (i < r.length) {
+    const top = r[i];
+    let cnt = 1;
+    while (i + 1 < r.length && r[i + 1] === top - cnt) {
+      cnt++;
+      i++;
+    }
+    sheet.deleteRows(top - cnt + 1, cnt);
+    i++;
   }
 }
 
 /* ============================================================
- * OPERASI DATA MULTI-USER (ISOLASI BERDASARKAN activeUserId)
+ * CACHE & VERSI DATA (kunci kecepatan)
  * ============================================================ */
 
-function getSettings_(activeUserId) {
-  const o = Object.assign({}, DEF_SET_);
-  const s = getSheet_(SH_SET);
-  const last = s.getLastRow();
-  if (last < 2) return o;
-  const data = s.getRange(2, 1, last - 1, 3).getValues();
-  data.forEach((r) => {
-    if (String(r[0]) === String(activeUserId) && r[1] in DEF_SET_ && r[2] !== "" && !isNaN(r[2])) {
-      o[r[1]] = Number(r[2]);
+/** Setup sheet hanya sekali per 6 jam, bukan di setiap request. */
+function ensureDb_() {
+  const c = CacheService.getScriptCache();
+  if (c.get("kc:dbok")) return;
+  setupDatabase();
+  c.put("kc:dbok", "1", 21600);
+}
+
+/** Dengan trigger terpasang -> cache 5 menit (di-invalidate instan saat sheet diedit).
+ *  Tanpa trigger -> cache cuma 45 detik supaya edit manual di sheet tetap cepat terbaca. */
+function cacheTtl_() {
+  return PropertiesService.getScriptProperties().getProperty("TRIG_OK")
+    ? 300
+    : 45;
+}
+
+const CK_D_ = "kc3:d",
+  CK_V_ = "kc3:v";
+const CH_ = 90000;
+function cachePutBig_(key, str, ttl) {
+  try {
+    const b64 = Utilities.base64Encode(
+      Utilities.gzip(Utilities.newBlob(str, "text/plain", "d.txt")).getBytes(),
+    );
+    const n = Math.ceil(b64.length / CH_);
+    const o = {};
+    for (let i = 0; i < n; i++) o[key + ":" + i] = b64.substr(i * CH_, CH_);
+    o[key + ":n"] = String(n);
+    CacheService.getScriptCache().putAll(o, ttl);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function cacheGetBig_(key) {
+  try {
+    const c = CacheService.getScriptCache();
+    const n = Number(c.get(key + ":n"));
+    if (!n) return null;
+    const keys = [];
+    for (let i = 0; i < n; i++) keys.push(key + ":" + i);
+    const got = c.getAll(keys);
+    let b64 = "";
+    for (let i = 0; i < n; i++) {
+      const part = got[key + ":" + i];
+      if (part == null) return null;
+      b64 += part;
     }
+    return Utilities.ungzip(
+      Utilities.newBlob(Utilities.base64Decode(b64), "application/x-gzip"),
+    ).getDataAsString("UTF-8");
+  } catch (_) {
+    return null;
+  }
+}
+
+function md5_(str) {
+  return Utilities.computeDigest(
+    Utilities.DigestAlgorithm.MD5,
+    str,
+    Utilities.Charset.UTF_8,
+  )
+    .map((b) => ("0" + (b & 0xff).toString(16)).slice(-2))
+    .join("");
+}
+
+/** Hapus cache data -> pembacaan berikutnya membaca sheet lagi. */
+function invalidate_() {
+  const c = CacheService.getScriptCache();
+  c.remove(CK_D_ + ":n");
+  c.remove(CK_V_);
+}
+
+/** JSON data lengkap (string). "v" = sidik jari isi data; berubah hanya jika data berubah. */
+function dataJson_(force) {
+  if (!force) {
+    const hit = cacheGetBig_(CK_D_);
+    if (hit) return hit;
+  }
+  const lock = LockService.getScriptLock();
+  let locked = false;
+  try {
+    lock.waitLock(10000);
+    locked = true;
+  } catch (_) {}
+  try {
+    if (!force && locked) {
+      const again = cacheGetBig_(CK_D_); // request lain mungkin sudah membangun cache
+      if (again) return again;
+    }
+    const base = JSON.stringify(buildData_());
+    const v = md5_(base);
+    const json = base.slice(0, -1) + ',"v":"' + v + '"}';
+    if (locked) {
+      const ttl = cacheTtl_();
+      cachePutBig_(CK_D_, json, ttl);
+      CacheService.getScriptCache().put(CK_V_, v, ttl);
+    }
+    return json;
+  } finally {
+    if (locked)
+      try {
+        lock.releaseLock();
+      } catch (_) {}
+  }
+}
+
+/** Sangat ringan: browser cukup menanyakan versi; data diunduh hanya jika versi berubah. */
+function getVersion() {
+  const c = CacheService.getScriptCache();
+  let v = c.get(CK_V_);
+  if (!v || !c.get(CK_D_ + ":n")) {
+    const j = dataJson_();
+    const m = /"v":"([0-9a-f]{32})"\}$/.exec(j.slice(-60));
+    v = m ? m[1] : String(Date.now());
+  }
+  return { status: "success", v: v };
+}
+
+/* ---------- Trigger (dipasang SEKALI lewat installTriggers) ---------- */
+function onSheetChange(e) {
+  try {
+    invalidate_();
+  } catch (_) {}
+}
+
+function warmUp() {
+  try {
+    dataJson_(true); // paksa baca ulang sheet & segarkan cache tiap 5 menit
+  } catch (_) {}
+}
+
+function cleanupExpired() {
+  return tx_(() => {
+    const now = new Date();
+    const a = compactSheet_(
+      SH_SESSIONS,
+      6,
+      (r) => r[5] === true && new Date(r[4]) > now,
+    );
+    const b = compactSheet_(SH_OTP, 4, (r) => !r[3] && new Date(r[2]) > now);
+    return ok_("Dibersihkan: " + a + " sesi, " + b + " OTP");
+  });
+}
+
+function compactSheet_(name, cols, keepFn) {
+  const s = getSheet_(name);
+  const last = s.getLastRow();
+  if (last < 2) return 0;
+  const data = s.getRange(2, 1, last - 1, cols).getValues();
+  const keep = data.filter(keepFn);
+  if (keep.length === data.length) return 0;
+  s.getRange(2, 1, data.length, cols).clearContent();
+  if (keep.length) s.getRange(2, 1, keep.length, cols).setValues(keep);
+  return data.length - keep.length;
+}
+
+/**
+ * JALANKAN SEKALI dari editor Apps Script (pilih fungsi ini lalu klik Run).
+ * Memasang: invalidasi cache instan saat sheet diedit, pemanasan cache tiap 5 menit,
+ * dan pembersihan sesi/OTP kedaluwarsa tiap hari.
+ */
+function installTriggers() {
+  const mine = { onSheetChange: 1, warmUp: 1, cleanupExpired: 1 };
+  ScriptApp.getProjectTriggers().forEach((t) => {
+    if (mine[t.getHandlerFunction()]) ScriptApp.deleteTrigger(t);
+  });
+  const ss = getSS_();
+  ScriptApp.newTrigger("onSheetChange").forSpreadsheet(ss).onEdit().create();
+  ScriptApp.newTrigger("onSheetChange").forSpreadsheet(ss).onChange().create();
+  ScriptApp.newTrigger("warmUp").timeBased().everyMinutes(5).create();
+  ScriptApp.newTrigger("cleanupExpired")
+    .timeBased()
+    .everyDays(1)
+    .atHour(3)
+    .create();
+  PropertiesService.getScriptProperties().setProperty("TRIG_OK", "1");
+  setupDatabase();
+  dataJson_(true);
+  return "Trigger terpasang";
+}
+
+/**
+ * Setup Database. Hanya MEMBUAT sheet yang belum ada; tidak mengubah data/format yang sudah ada.
+ * (Ini satu-satunya setupDatabase — hapus file data.gs agar tidak bentrok.)
+ */
+function setupDatabase() {
+  const ss = getSS_();
+  const sheets = {
+    [SH_TRX]: [
+      "ID",
+      "Tanggal",
+      "Nama_Transaksi",
+      "Jenis",
+      "Kategori",
+      "Nominal",
+      "Keterangan",
+      "UserId",
+    ],
+    [SH_KAT]: ["ID_Kategori", "Nama_Kategori", "Tipe_Transaksi", "UserId"],
+    [SH_SET]: ["Parameter_Key", "Parameter_Value"],
+    [SH_ANG]: ["Kategori", "Batas_Bulanan", "UserId"],
+    [SH_TGT]: [
+      "ID",
+      "Nama_Target",
+      "Target_Nominal",
+      "Terkumpul",
+      "Tenggat",
+      "UserId",
+    ],
+    [SH_USERS]: [
+      "UserId",
+      "Nama",
+      "Email",
+      "PinHash",
+      "DeviceIds",
+      "BiometricCreds",
+      "Picture",
+      "CreatedAt",
+      "LastLogin",
+      "GoogleSub",
+    ],
+    [SH_SESSIONS]: [
+      "Token",
+      "UserId",
+      "DeviceId",
+      "CreatedAt",
+      "ExpiresAt",
+      "IsValid",
+    ],
+    [SH_OTP]: ["Email", "Otp", "ExpiresAt", "Used"],
+  };
+
+  for (const [name, headers] of Object.entries(sheets)) {
+    let s = findSheet_(name) || ss.getSheetByName(name);
+    if (!s) {
+      s = ss.insertSheet(name);
+      s.getRange(1, 1, 1, headers.length).setValues([headers]);
+      styleHeader_(s, headers.length);
+      if (name === SH_TRX) s.getRange("B:B").setNumberFormat("@");
+      if (name === SH_TGT) s.getRange("E:E").setNumberFormat("@");
+    } else {
+      // Isi header "UserId" hanya jika selnya kosong (tidak menimpa apa pun)
+      const ui = headers.indexOf("UserId");
+      if (ui > 0 && !String(s.getRange(1, ui + 1).getValue()).trim())
+        s.getRange(1, ui + 1).setValue("UserId");
+    }
+  }
+
+  // Isi kategori default jika Kategori masih kosong
+  const katSheet = findSheet_(SH_KAT);
+  if (katSheet && katSheet.getLastRow() < 2) {
+    const defaultRows = DEFAULT_CATEGORIES.map((c, i) => [
+      i + 1,
+      c.nama,
+      c.tipe,
+      "SYSTEM",
+    ]);
+    katSheet.getRange(2, 1, defaultRows.length, 4).setValues(defaultRows);
+  }
+}
+
+function styleHeader_(sheet, numCols) {
+  sheet
+    .getRange(1, 1, 1, numCols)
+    .setBackground("#4F46E5")
+    .setFontColor("#FFFFFF")
+    .setFontWeight("bold");
+  sheet.setFrozenRows(1);
+}
+
+/* ============================================================
+ * OPERASI DATA
+ * ============================================================ */
+
+/** Baris pengaturan. Mendukung 2 kolom (Key, Value) maupun 3 kolom lama (UserId, Key, Value). */
+function settingsRows_() {
+  const s = getSheet_(SH_SET);
+  const out = [];
+  const data = readRows_(s, 3);
+  data.forEach((r, i) => {
+    if (DEF_SET_.hasOwnProperty(String(r[0])))
+      out.push({ row: i + 2, key: String(r[0]), val: r[1], col: 2 });
+    else if (DEF_SET_.hasOwnProperty(String(r[1])))
+      out.push({ row: i + 2, key: String(r[1]), val: r[2], col: 3 });
+  });
+  return out;
+}
+
+function getSettings_() {
+  const o = Object.assign({}, DEF_SET_);
+  settingsRows_().forEach((r) => {
+    if (r.val !== "" && !isNaN(r.val)) o[r.key] = Number(r.val);
   });
   return o;
 }
 
-/**
- * Baca semua data keuangan milik activeUserId
- */
-function getAllData() {
-  // 1. Transaksi (semua data)
+/** Baca SEMUA data dari sheet (dipakai saat cache kosong). Tidak memfilter per-user:
+ *  seluruh baris di Sheet ditampilkan. */
+function buildData_() {
+  /* --- Transaksi --- */
   const sTrx = getSheet_(SH_TRX);
-  const lastTrx = sTrx.getLastRow();
-  let trx = [];
-  if (lastTrx > 1) {
-    const rows = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
-    trx = rows.map((r) => ({
-      id: String(r[0]),
-      tanggal: fmtTanggal_(r[1]),
-      nama: String(r[2] || "-"),
-      jenis: r[3] === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
-      kategori: String(r[4] || "Umum"),
-      nominal: Number(r[5]) || 0,
-      keterangan: String(r[6] || ""),
-    }));
-    trx.sort((a, b) => b.tanggal.localeCompare(a.tanggal));
+  const cm = trxColMap_(sTrx);
+  const M = cm.map;
+  const rows = readRows_(sTrx, cm.width);
+  const g = (r, f) => (M[f] > -1 && M[f] < r.length ? r[M[f]] : "");
+  const trx = [];
+  const idCol = [];
+  let adaIdKosong = false;
+  const stamp = Date.now();
+  rows.forEach((r, i) => {
+    const punyaData = !(
+      blank_(g(r, "tanggal")) &&
+      blank_(g(r, "nama")) &&
+      blank_(g(r, "kategori")) &&
+      blank_(g(r, "nominal"))
+    );
+    let id = String(g(r, "id") == null ? "" : g(r, "id")).trim();
+    if (!id && punyaData) {
+      id = "TRX-R" + (i + 2); // ID stabil per baris agar bisa diedit/dihapus
+      adaIdKosong = true;
+    }
+    idCol.push([id || g(r, "id")]);
+    if (!punyaData && !id) return;
+    trx.push({
+      id: id,
+      tanggal: normTgl_(g(r, "tanggal")),
+      nama:
+        String(g(r, "nama") || "").trim() ||
+        String(g(r, "kategori") || "").trim() ||
+        "-",
+      jenis: normJenis_(g(r, "jenis")),
+      kategori: String(g(r, "kategori") || "").trim() || "Umum",
+      nominal: Math.abs(normNum_(g(r, "nominal"))),
+      keterangan: String(g(r, "keterangan") || ""),
+      _i: i,
+    });
+  });
+  if (adaIdKosong && M.id > -1) {
+    try {
+      sTrx.getRange(2, M.id + 1, idCol.length, 1).setValues(idCol);
+    } catch (_) {}
   }
+  trx.sort((a, b) => b.tanggal.localeCompare(a.tanggal) || b._i - a._i);
+  trx.forEach((t) => delete t._i);
 
-  // 2. Kategori (semua kategori)
-  const sKat = getSheet_(SH_KAT);
-  const lastKat = sKat.getLastRow();
-  let kategori = [];
-  if (lastKat > 1) {
-    const rows = sKat.getRange(2, 1, lastKat - 1, 4).getValues();
-    kategori = rows
-      .map((r) => ({ id: r[0], nama: String(r[1]), tipe: String(r[2]) }))
-      .filter((k) => k.nama);
-  }
+  /* --- Kategori --- */
+  const kategori = readRows_(getSheet_(SH_KAT), 4)
+    .map((r) => ({
+      id: r[0],
+      nama: String(r[1] == null ? "" : r[1]).trim(),
+      tipe: normJenis_(r[2]),
+    }))
+    .filter((k) => k.nama);
 
-  // 3. Anggaran (semua anggaran)
-  const sAng = getSheet_(SH_ANG);
-  const lastAng = sAng.getLastRow();
-  let anggaran = [];
-  if (lastAng > 1) {
-    const rows = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
-    anggaran = rows.map((r) => ({
-      kategori: String(r[0]),
-      batas: Number(r[1]) || 0,
+  /* --- Anggaran --- */
+  const anggaran = readRows_(getSheet_(SH_ANG), 3)
+    .filter((r) => !blank_(r[0]))
+    .map((r) => ({
+      kategori: String(r[0]).trim(),
+      batas: normNum_(r[1]),
     }));
-  }
 
-  // 4. Target (semua target)
-  const sTgt = getSheet_(SH_TGT);
-  const lastTgt = sTgt.getLastRow();
-  let target = [];
-  if (lastTgt > 1) {
-    const rows = sTgt.getRange(2, 1, lastTgt - 1, 6).getValues();
-    target = rows.map((r) => ({
-      id: String(r[0]),
-      nama: String(r[1]),
-      target: Number(r[2]) || 0,
-      terkumpul: Number(r[3]) || 0,
-      tenggat: fmtTanggal_(r[4]).slice(0, 10),
+  /* --- Target --- */
+  const target = readRows_(getSheet_(SH_TGT), 6)
+    .filter((r) => !blank_(r[1]))
+    .map((r) => ({
+      id: String(r[0] == null ? "" : r[0]),
+      nama: String(r[1]).trim(),
+      target: normNum_(r[2]),
+      terkumpul: normNum_(r[3]),
+      tenggat: blank_(r[4]) ? "" : normTgl_(r[4], "").slice(0, 10),
     }));
-  }
 
   return {
     trx: trx,
@@ -343,7 +928,70 @@ function getAllData() {
     anggaran: anggaran,
     target: target,
     settings: getSettings_(),
+    meta: {
+      spreadsheet: getSS_().getName(),
+      sheetTrx: sTrx.getName(),
+      barisTrxDiSheet: rows.length,
+      barisTrxTerbaca: trx.length,
+      kolomDariJudul: cm.byHeader,
+    },
   };
+}
+
+/** Laporan diagnosa lengkap. Dipanggil dari tombol "Cek koneksi" di aplikasi,
+ *  atau jalankan manual di editor Apps Script (lihat "Execution log"). */
+function diagnosa() {
+  const ss = getSS_();
+  const sheets = ss.getSheets().map((sh) => {
+    const lc = Math.max(1, sh.getLastColumn());
+    return {
+      nama: sh.getName(),
+      baris: Math.max(0, sh.getLastRow() - 1),
+      kolom: sh.getLastColumn(),
+      judul:
+        sh.getLastRow() >= 1
+          ? sh.getRange(1, 1, 1, Math.min(lc, 12)).getValues()[0].map(String)
+          : [],
+    };
+  });
+  let d = null,
+    errBuild = "";
+  try {
+    d = buildData_();
+  } catch (e) {
+    errBuild = String(e && e.message ? e.message : e);
+  }
+  const tak = d
+    ? d.trx.filter((t) => t.tanggal.indexOf("1970-01-01") === 0).length
+    : 0;
+  const nol = d ? d.trx.filter((t) => !(t.nominal > 0)).length : 0;
+  const out = {
+    status: "success",
+    spreadsheet: ss.getName(),
+    zonaWaktu: tz_(),
+    memakaiSheetId:
+      !!PropertiesService.getScriptProperties().getProperty("SHEET_ID"),
+    tokenServerDiaktifkan:
+      !!PropertiesService.getScriptProperties().getProperty("APP_TOKEN"),
+    sheets: sheets,
+    sheetTransaksiDipakai: d ? d.meta.sheetTrx : "",
+    kolomDariJudul: d ? d.meta.kolomDariJudul : false,
+    transaksiTerbaca: d ? d.trx.length : 0,
+    kategori: d ? d.kategori.length : 0,
+    anggaran: d ? d.anggaran.length : 0,
+    target: d ? d.target.length : 0,
+    tanggalTakTerbaca: tak,
+    nominalNol: nol,
+    contoh: d ? d.trx.slice(0, 3) : [],
+    errorMembaca: errBuild,
+  };
+  Logger.log(JSON.stringify(out, null, 2));
+  return out;
+}
+
+/** Versi objek (kompatibel dengan kode lama). */
+function getAllData() {
+  return JSON.parse(dataJson_());
 }
 
 function prefetchData() {
@@ -361,7 +1009,7 @@ function simpanDataTransaksi(f) {
     const kategori = String(f.kategori || "").trim() || "Umum";
     const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
       ? f.tanggal
-      : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+      : Utilities.formatDate(new Date(), tz_(), "yyyy-MM-dd HH:mm:ss");
 
     const s = getSheet_(SH_TRX);
     const last = s.getLastRow();
@@ -391,13 +1039,16 @@ function simpanDataTransaksi(f) {
         "GLOBAL",
       ],
     ]);
-    return ok_(isEdit ? "Transaksi berhasil diperbarui" : "Transaksi berhasil disimpan");
+    return ok_(
+      isEdit ? "Transaksi berhasil diperbarui" : "Transaksi berhasil disimpan",
+    );
   });
 }
 
 function simpanBanyakTransaksi(list) {
   return tx_(() => {
-    if (!Array.isArray(list) || !list.length) return err_("Tidak ada data yang dikirim");
+    if (!Array.isArray(list) || !list.length)
+      return err_("Tidak ada data yang dikirim");
     if (list.length > 50) return err_("Maksimal 50 data sekaligus");
 
     const rows = [];
@@ -412,7 +1063,7 @@ function simpanBanyakTransaksi(list) {
       const kategori = String(f.kategori || "").trim() || "Umum";
       const tgl = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(f.tanggal || "")
         ? f.tanggal
-        : Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm:ss");
+        : Utilities.formatDate(new Date(), tz_(), "yyyy-MM-dd HH:mm:ss");
 
       rows.push([
         "TRX-" + now + "-" + i,
@@ -453,28 +1104,31 @@ function hapusTransaksi(id) {
 
 function hapusTransaksiBanyak(ids) {
   return tx_(() => {
-    if (!Array.isArray(ids) || !ids.length) return err_("Tidak ada data yang dipilih");
+    if (!Array.isArray(ids) || !ids.length)
+      return err_("Tidak ada data yang dipilih");
     const s = getSheet_(SH_TRX);
     const last = s.getLastRow();
     if (last < 2) return err_("Data tidak ditemukan");
     const idSet = new Set(ids.map(String));
     const data = s.getRange(2, 1, last - 1, 1).getValues();
-    let jml = 0;
-    for (let i = data.length - 1; i >= 0; i--) {
-      if (idSet.has(String(data[i][0]))) {
-        s.deleteRow(i + 2);
-        jml++;
-      }
+    const rows = [];
+    for (let i = 0; i < data.length; i++) {
+      if (idSet.has(String(data[i][0]))) rows.push(i + 2);
     }
-    return ok_(jml + " transaksi berhasil dihapus");
+    if (rows.length) deleteRows_(s, rows);
+    return ok_(rows.length + " transaksi berhasil dihapus");
   });
 }
 
 function editTransaksiBanyak(ids, patch) {
   return tx_(() => {
-    if (!Array.isArray(ids) || !ids.length) return err_("Tidak ada data yang dipilih");
+    if (!Array.isArray(ids) || !ids.length)
+      return err_("Tidak ada data yang dipilih");
     patch = patch || {};
-    const jenisBaru = patch.jenis === "Pemasukan" || patch.jenis === "Pengeluaran" ? patch.jenis : "";
+    const jenisBaru =
+      patch.jenis === "Pemasukan" || patch.jenis === "Pengeluaran"
+        ? patch.jenis
+        : "";
     const katBaru = String(patch.kategori || "").trim();
     if (!jenisBaru && !katBaru) return err_("Tidak ada perubahan yang dipilih");
 
@@ -507,11 +1161,16 @@ function simpanKategori(nama, tipe) {
     if (last > 1) {
       const data = s.getRange(2, 1, last - 1, 4).getValues();
       const exists = data.some(
-        (r) => String(r[1]).toLowerCase() === nama.toLowerCase()
+        (r) => String(r[1]).toLowerCase() === nama.toLowerCase(),
       );
       if (exists) return err_('Kategori "' + nama + '" sudah ada');
     }
-    s.appendRow([Math.max(0, s.getLastRow() - 1) + 1, nama, tipe === "Pemasukan" ? "Pemasukan" : "Pengeluaran", "GLOBAL"]);
+    s.appendRow([
+      Math.max(0, s.getLastRow() - 1) + 1,
+      nama,
+      tipe === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+      "GLOBAL",
+    ]);
     return ok_("Kategori berhasil ditambahkan");
   });
 }
@@ -538,11 +1197,12 @@ function hapusKategori(nama) {
     const lastTrx = sTrx.getLastRow();
     if (lastTrx > 1) {
       const dataTrx = sTrx.getRange(2, 1, lastTrx - 1, 8).getValues();
-      for (let i = dataTrx.length - 1; i >= 0; i--) {
-        if (String(dataTrx[i][4]).toLowerCase() === nama.toLowerCase()) {
-          sTrx.deleteRow(i + 2);
-        }
+      const rowsTrx = [];
+      for (let i = 0; i < dataTrx.length; i++) {
+        if (String(dataTrx[i][4]).toLowerCase() === nama.toLowerCase())
+          rowsTrx.push(i + 2);
       }
+      if (rowsTrx.length) deleteRows_(sTrx, rowsTrx);
     }
 
     // Hapus anggaran untuk kategori ini
@@ -550,11 +1210,12 @@ function hapusKategori(nama) {
     const lastAng = sAng.getLastRow();
     if (lastAng > 1) {
       const dataAng = sAng.getRange(2, 1, lastAng - 1, 3).getValues();
-      for (let i = dataAng.length - 1; i >= 0; i--) {
-        if (String(dataAng[i][0]).toLowerCase() === nama.toLowerCase()) {
-          sAng.deleteRow(i + 2);
-        }
+      const rowsAng = [];
+      for (let i = 0; i < dataAng.length; i++) {
+        if (String(dataAng[i][0]).toLowerCase() === nama.toLowerCase())
+          rowsAng.push(i + 2);
       }
+      if (rowsAng.length) deleteRows_(sAng, rowsAng);
     }
 
     sKat.deleteRow(rowKat);
@@ -565,24 +1226,21 @@ function hapusKategori(nama) {
 /* ---------- Pengaturan ---------- */
 function simpanPengaturan(o) {
   return tx_(() => {
+    o = o || {};
     const s = getSheet_(SH_SET);
-    const last = s.getLastRow();
     const existing = {};
-    if (last > 1) {
-      const data = s.getRange(2, 1, last - 1, 3).getValues();
-      data.forEach((r, idx) => {
-        existing[String(r[1])] = idx + 2;
-      });
-    }
+    settingsRows_().forEach((r) => {
+      existing[r.key] = r;
+    });
 
     for (const k in DEF_SET_) {
       if (!(k in o)) continue;
       const n = Number(o[k]);
       if (isNaN(n) || n < 0) return err_('Nilai "' + k + '" tidak valid');
       if (existing[k]) {
-        s.getRange(existing[k], 3).setValue(n);
+        s.getRange(existing[k].row, existing[k].col).setValue(n);
       } else {
-        s.appendRow(["GLOBAL", k, n]);
+        s.appendRow([k, n]);
       }
     }
     return ok_("Pengaturan berhasil disimpan");
@@ -594,7 +1252,8 @@ function simpanAnggaran(kategori, batas) {
   return tx_(() => {
     kategori = String(kategori || "").trim();
     batas = Number(batas);
-    if (!kategori || !(batas > 0)) return err_("Kategori dan batas anggaran wajib diisi");
+    if (!kategori || !(batas > 0))
+      return err_("Kategori dan batas anggaran wajib diisi");
 
     const s = getSheet_(SH_ANG);
     const last = s.getLastRow();
@@ -643,8 +1302,11 @@ function simpanTarget(o) {
     const nama = String(o.nama || "").trim(),
       target = Number(o.target),
       terkumpul = Number(o.terkumpul) || 0;
-    if (!nama || !(target > 0) || terkumpul < 0) return err_("Nama dan nominal target wajib diisi");
-    const tenggat = /^\d{4}-\d{2}-\d{2}$/.test(o.tenggat || "") ? o.tenggat : "";
+    if (!nama || !(target > 0) || terkumpul < 0)
+      return err_("Nama dan nominal target wajib diisi");
+    const tenggat = /^\d{4}-\d{2}-\d{2}$/.test(o.tenggat || "")
+      ? o.tenggat
+      : "";
 
     const s = getSheet_(SH_TGT);
     const last = s.getLastRow();
@@ -672,9 +1334,18 @@ function simpanTarget(o) {
     if (!isEdit) row = s.getLastRow() + 1;
     s.getRange(row, 5).setNumberFormat("@");
     s.getRange(row, 1, 1, 6).setValues([
-      [isEdit ? (tgtId || "TGT-" + Date.now()) : ("TGT-" + Date.now()), nama, target, terkumpul, tenggat, "GLOBAL"],
+      [
+        isEdit ? tgtId || "TGT-" + Date.now() : "TGT-" + Date.now(),
+        nama,
+        target,
+        terkumpul,
+        tenggat,
+        "GLOBAL",
+      ],
     ]);
-    return ok_(isEdit ? "Target berhasil diperbarui" : "Target berhasil dibuat");
+    return ok_(
+      isEdit ? "Target berhasil diperbarui" : "Target berhasil dibuat",
+    );
   });
 }
 
@@ -687,7 +1358,10 @@ function hapusTarget(id) {
     if (last < 2) return err_("Target tidak ditemukan");
     const data = s.getRange(2, 1, last - 1, 6).getValues();
     for (let i = 0; i < data.length; i++) {
-      if (String(data[i][0]).trim() === id || String(data[i][1]).trim().toLowerCase() === id.toLowerCase()) {
+      if (
+        String(data[i][0]).trim() === id ||
+        String(data[i][1]).trim().toLowerCase() === id.toLowerCase()
+      ) {
         s.deleteRow(i + 2);
         return ok_("Target berhasil dihapus");
       }
@@ -706,11 +1380,18 @@ function setorTarget(id, jumlah) {
     if (last < 2) return err_("Target tidak ditemukan");
     const data = s.getRange(2, 1, last - 1, 6).getValues();
     for (let i = 0; i < data.length; i++) {
-      if (String(data[i][0]).trim() === id || String(data[i][1]).trim().toLowerCase() === id.toLowerCase()) {
+      if (
+        String(data[i][0]).trim() === id ||
+        String(data[i][1]).trim().toLowerCase() === id.toLowerCase()
+      ) {
         const target = Number(data[i][2]) || 0;
         const baru = (Number(data[i][3]) || 0) + jumlah;
         s.getRange(i + 2, 4).setValue(baru);
-        return ok_(baru >= target ? "Selamat, target tabungan tercapai!" : "Setoran berhasil ditambahkan");
+        return ok_(
+          baru >= target
+            ? "Selamat, target tabungan tercapai!"
+            : "Setoran berhasil ditambahkan",
+        );
       }
     }
     return err_("Target tidak ditemukan");
@@ -724,11 +1405,17 @@ function setorTarget(id, jumlah) {
  *   "makan siang 25 ribu lalu bensin 20 ribu lalu terima gaji 5 juta"
  */
 function parseSuaraSegmen_(teks) {
-  const t = String(teks || "").trim().toLowerCase();
+  const t = String(teks || "")
+    .trim()
+    .toLowerCase();
   if (!t) return null;
-  const m = t.match(/(\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?)\s*(ribu|rb|k|juta|jt)?/);
+  const m = t.match(
+    /(\d{1,3}(?:\.\d{3})+|\d+(?:,\d+)?)\s*(ribu|rb|k|juta|jt)?/,
+  );
   if (!m) return null;
-  let n = /\.\d{3}/.test(m[1]) ? parseFloat(m[1].replace(/\./g, "")) : parseFloat(m[1].replace(",", "."));
+  let n = /\.\d{3}/.test(m[1])
+    ? parseFloat(m[1].replace(/\./g, ""))
+    : parseFloat(m[1].replace(",", "."));
   if (/^(ribu|rb|k)$/.test(m[2] || "")) n *= 1000;
   else if (/^(juta|jt)$/.test(m[2] || "")) n *= 1000000;
 
@@ -737,10 +1424,14 @@ function parseSuaraSegmen_(teks) {
   try {
     const sKat = getSheet_(SH_KAT);
     if (sKat.getLastRow() > 1) {
-      katList = sKat.getRange(2, 1, sKat.getLastRow() - 1, 3).getValues().map(r => ({
-        nama: String(r[1]).trim(),
-        tipe: String(r[2]).trim() === "Pemasukan" ? "Pemasukan" : "Pengeluaran"
-      }));
+      katList = sKat
+        .getRange(2, 1, sKat.getLastRow() - 1, 3)
+        .getValues()
+        .map((r) => ({
+          nama: String(r[1]).trim(),
+          tipe:
+            String(r[2]).trim() === "Pemasukan" ? "Pemasukan" : "Pengeluaran",
+        }));
     }
   } catch (_) {}
 
@@ -788,11 +1479,14 @@ function parseSuaraSegmen_(teks) {
 function analisisSuaraPintar(teks) {
   try {
     const bagian = String(teks || "")
-      .split(/\s*(?:[,;]|\blalu\b|\bkemudian\b|\bselanjutnya\b|\bberikutnya\b|\bterus\b|\bsetelah itu\b|\bsesudah itu\b)\s*/i)
+      .split(
+        /\s*(?:[,;]|\blalu\b|\bkemudian\b|\bselanjutnya\b|\bberikutnya\b|\bterus\b|\bsetelah itu\b|\bsesudah itu\b)\s*/i,
+      )
       .map((x) => x.trim())
       .filter(Boolean);
     const list = bagian.map(parseSuaraSegmen_).filter(Boolean);
-    if (!list.length) return err_("Nominal tidak terdeteksi, coba sebutkan angkanya");
+    if (!list.length)
+      return err_("Nominal tidak terdeteksi, coba sebutkan angkanya");
     if (list.length === 1) return simpanDataTransaksi(list[0]);
     return simpanBanyakTransaksi(list);
   } catch (e) {
@@ -809,7 +1503,9 @@ function findUserByEmail_(email) {
   const last = s.getLastRow();
   if (last < 2) return null;
   const data = s.getRange(2, 1, last - 1, 10).getValues();
-  const emailLow = String(email || "").toLowerCase().trim();
+  const emailLow = String(email || "")
+    .toLowerCase()
+    .trim();
   for (let i = 0; i < data.length; i++) {
     if (String(data[i][2]).toLowerCase().trim() === emailLow) {
       return { row: i + 2, data: data[i] };
@@ -829,7 +1525,14 @@ function createSession_(userId, deviceId) {
   const now = new Date();
   const expiry = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Sesi 12 jam
   const s = getSheet_(SH_SESSIONS);
-  s.appendRow([token, userId, deviceId, now.toISOString(), expiry.toISOString(), true]);
+  s.appendRow([
+    token,
+    userId,
+    deviceId,
+    now.toISOString(),
+    expiry.toISOString(),
+    true,
+  ]);
 
   // Update LastLogin di Users sheet
   const uSheet = getSheet_(SH_USERS);
@@ -871,7 +1574,9 @@ function validateSession_(token) {
 function googleAuthCheck(payload, deviceId) {
   return tx_(() => {
     payload = payload || {};
-    const email = String(payload.email || "").trim().toLowerCase();
+    const email = String(payload.email || "")
+      .trim()
+      .toLowerCase();
     const nama = String(payload.nama || payload.name || "").trim();
     const picture = String(payload.picture || "").trim();
     const googleSub = String(payload.googleSub || payload.sub || "").trim();
@@ -933,7 +1638,8 @@ function googleAuthCheck(payload, deviceId) {
         nama: String(user.data[1]),
         email: String(user.data[2]),
         picture: String(user.data[6] || picture),
-        message: "Perangkat baru terdeteksi! Masukkan PIN 6-digit untuk mendaftarkan perangkat ini.",
+        message:
+          "Perangkat baru terdeteksi! Masukkan PIN 6-digit untuk mendaftarkan perangkat ini.",
       };
     }
   });
@@ -946,15 +1652,21 @@ function googleAuthCheck(payload, deviceId) {
 function googleRegisterWithPin(googleData, pinHash, deviceId) {
   return tx_(() => {
     googleData = googleData || {};
-    const email = String(googleData.email || "").trim().toLowerCase();
-    const nama = String(googleData.nama || googleData.name || "").trim() || "Pengguna";
+    const email = String(googleData.email || "")
+      .trim()
+      .toLowerCase();
+    const nama =
+      String(googleData.nama || googleData.name || "").trim() || "Pengguna";
     const picture = String(googleData.picture || "").trim();
-    const googleSub = String(googleData.googleSub || googleData.sub || "").trim();
+    const googleSub = String(
+      googleData.googleSub || googleData.sub || "",
+    ).trim();
     pinHash = String(pinHash || "").trim();
     deviceId = String(deviceId || "").trim();
 
     if (!email || !pinHash) return err_("Email dan PIN wajib diisi");
-    if (findUserByEmail_(email)) return err_("Akun dengan email ini sudah terdaftar");
+    if (findUserByEmail_(email))
+      return err_("Akun dengan email ini sudah terdaftar");
 
     const userId = "USR-" + Date.now();
     const now = new Date().toISOString();
@@ -994,7 +1706,9 @@ function googleRegisterWithPin(googleData, pinHash, deviceId) {
  */
 function verifyNewDeviceWithPin(email, pinHash, deviceId) {
   return tx_(() => {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     pinHash = String(pinHash || "").trim();
     deviceId = String(deviceId || "").trim();
 
@@ -1015,7 +1729,9 @@ function verifyNewDeviceWithPin(email, pinHash, deviceId) {
     }
     if (deviceId && !devices.includes(deviceId)) {
       devices.push(deviceId);
-      getSheet_(SH_USERS).getRange(user.row, 5).setValue(JSON.stringify(devices));
+      getSheet_(SH_USERS)
+        .getRange(user.row, 5)
+        .setValue(JSON.stringify(devices));
     }
 
     const session = createSession_(String(user.data[0]), deviceId);
@@ -1037,7 +1753,9 @@ function verifyNewDeviceWithPin(email, pinHash, deviceId) {
  */
 function loginWithPin(email, pinHash, deviceId) {
   return tx_(() => {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     pinHash = String(pinHash || "").trim();
     deviceId = String(deviceId || "").trim();
 
@@ -1056,7 +1774,9 @@ function loginWithPin(email, pinHash, deviceId) {
     }
     if (deviceId && !devices.includes(deviceId)) {
       devices.push(deviceId);
-      getSheet_(SH_USERS).getRange(user.row, 5).setValue(JSON.stringify(devices));
+      getSheet_(SH_USERS)
+        .getRange(user.row, 5)
+        .setValue(JSON.stringify(devices));
     }
 
     const session = createSession_(String(user.data[0]), deviceId);
@@ -1073,7 +1793,11 @@ function loginWithPin(email, pinHash, deviceId) {
 }
 
 function registerUser(email, nama, pinHash, deviceId) {
-  return googleRegisterWithPin({ email, nama, picture: "", sub: "" }, pinHash, deviceId);
+  return googleRegisterWithPin(
+    { email, nama, picture: "", sub: "" },
+    pinHash,
+    deviceId,
+  );
 }
 
 /**
@@ -1095,7 +1819,9 @@ function checkDeviceBiometric(deviceId, credentialId) {
     } catch (_) {
       creds = [];
     }
-    const found = creds.find((c) => c.credentialId === credentialId && c.deviceId === deviceId);
+    const found = creds.find(
+      (c) => c.credentialId === credentialId && c.deviceId === deviceId,
+    );
     if (found) {
       return {
         status: "success",
@@ -1116,7 +1842,8 @@ function loginWithBiometric(credentialId, deviceId) {
   return tx_(() => {
     credentialId = String(credentialId || "").trim();
     deviceId = String(deviceId || "").trim();
-    if (!credentialId || !deviceId) return err_("Credential biometrik tidak valid");
+    if (!credentialId || !deviceId)
+      return err_("Credential biometrik tidak valid");
 
     const s = getSheet_(SH_USERS);
     const last = s.getLastRow();
@@ -1129,7 +1856,9 @@ function loginWithBiometric(credentialId, deviceId) {
       } catch (_) {
         creds = [];
       }
-      const found = creds.find((c) => c.credentialId === credentialId && c.deviceId === deviceId);
+      const found = creds.find(
+        (c) => c.credentialId === credentialId && c.deviceId === deviceId,
+      );
       if (found) {
         const session = createSession_(String(data[i][0]), deviceId);
         return {
@@ -1168,7 +1897,11 @@ function registerBiometric(token, credentialId, deviceId) {
           creds = [];
         }
         creds = creds.filter((c) => c.deviceId !== deviceId);
-        creds.push({ credentialId, deviceId, registeredAt: new Date().toISOString() });
+        creds.push({
+          credentialId,
+          deviceId,
+          registeredAt: new Date().toISOString(),
+        });
         s.getRange(i + 2, 6).setValue(JSON.stringify(creds));
         return ok_("Sidik jari berhasil didaftarkan");
       }
@@ -1222,9 +1955,12 @@ function logoutSession(token) {
 
 function sendOtpEmail(email, context) {
   return tx_(() => {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     context = String(context || "register");
-    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email)) return err_("Format email tidak valid");
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email))
+      return err_("Format email tidak valid");
 
     if (context === "reset") {
       const user = findUserByEmail_(email);
@@ -1248,7 +1984,10 @@ function sendOtpEmail(email, context) {
 
     s.appendRow([email, otp, expiry.toISOString(), false]);
 
-    const subject = context === "reset" ? "Reset PIN - Keuangan Cerdas" : "Verifikasi Email - Keuangan Cerdas";
+    const subject =
+      context === "reset"
+        ? "Reset PIN - Keuangan Cerdas"
+        : "Verifikasi Email - Keuangan Cerdas";
     const htmlBody = `<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;background:#f8fafc;padding:24px;border-radius:16px">
       <div style="background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px">
         <h1 style="color:#fff;margin:0;font-size:24px">Keuangan Cerdas</h1>
@@ -1261,14 +2000,22 @@ function sendOtpEmail(email, context) {
       <p style="color:#94a3b8;font-size:12px">Kode berlaku selama <strong>10 menit</strong>. Jangan bagikan kode ini ke siapapun.</p>
     </div>`;
 
-    MailApp.sendEmail(email, subject, "Kode OTP Anda: " + otp, { htmlBody: htmlBody });
-    return { status: "success", message: "OTP dikirim ke email Anda", expiresInMinutes: 10 };
+    MailApp.sendEmail(email, subject, "Kode OTP Anda: " + otp, {
+      htmlBody: htmlBody,
+    });
+    return {
+      status: "success",
+      message: "OTP dikirim ke email Anda",
+      expiresInMinutes: 10,
+    };
   });
 }
 
 function verifyOtp(email, otp) {
   return tx_(() => {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     otp = String(otp || "").trim();
     if (!email || !otp) return err_("Email dan OTP wajib diisi");
 
@@ -1278,9 +2025,14 @@ function verifyOtp(email, otp) {
     const data = s.getRange(2, 1, last - 1, 4).getValues();
     let foundRow = -1;
     for (let i = data.length - 1; i >= 0; i--) {
-      if (String(data[i][0]).toLowerCase().trim() === email && String(data[i][1]).trim() === otp && !data[i][3]) {
+      if (
+        String(data[i][0]).toLowerCase().trim() === email &&
+        String(data[i][1]).trim() === otp &&
+        !data[i][3]
+      ) {
         const expiry = new Date(data[i][2]);
-        if (expiry < new Date()) return err_("OTP sudah kadaluarsa. Minta OTP baru.");
+        if (expiry < new Date())
+          return err_("OTP sudah kadaluarsa. Minta OTP baru.");
         foundRow = i + 2;
         break;
       }
@@ -1293,7 +2045,9 @@ function verifyOtp(email, otp) {
 
 function resetPin(email, otp, newPinHash) {
   return tx_(() => {
-    email = String(email || "").trim().toLowerCase();
+    email = String(email || "")
+      .trim()
+      .toLowerCase();
     otp = String(otp || "").trim();
     newPinHash = String(newPinHash || "").trim();
     if (!email || !otp || !newPinHash) return err_("Semua field wajib diisi");
@@ -1318,6 +2072,9 @@ function resetPin(email, otp, newPinHash) {
         }
       }
     }
-    return { status: "success", message: "PIN berhasil direset. Silakan login dengan PIN baru." };
+    return {
+      status: "success",
+      message: "PIN berhasil direset. Silakan login dengan PIN baru.",
+    };
   });
 }
